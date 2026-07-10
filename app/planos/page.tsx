@@ -45,7 +45,7 @@ export default function PlanosPage() {
     </p>
 
     <h2 className="mt-4 text-5xl font-bold">
-      R$17
+      R$17,00
     </h2>
 
     <p className="text-slate-400">
