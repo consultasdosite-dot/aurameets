@@ -13,7 +13,7 @@ const plans = [
   },
   {
     name: "Profissional",
-    price: "R$ 59/mês",
+    price: "R$ 62/mês",
     description: "Para terapeutas que querem crescer com mais visibilidade.",
     features: [
       "Tudo do Essencial",
@@ -26,8 +26,8 @@ const plans = [
   },
   {
     name: "Fundador",
-    price: "R$ 17/mês",
-    oldPrice: "De R$ 59/mês",
+    price: "R$ 17,00/mês",
+    oldPrice: "De R$ 62,00/mês",
     description: "Oferta exclusiva para os 100 primeiros terapeutas.",
     features: [
       "Tudo do Profissional",

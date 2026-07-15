@@ -108,7 +108,7 @@ export default function FounderBenefits() {
                 </p>
 
                 <h2 className="mt-2 text-6xl font-black text-yellow-400">
-                  R$ 17
+                  R$ 17,00
                 </h2>
 
                 <p className="text-xl text-slate-300">

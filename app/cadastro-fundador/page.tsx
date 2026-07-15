@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
 
 const specialties = [
   "Psicologia",
@@ -24,6 +23,14 @@ const specialties = [
   "Mentoria",
   "Terapias Integrativas",
   "Outra especialidade",
+];
+
+const founderBenefits = [
+  "Participação gratuita durante a fase de validação",
+  "Acesso antecipado aos primeiros recursos",
+  "Prioridade na apresentação dos perfis",
+  "Participação nas decisões e melhorias",
+  "Reconhecimento como Terapeuta Cofundador",
 ];
 
 export default function CadastroFundadorPage() {
@@ -99,34 +106,48 @@ export default function CadastroFundadorPage() {
 
     setCarregando(true);
 
-    const { error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password: senha,
-      options: {
-        data: {
-          name: nome.trim(),
+    try {
+      const resposta = await fetch("/api/cadastro-fundador", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nome: nome.trim(),
+          email: email.trim(),
           telefone: telefone.trim(),
           especialidade,
           cidade: cidade.trim(),
           estado: estado.trim().toUpperCase(),
-          atende_online: atendeOnline,
-          atende_presencial: atendePresencial,
-          tipo_usuario: "terapeuta",
-          plano: "fundador",
-          valor_plano: 17,
-          status_plano: "aguardando_pagamento",
-        },
-      },
-    });
+          atendeOnline,
+          atendePresencial,
+          senha,
+          aceitouTermos,
+        }),
+      });
 
-    setCarregando(false);
+      const resultado = (await resposta.json()) as {
+        success?: boolean;
+        error?: string;
+      };
 
-    if (error) {
-      setErro(error.message);
-      return;
+      if (!resposta.ok) {
+        setErro(
+          resultado.error ??
+            "Não foi possível concluir o cadastro. Tente novamente.",
+        );
+        return;
+      }
+
+      setSucesso(true);
+    } catch (error) {
+      console.error("Erro ao enviar cadastro:", error);
+      setErro(
+        "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.",
+      );
+    } finally {
+      setCarregando(false);
     }
-
-    setSucesso(true);
   }
 
   if (sucesso) {
@@ -138,24 +159,29 @@ export default function CadastroFundadorPage() {
           </div>
 
           <p className="mt-8 text-xs font-bold uppercase tracking-[0.25em] text-yellow-400 sm:text-sm sm:tracking-[0.35em]">
-            Cadastro recebido
+            Solicitação recebida
           </p>
 
           <h1 className="mt-5 text-3xl font-black leading-tight sm:text-4xl md:text-5xl">
-            Bem-vindo ao AuraMeets.
+            Bem-vindo ao início do AuraMeets.
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-            Seu cadastro como Terapeuta Fundador foi realizado. Verifique seu
-            e-mail para confirmar a conta e aguarde as próximas orientações para
-            ativação do plano.
+            Sua solicitação para participar como Terapeuta Cofundador foi
+            registrada. Verifique seu e-mail para confirmar sua conta e
+            acompanhe as próximas orientações.
           </p>
 
           <div className="mt-8 rounded-2xl border border-slate-700 bg-[#080D22] p-5 text-left sm:p-6">
-            <p className="font-bold text-yellow-400">Plano selecionado</p>
-            <p className="mt-2 text-2xl font-black">Terapeuta Fundador</p>
-            <p className="mt-2 text-slate-300">
-              R$ 17 por mês enquanto sua assinatura permanecer ativa.
+            <p className="font-bold text-yellow-400">
+              Participação no pré-lançamento
+            </p>
+            <p className="mt-2 text-2xl font-black">
+              Terapeuta Cofundador
+            </p>
+            <p className="mt-2 leading-7 text-slate-300">
+              Nesta fase de validação não haverá cobrança automática nem
+              obrigação de permanência.
             </p>
           </div>
 
@@ -182,22 +208,23 @@ export default function CadastroFundadorPage() {
           </Link>
 
           <p className="mt-8 text-xs font-bold uppercase tracking-[0.25em] text-yellow-400 sm:mt-10 sm:text-sm sm:tracking-[0.35em] lg:mt-12">
-            Cadastro exclusivo
+            Solicitação de participação
           </p>
 
           <h1 className="mt-5 max-w-2xl text-4xl font-black leading-[1.05] sm:text-5xl lg:text-5xl xl:text-6xl">
-            Seja um dos 100 Terapeutas Fundadores.
+            Faça parte dos 100 Terapeutas Cofundadores.
           </h1>
 
           <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-            Entre na fase inicial do AuraMeets, ganhe mais visibilidade e ajude
-            a construir uma nova forma de conectar pessoas e terapeutas.
+            Entre na fase inicial do AuraMeets, conheça a plataforma antes do
+            lançamento oficial e ajude a construir uma nova forma de conectar
+            pessoas e terapeutas.
           </p>
 
           <div className="mt-8 rounded-3xl border border-yellow-300/50 bg-yellow-400 p-6 text-black shadow-[0_20px_80px_rgba(250,204,21,0.12)] sm:p-8 lg:mt-10">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs font-black uppercase tracking-[0.2em] sm:text-sm sm:tracking-[0.25em]">
-                Condição de lançamento
+                Pré-lançamento exclusivo
               </p>
 
               <span className="rounded-full bg-black px-3 py-1 text-xs font-black uppercase tracking-wide text-yellow-400">
@@ -205,75 +232,45 @@ export default function CadastroFundadorPage() {
               </span>
             </div>
 
-            <p className="mt-6 text-base font-bold line-through opacity-60 sm:text-lg">
-              Valor oficial: R$ 62/mês
+            <p className="mt-7 text-4xl font-black leading-tight sm:text-5xl">
+              Participação gratuita
             </p>
 
-            <div className="mt-2 flex flex-wrap items-end gap-2">
-              <p className="text-5xl font-black sm:text-6xl">R$ 17</p>
-              <p className="pb-2 text-lg font-black">/mês</p>
-            </div>
-
-            <p className="mt-3 font-bold">
-              Enquanto sua assinatura permanecer ativa.
+            <p className="mt-4 text-base font-bold leading-7 sm:text-lg">
+              Nenhuma cobrança será realizada durante esta fase de validação.
             </p>
-
-            <div className="mt-5 inline-flex rounded-xl bg-black/10 px-4 py-3">
-              <p className="text-sm font-black">
-                Economia aproximada de 73% sobre o valor oficial
-              </p>
-            </div>
 
             <ul className="mt-8 space-y-4 text-sm font-semibold sm:text-base">
-              <li className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-sm text-yellow-400">
-                  ✓
-                </span>
-                <span>Selo exclusivo de Terapeuta Fundador</span>
-              </li>
-
-              <li className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-sm text-yellow-400">
-                  ✓
-                </span>
-                <span>Prioridade nas primeiras buscas da plataforma</span>
-              </li>
-
-              <li className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-sm text-yellow-400">
-                  ✓
-                </span>
-                <span>Destaque nas campanhas oficiais do AuraMeets</span>
-              </li>
-
-              <li className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-sm text-yellow-400">
-                  ✓
-                </span>
-                <span>Perfil profissional completo para divulgar seu trabalho</span>
-              </li>
+              {founderBenefits.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-sm text-yellow-400">
+                    ✓
+                  </span>
+                  <span>{benefit}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
+              <p className="text-2xl font-black text-yellow-400">30</p>
+              <p className="mt-1 text-sm text-slate-300">
+                Conselho inicial
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
               <p className="text-2xl font-black text-yellow-400">100</p>
               <p className="mt-1 text-sm text-slate-300">
-                vagas iniciais
+                vagas de Cofundador
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
-              <p className="text-2xl font-black text-yellow-400">R$ 17</p>
+              <p className="text-2xl font-black text-yellow-400">R$ 0,00</p>
               <p className="mt-1 text-sm text-slate-300">
-                valor mensal
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
-              <p className="text-2xl font-black text-yellow-400">73%</p>
-              <p className="mt-1 text-sm text-slate-300">
-                de economia
+                durante a validação
               </p>
             </div>
           </div>
@@ -281,16 +278,16 @@ export default function CadastroFundadorPage() {
 
         <section className="min-w-0 rounded-3xl border border-slate-800 bg-[#111A33] p-5 shadow-2xl sm:p-8 lg:p-9 xl:p-12">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-yellow-400 sm:text-sm sm:tracking-[0.3em]">
-            Seus dados
+            Seus dados profissionais
           </p>
 
           <h2 className="mt-4 text-3xl font-black leading-tight sm:text-4xl">
-            Comece seu cadastro profissional
+            Solicite sua participação
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-            Preencha as informações abaixo. Você poderá completar seu perfil
-            profissional depois.
+            Preencha as informações abaixo. Depois do acesso, você poderá
+            completar e atualizar seu perfil profissional.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6 sm:mt-10">
@@ -534,8 +531,8 @@ export default function CadastroFundadorPage() {
               className="w-full rounded-xl bg-yellow-400 px-5 py-4 text-base font-black text-black shadow-[0_15px_45px_rgba(250,204,21,0.15)] transition hover:-translate-y-0.5 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:px-6 sm:py-5 sm:text-lg"
             >
               {carregando
-                ? "Realizando cadastro..."
-                : "Garantir minha vaga de Fundador"}
+                ? "Enviando solicitação..."
+                : "Solicitar participação como Cofundador"}
             </button>
 
             <p className="text-center text-sm leading-6 text-slate-400">
