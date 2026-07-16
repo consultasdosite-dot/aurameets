@@ -492,19 +492,29 @@ export async function POST(request: Request) {
 
       .from("profiles")
 
-      .insert({
+      .upsert(
 
-        id: usuario.id,
+        {
 
-        email,
+          id: usuario.id,
 
-        name: nome,
+          email,
 
-        user_type: "therapist",
+          name: nome,
 
-        avatar_url: null,
+          user_type: "therapist",
 
-      });
+          avatar_url: null,
+
+        },
+
+        {
+
+          onConflict: "id",
+
+        },
+
+      );
 
  
 
@@ -512,7 +522,7 @@ export async function POST(request: Request) {
 
       console.error(
 
-        "Erro ao criar registro em profiles:",
+        "Erro ao criar ou atualizar registro em profiles:",
 
         erroProfile,
 
@@ -791,4 +801,3 @@ export async function POST(request: Request) {
   }
 
 }
-
