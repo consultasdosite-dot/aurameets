@@ -98,6 +98,7 @@ export default function HomePage() {
               <p className="text-2xl font-black tracking-tight text-yellow-400">
                 AuraMeets
               </p>
+
               <p className="text-[10px] uppercase tracking-[0.24em] text-slate-400">
                 Conecta • acolhe • transforma
               </p>
@@ -105,16 +106,31 @@ export default function HomePage() {
           </Link>
 
           <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-300 lg:flex">
-            <a href="#como-funciona" className="transition hover:text-yellow-400">
+            <a
+              href="#como-funciona"
+              className="transition hover:text-yellow-400"
+            >
               Como funciona
             </a>
-            <a href="#especialidades" className="transition hover:text-yellow-400">
+
+            <a
+              href="#especialidades"
+              className="transition hover:text-yellow-400"
+            >
               Especialidades
             </a>
-            <Link href="/terapeutas" className="transition hover:text-yellow-400">
+
+            <Link
+              href="/terapeutas"
+              className="transition hover:text-yellow-400"
+            >
               Terapeutas
             </Link>
-            <Link href="/seja-terapeuta" className="transition hover:text-yellow-400">
+
+            <Link
+              href="/seja-terapeuta"
+              className="transition hover:text-yellow-400"
+            >
               Sou terapeuta
             </Link>
           </nav>
@@ -140,7 +156,7 @@ export default function HomePage() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_32%,rgba(250,204,21,0.20),transparent_31%)]" />
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[0.95fr_1.05fr] lg:py-24">
+        <div className="relative mx-auto grid max-w-7xl items-start gap-12 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[0.95fr_1.05fr] lg:py-24">
           <div className="relative z-10">
             <p className="text-sm font-black uppercase tracking-[0.26em] text-yellow-400">
               Bem-estar com mais clareza
@@ -148,6 +164,7 @@ export default function HomePage() {
 
             <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[1.06] sm:text-5xl lg:text-6xl">
               Conectamos você com o terapeuta ideal
+
               <span className="mt-2 block text-yellow-400">
                 para o seu momento.
               </span>
@@ -167,12 +184,15 @@ export default function HomePage() {
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-400 text-2xl text-slate-950">
                   ♡
                 </span>
+
                 <h2 className="mt-5 text-2xl font-black text-yellow-300">
                   Estou procurando um terapeuta
                 </h2>
+
                 <p className="mt-3 leading-7 text-slate-300">
                   Encontre o profissional ideal para o que você precisa agora.
                 </p>
+
                 <span className="mt-6 inline-flex rounded-xl bg-yellow-400 px-5 py-3 font-black text-slate-950 transition group-hover:bg-yellow-300">
                   Quero encontrar
                 </span>
@@ -185,12 +205,15 @@ export default function HomePage() {
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-2xl text-white">
                   ◯
                 </span>
+
                 <h2 className="mt-5 text-2xl font-black text-blue-300">
                   Sou terapeuta
                 </h2>
+
                 <p className="mt-3 leading-7 text-slate-300">
                   Faça parte da plataforma que valoriza seu propósito.
                 </p>
+
                 <span className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-black text-white transition group-hover:bg-blue-500">
                   Quero participar
                 </span>
@@ -202,7 +225,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="relative">
+          <div className="relative self-start">
             <div className="absolute -inset-5 rounded-[40px] bg-yellow-400/10 blur-3xl" />
 
             <div className="relative overflow-hidden rounded-[36px] border border-white/10 bg-slate-900 shadow-2xl">
@@ -219,7 +242,7 @@ export default function HomePage() {
                   height={1080}
                   priority
                   sizes="(max-width: 1024px) 100vw, 52vw"
-                  className="h-[460px] w-full object-cover sm:h-[560px] lg:h-[640px]"
+                  className="h-[460px] w-full object-cover object-top sm:h-[560px] lg:h-[640px]"
                 />
               </picture>
 
@@ -243,6 +266,7 @@ export default function HomePage() {
             <p className="text-sm font-black uppercase tracking-[0.26em] text-yellow-400">
               Como funciona
             </p>
+
             <h2 className="mt-5 text-3xl font-black sm:text-5xl">
               Um caminho simples até o profissional certo
             </h2>
@@ -257,7 +281,9 @@ export default function HomePage() {
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-yellow-400 font-black text-slate-950">
                   {step.number}
                 </span>
+
                 <h3 className="mt-5 text-xl font-black">{step.title}</h3>
+
                 <p className="mt-3 leading-7 text-slate-400">
                   {step.description}
                 </p>
@@ -275,9 +301,11 @@ export default function HomePage() {
           <p className="text-sm font-black uppercase tracking-[0.26em] text-yellow-400">
             Especialidades
           </p>
+
           <h2 className="mt-5 text-3xl font-black sm:text-5xl">
             Encontre apoio para diferentes momentos da sua vida
           </h2>
+
           <p className="mt-6 text-lg leading-8 text-slate-400">
             Explore áreas terapêuticas e encontre um profissional com uma
             abordagem compatível com suas necessidades.
@@ -311,6 +339,7 @@ export default function HomePage() {
               <p className="text-sm font-black uppercase tracking-[0.26em] text-yellow-400">
                 Profissionais
               </p>
+
               <h2 className="mt-5 text-3xl font-black sm:text-5xl">
                 Terapeutas em destaque
               </h2>
@@ -343,17 +372,21 @@ export default function HomePage() {
                       sizes="(max-width: 768px) 100vw, 33vw"
                       className="object-cover"
                     />
+
                     <div className="absolute inset-0 bg-gradient-to-t from-[#081628] via-transparent to-transparent" />
                   </div>
 
                   <div className="p-5">
                     <h3 className="text-xl font-black">{therapist.name}</h3>
+
                     <p className="mt-2 font-bold text-yellow-400">
                       {therapist.specialty}
                     </p>
+
                     <p className="mt-2 text-sm text-slate-400">
                       {therapist.location}
                     </p>
+
                     <Link
                       href={href}
                       className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-yellow-400/50 px-4 py-3 font-black text-yellow-300 transition hover:bg-yellow-400 hover:text-slate-950"
@@ -376,7 +409,9 @@ export default function HomePage() {
               className="rounded-3xl border border-white/10 bg-[#06101f] p-6"
             >
               <span className="text-3xl text-yellow-400">✦</span>
+
               <h3 className="mt-4 text-xl font-black">{item.title}</h3>
+
               <p className="mt-3 leading-7 text-slate-400">
                 {item.description}
               </p>
@@ -392,9 +427,11 @@ export default function HomePage() {
               <p className="text-sm font-black uppercase tracking-[0.26em] text-yellow-400">
                 Seu próximo passo
               </p>
+
               <h2 className="mt-5 max-w-3xl text-3xl font-black leading-tight sm:text-5xl">
                 Sua jornada de transformação pode começar agora.
               </h2>
+
               <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
                 Permita-se encontrar um profissional que compreenda o seu
                 momento e caminhe ao seu lado.
@@ -415,6 +452,7 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
             <p className="text-2xl font-black text-yellow-400">AuraMeets</p>
+
             <p className="mt-4 max-w-md leading-7 text-slate-400">
               Uma plataforma criada para aproximar pessoas e terapeutas com
               confiança, acolhimento e propósito.
@@ -423,13 +461,16 @@ export default function HomePage() {
 
           <div>
             <p className="font-black">Para visitantes</p>
+
             <div className="mt-4 space-y-3 text-slate-400">
               <Link href="/seja-visitante" className="block hover:text-white">
                 Encontrar terapeuta
               </Link>
+
               <Link href="/terapeutas" className="block hover:text-white">
                 Ver profissionais
               </Link>
+
               <Link href="/login" className="block hover:text-white">
                 Entrar
               </Link>
@@ -438,16 +479,19 @@ export default function HomePage() {
 
           <div>
             <p className="font-black">Para terapeutas</p>
+
             <div className="mt-4 space-y-3 text-slate-400">
               <Link href="/seja-terapeuta" className="block hover:text-white">
                 Seja terapeuta
               </Link>
+
               <Link
                 href="/cadastro-fundador"
                 className="block hover:text-white"
               >
                 Cadastro fundador
               </Link>
+
               <Link href="/login" className="block hover:text-white">
                 Área do terapeuta
               </Link>

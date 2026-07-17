@@ -1,30 +1,35 @@
+import Link from "next/link";
+
 export default function SejaTerapeutaPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       {/* HERO */}
-      <section className="mx-auto max-w-6xl px-8 py-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Faça parte da <span className="text-yellow-400">AuraMeets</span>
+      <section className="mx-auto max-w-6xl px-6 py-16 text-center sm:px-8 sm:py-20">
+        <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+          Faça parte da{" "}
+          <span className="text-yellow-400">AuraMeets</span>
         </h1>
 
-        <p className="mt-6 text-2xl text-slate-300">
+        <p className="mt-6 text-xl text-slate-300 sm:text-2xl">
           Conectando pessoas. Transformando vidas.
         </p>
 
-        <p className="mx-auto mt-8 max-w-3xl text-lg text-slate-400">
+        <p className="mx-auto mt-8 max-w-3xl text-base leading-relaxed text-slate-400 sm:text-lg">
           Cadastre seu perfil profissional, receba novos clientes, divulgue
           seus cursos, eventos e faça parte da maior comunidade de
           desenvolvimento humano da América Latina.
         </p>
-
-        <button className="mt-10 rounded-xl bg-yellow-400 px-8 py-4 text-xl font-bold text-slate-900 hover:bg-yellow-300">
-          Quero criar meu perfil
-        </button>
+      <a
+  href="/cadastro-fundador"
+  className="relative z-20 mt-10 inline-flex cursor-pointer items-center justify-center rounded-xl bg-yellow-400 px-8 py-4 text-lg font-bold text-slate-900 transition hover:bg-yellow-300 focus:outline-none focus:ring-4 focus:ring-yellow-400/30 sm:text-xl"
+>
+  Quero criar meu perfil
+</a>
       </section>
 
       {/* BENEFÍCIOS */}
-      <section className="mx-auto max-w-6xl px-8 py-16">
-        <h2 className="mb-10 text-center text-4xl font-bold text-yellow-400">
+      <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
+        <h2 className="mb-10 text-center text-3xl font-bold text-yellow-400 sm:text-4xl">
           Por que entrar para a AuraMeets?
         </h2>
 
@@ -60,8 +65,8 @@ export default function SejaTerapeutaPage() {
       </section>
 
       {/* PLANOS */}
-      <section className="mx-auto max-w-6xl px-8 py-16">
-        <h2 className="mb-10 text-center text-4xl font-bold text-yellow-400">
+      <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
+        <h2 className="mb-10 text-center text-3xl font-bold text-yellow-400 sm:text-4xl">
           Escolha seu plano
         </h2>
 
@@ -99,13 +104,13 @@ export default function SejaTerapeutaPage() {
       </section>
 
       {/* FRASE */}
-      <section className="mx-auto max-w-5xl px-8 py-20 text-center">
-        <blockquote className="text-3xl italic text-slate-300">
-          "A AuraMeets nasceu para aproximar pessoas de profissionais que
-          realmente transformam vidas."
+      <section className="mx-auto max-w-5xl px-6 py-20 text-center sm:px-8">
+        <blockquote className="text-2xl italic text-slate-300 sm:text-3xl">
+          &ldquo;A AuraMeets nasceu para aproximar pessoas de profissionais que
+          realmente transformam vidas.&rdquo;
         </blockquote>
 
-        <p className="mt-8 text-yellow-400 font-bold">
+        <p className="mt-8 font-bold text-yellow-400">
           Oscar Ahumada
         </p>
       </section>
