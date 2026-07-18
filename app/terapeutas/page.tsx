@@ -35,10 +35,10 @@ export default function TerapeutasPage() {
 
         <div className="mt-12 flex justify-center">
           <Link
-            href="/acolhimento/perguntas"
+            href="/jornada/resultado"
             className="rounded-xl border border-slate-700 px-7 py-4 text-center font-bold text-slate-300 transition hover:border-yellow-400 hover:text-yellow-400"
           >
-            Voltar ao resultado do acolhimento
+            Voltar ao resultado da jornada
           </Link>
         </div>
       </section>
