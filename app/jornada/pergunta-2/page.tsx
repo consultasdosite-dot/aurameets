@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+const LIMITE_DE_AREAS = 3;
 
 const opcoes = [
   {
     titulo: "Relacionamentos",
-    descricao: "Vínculos afetivos, casamento, separação ou dificuldade de conexão.",
+    descricao:
+      "Vínculos afetivos, casamento, separação ou dificuldade de conexão.",
   },
   {
     titulo: "Família",
@@ -22,11 +25,13 @@ const opcoes = [
   },
   {
     titulo: "Autoconhecimento",
-    descricao: "Desejo de compreender melhor quem você é e o que precisa transformar.",
+    descricao:
+      "Desejo de compreender melhor quem você é e o que precisa transformar.",
   },
   {
     titulo: "Saúde emocional",
-    descricao: "Ansiedade, medo, tristeza, sobrecarga ou dificuldade de seguir em frente.",
+    descricao:
+      "Ansiedade, medo, tristeza, sobrecarga ou dificuldade de seguir em frente.",
   },
   {
     titulo: "Espiritualidade",
@@ -34,21 +39,97 @@ const opcoes = [
   },
   {
     titulo: "Ainda não sei explicar",
-    descricao: "Existe um desconforto, mas ainda é difícil entender de onde ele vem.",
+    descricao:
+      "Existe um desconforto, mas ainda é difícil entender de onde ele vem.",
   },
 ];
 
 export default function Pergunta2Page() {
   const router = useRouter();
-  const [areaSelecionada, setAreaSelecionada] = useState("");
+
+  const [areasSelecionadas, setAreasSelecionadas] = useState<string[]>([]);
+  const [mensagemLimite, setMensagemLimite] = useState("");
+
+  useEffect(() => {
+    const areasSalvas = localStorage.getItem(
+      "aurameets_areas_selecionadas",
+    );
+
+    if (areasSalvas) {
+      try {
+        const areasConvertidas = JSON.parse(areasSalvas);
+
+        if (Array.isArray(areasConvertidas)) {
+          setAreasSelecionadas(
+            areasConvertidas
+              .filter((area): area is string => typeof area === "string")
+              .slice(0, LIMITE_DE_AREAS),
+          );
+
+          return;
+        }
+      } catch {
+        localStorage.removeItem("aurameets_areas_selecionadas");
+      }
+    }
+
+    const areaPrincipalSalva = localStorage.getItem(
+      "aurameets_area_principal",
+    );
+
+    if (areaPrincipalSalva) {
+      setAreasSelecionadas([areaPrincipalSalva]);
+    }
+  }, []);
+
+  function selecionarArea(area: string) {
+    setMensagemLimite("");
+
+    const areaJaSelecionada = areasSelecionadas.includes(area);
+
+    if (areaJaSelecionada) {
+      setAreasSelecionadas((areasAtuais) =>
+        areasAtuais.filter((item) => item !== area),
+      );
+
+      return;
+    }
+
+    if (areasSelecionadas.length >= LIMITE_DE_AREAS) {
+      setMensagemLimite(
+        `Você pode selecionar até ${LIMITE_DE_AREAS} áreas.`,
+      );
+
+      return;
+    }
+
+    setAreasSelecionadas((areasAtuais) => [...areasAtuais, area]);
+  }
 
   function continuar() {
-    if (!areaSelecionada) return;
+    if (areasSelecionadas.length === 0) return;
 
-    localStorage.setItem("aurameets_area_principal", areaSelecionada);
+    localStorage.setItem(
+      "aurameets_areas_selecionadas",
+      JSON.stringify(areasSelecionadas),
+    );
+
+    /*
+     * Mantemos temporariamente a primeira opção como área principal
+     * para preservar a compatibilidade com as etapas e com o resultado
+     * atual da jornada.
+     *
+     * Na próxima etapa, criaremos a escolha da área prioritária.
+     */
+    localStorage.setItem(
+      "aurameets_area_principal",
+      areasSelecionadas[0],
+    );
 
     router.push("/jornada/pergunta-3");
   }
+
+  const quantidadeSelecionada = areasSelecionadas.length;
 
   return (
     <main className="min-h-screen bg-[#06101f] px-5 py-8 text-white sm:px-8 sm:py-10">
@@ -62,28 +143,48 @@ export default function Pergunta2Page() {
             <div className="h-full w-[16%] rounded-full bg-yellow-400" />
           </div>
 
-          <p className="mt-3 text-sm text-slate-400">Etapa 2 de 12</p>
+          <p className="mt-3 text-sm text-slate-400">
+            Etapa 2 de 12
+          </p>
         </header>
 
         <section className="mt-10">
           <h1 className="max-w-4xl text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-            Hoje, qual área da sua vida mais precisa de atenção?
+            Quais áreas da sua vida precisam de mais atenção neste momento?
           </h1>
 
           <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">
-            Escolha a opção que mais se aproxima do seu momento. Você poderá
-            aprofundar sua resposta nas próximas etapas.
+            Você pode escolher até 3 áreas que representam melhor o seu
+            momento atual.
           </p>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2">
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-bold text-slate-400">
+              {quantidadeSelecionada} de {LIMITE_DE_AREAS} áreas selecionadas
+            </p>
+
+            {mensagemLimite && (
+              <p
+                role="alert"
+                aria-live="polite"
+                className="text-sm font-bold text-yellow-300"
+              >
+                {mensagemLimite}
+              </p>
+            )}
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
             {opcoes.map((opcao) => {
-              const selecionada = areaSelecionada === opcao.titulo;
+              const selecionada = areasSelecionadas.includes(
+                opcao.titulo,
+              );
 
               return (
                 <button
                   key={opcao.titulo}
                   type="button"
-                  onClick={() => setAreaSelecionada(opcao.titulo)}
+                  onClick={() => selecionarArea(opcao.titulo)}
                   aria-pressed={selecionada}
                   className={`rounded-3xl border p-6 text-left transition ${
                     selecionada
@@ -95,7 +196,9 @@ export default function Pergunta2Page() {
                     <div>
                       <h2
                         className={`text-xl font-black ${
-                          selecionada ? "text-yellow-300" : "text-white"
+                          selecionada
+                            ? "text-yellow-300"
+                            : "text-white"
                         }`}
                       >
                         {opcao.titulo}
@@ -107,6 +210,7 @@ export default function Pergunta2Page() {
                     </div>
 
                     <span
+                      aria-hidden="true"
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm ${
                         selecionada
                           ? "border-yellow-400 bg-yellow-400 font-black text-slate-950"
@@ -133,7 +237,7 @@ export default function Pergunta2Page() {
             <button
               type="button"
               onClick={continuar}
-              disabled={!areaSelecionada}
+              disabled={quantidadeSelecionada === 0}
               className="rounded-2xl bg-yellow-400 px-8 py-4 text-lg font-black text-slate-950 transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Continuar →
