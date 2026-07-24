@@ -10,6 +10,7 @@ export type SupabaseTherapist = {
   state: string | null;
   bio: string | null;
   photo_url: string | null;
+  profile_photo_url: string | null;
   verified: boolean | null;
   rating: number | null;
   price: number | null;
@@ -24,7 +25,9 @@ export type SupabaseTherapist = {
   slug: string;
 };
 
-export async function getActiveTherapists(): Promise<SupabaseTherapist[]> {
+export async function getActiveTherapists(): Promise<
+  SupabaseTherapist[]
+> {
   const { data, error } = await supabase
     .from("therapists")
     .select(
@@ -38,6 +41,7 @@ export async function getActiveTherapists(): Promise<SupabaseTherapist[]> {
         state,
         bio,
         photo_url,
+        profile_photo_url,
         verified,
         rating,
         price,
@@ -80,6 +84,7 @@ export async function getTherapistBySlug(
         state,
         bio,
         photo_url,
+        profile_photo_url,
         verified,
         rating,
         price,

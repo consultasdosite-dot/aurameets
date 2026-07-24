@@ -9,6 +9,9 @@ type PageProps = {
   }>;
 };
 
+const OSCAR_PAYMENT_URL =
+  "https://invoice.infinitepay.io/oscar_jose_ahumada_/LBCJSjfHjP";
+
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -28,6 +31,15 @@ function splitSpecialities(value: string | null) {
     .split(/[,•]/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function normalizeText(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 export default async function TherapistProfilePage({
@@ -56,6 +68,24 @@ export default async function TherapistProfilePage({
     "Profissional cadastrado no AuraMeets, com atendimento voltado ao cuidado, escuta e desenvolvimento humano.";
 
   const compatibility = therapist.verified ? 95 : 85;
+
+  const normalizedName = normalizeText(therapist.name);
+  const normalizedSlug = normalizeText(therapist.slug);
+
+  const isOscar =
+    normalizedName === "oscarahumada" ||
+    normalizedSlug === "oscarahumada";
+
+  const displayedPrice = isOscar
+    ? "R$ 35,00"
+    : therapist.price !== null
+      ? therapist.price.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      : "Consultar";
 
   return (
     <main className="min-h-screen bg-[#060B1A] text-white">
@@ -115,12 +145,23 @@ export default async function TherapistProfilePage({
               </p>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                <Link
-                  href={`/agendar/${therapist.slug}`}
-                  className="rounded-xl bg-yellow-400 px-8 py-4 text-center text-lg font-black text-slate-950 transition hover:bg-yellow-300"
-                >
-                  Agendar atendimento
-                </Link>
+                {isOscar ? (
+                  <a
+                    href={OSCAR_PAYMENT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl bg-yellow-400 px-8 py-4 text-center text-lg font-black text-slate-950 transition hover:bg-yellow-300"
+                  >
+                    Comprar Mapa Numerológico — R$ 35,00
+                  </a>
+                ) : (
+                  <Link
+                    href={`/agendar/${therapist.slug}`}
+                    className="rounded-xl bg-yellow-400 px-8 py-4 text-center text-lg font-black text-slate-950 transition hover:bg-yellow-300"
+                  >
+                    Agendar atendimento
+                  </Link>
+                )}
 
                 <Link
                   href="/terapeutas"
@@ -212,14 +253,7 @@ export default async function TherapistProfilePage({
                 </p>
 
                 <p className="mt-2 text-lg font-black text-white">
-                  {therapist.price !== null
-                    ? therapist.price.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })
-                    : "Consultar"}
+                  {displayedPrice}
                 </p>
               </div>
 
@@ -242,19 +276,34 @@ export default async function TherapistProfilePage({
           </p>
 
           <h2 className="mt-4 text-2xl font-black">
-            Deseja conversar com este profissional?
+            {isOscar
+              ? "Adquira seu Mapa Numerológico Pessoal"
+              : "Deseja conversar com este profissional?"}
           </h2>
 
           <p className="mt-4 leading-7 text-slate-300">
-            Escolha um horário disponível e avance para o agendamento.
+            {isOscar
+              ? "Realize o pagamento com segurança e dê o primeiro passo para compreender os principais números da sua vida."
+              : "Escolha um horário disponível e avance para o agendamento."}
           </p>
 
-          <Link
-            href={`/agendar/${therapist.slug}`}
-            className="mt-7 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
-          >
-            Ver horários disponíveis
-          </Link>
+          {isOscar ? (
+            <a
+              href={OSCAR_PAYMENT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-7 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+            >
+              Comprar por R$ 35,00
+            </a>
+          ) : (
+            <Link
+              href={`/agendar/${therapist.slug}`}
+              className="mt-7 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+            >
+              Ver horários disponíveis
+            </Link>
+          )}
 
           {therapist.instagram && (
             <a
@@ -279,7 +328,9 @@ export default async function TherapistProfilePage({
           )}
 
           <p className="mt-5 text-sm leading-6 text-slate-500">
-            O agendamento ainda será conectado à agenda real do profissional.
+            {isOscar
+              ? "O pagamento será processado pela InfinitePay."
+              : "O agendamento ainda será conectado à agenda real do profissional."}
           </p>
         </aside>
       </section>

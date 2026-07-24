@@ -1,6 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 
 const specialties = [
@@ -33,7 +39,17 @@ const founderBenefits = [
   "Reconhecimento como Terapeuta Cofundador",
 ];
 
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
+
+const ALLOWED_PHOTO_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
 export default function CadastroFundadorPage() {
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -46,13 +62,77 @@ export default function CadastroFundadorPage() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [aceitouTermos, setAceitouTermos] = useState(false);
 
+  const [foto, setFoto] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState("");
+  const [erroFoto, setErroFoto] = useState("");
+
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      if (fotoPreview) {
+        URL.revokeObjectURL(fotoPreview);
+      }
+    };
+  }, [fotoPreview]);
+
+  function selecionarFoto(event: ChangeEvent<HTMLInputElement>) {
+    const arquivo = event.target.files?.[0];
+
+    setErro("");
+    setErroFoto("");
+
+    if (!arquivo) {
+      return;
+    }
+
+    if (!ALLOWED_PHOTO_TYPES.includes(arquivo.type)) {
+      setErroFoto("Escolha uma imagem JPG, PNG ou WEBP.");
+      event.target.value = "";
+      return;
+    }
+
+    if (arquivo.size > MAX_PHOTO_SIZE) {
+      setErroFoto("A imagem deve ter no máximo 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    if (fotoPreview) {
+      URL.revokeObjectURL(fotoPreview);
+    }
+
+    const novaPreview = URL.createObjectURL(arquivo);
+
+    setFoto(arquivo);
+    setFotoPreview(novaPreview);
+  }
+
+  function removerFoto() {
+    if (fotoPreview) {
+      URL.revokeObjectURL(fotoPreview);
+    }
+
+    setFoto(null);
+    setFotoPreview("");
+    setErroFoto("");
+
+    if (photoInputRef.current) {
+      photoInputRef.current.value = "";
+    }
+  }
+
+  function abrirSeletorDeFoto() {
+    photoInputRef.current?.click();
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     setErro("");
+    setErroFoto("");
 
     if (!nome.trim()) {
       setErro("Informe seu nome completo.");
@@ -104,31 +184,48 @@ export default function CadastroFundadorPage() {
       return;
     }
 
+    if (foto) {
+      if (!ALLOWED_PHOTO_TYPES.includes(foto.type)) {
+        setErroFoto("Escolha uma imagem JPG, PNG ou WEBP.");
+        return;
+      }
+
+      if (foto.size > MAX_PHOTO_SIZE) {
+        setErroFoto("A imagem deve ter no máximo 5 MB.");
+        return;
+      }
+    }
+
     setCarregando(true);
 
     try {
+      const formData = new FormData();
+
+      formData.append("nome", nome.trim());
+      formData.append("email", email.trim().toLowerCase());
+      formData.append("telefone", telefone.trim());
+      formData.append("especialidade", especialidade);
+      formData.append("cidade", cidade.trim());
+      formData.append("estado", estado.trim().toUpperCase());
+      formData.append("atendeOnline", String(atendeOnline));
+      formData.append("atendePresencial", String(atendePresencial));
+      formData.append("senha", senha);
+      formData.append("aceitouTermos", String(aceitouTermos));
+
+      if (foto) {
+        formData.append("foto", foto);
+      }
+
       const resposta = await fetch("/api/cadastro-fundador", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nome: nome.trim(),
-          email: email.trim(),
-          telefone: telefone.trim(),
-          especialidade,
-          cidade: cidade.trim(),
-          estado: estado.trim().toUpperCase(),
-          atendeOnline,
-          atendePresencial,
-          senha,
-          aceitouTermos,
-        }),
+        body: formData,
       });
 
       const resultado = (await resposta.json()) as {
         success?: boolean;
         error?: string;
+        profilePhotoUrl?: string | null;
+        userId?: string;
       };
 
       if (!resposta.ok) {
@@ -142,6 +239,7 @@ export default function CadastroFundadorPage() {
       setSucesso(true);
     } catch (error) {
       console.error("Erro ao enviar cadastro:", error);
+
       setErro(
         "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.",
       );
@@ -168,17 +266,19 @@ export default function CadastroFundadorPage() {
 
           <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
             Sua solicitação para participar como Terapeuta Cofundador foi
-            registrada. Verifique seu e-mail para confirmar sua conta e
-            acompanhe as próximas orientações.
+            registrada. Agora você poderá acessar sua conta e completar seu
+            perfil profissional.
           </p>
 
           <div className="mt-8 rounded-2xl border border-slate-700 bg-[#080D22] p-5 text-left sm:p-6">
             <p className="font-bold text-yellow-400">
               Participação no pré-lançamento
             </p>
+
             <p className="mt-2 text-2xl font-black">
               Terapeuta Cofundador
             </p>
+
             <p className="mt-2 leading-7 text-slate-300">
               Nesta fase de validação não haverá cobrança automática nem
               obrigação de permanência.
@@ -246,6 +346,7 @@ export default function CadastroFundadorPage() {
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-sm text-yellow-400">
                     ✓
                   </span>
+
                   <span>{benefit}</span>
                 </li>
               ))}
@@ -255,6 +356,7 @@ export default function CadastroFundadorPage() {
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
               <p className="text-2xl font-black text-yellow-400">30</p>
+
               <p className="mt-1 text-sm text-slate-300">
                 Conselho inicial
               </p>
@@ -262,6 +364,7 @@ export default function CadastroFundadorPage() {
 
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
               <p className="text-2xl font-black text-yellow-400">100</p>
+
               <p className="mt-1 text-sm text-slate-300">
                 vagas de Cofundador
               </p>
@@ -269,6 +372,7 @@ export default function CadastroFundadorPage() {
 
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
               <p className="text-2xl font-black text-yellow-400">R$ 0,00</p>
+
               <p className="mt-1 text-sm text-slate-300">
                 durante a validação
               </p>
@@ -291,6 +395,105 @@ export default function CadastroFundadorPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6 sm:mt-10">
+            <section className="rounded-2xl border border-slate-700 bg-[#080D22] p-5 sm:p-6">
+              <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
+                <button
+                  type="button"
+                  onClick={abrirSeletorDeFoto}
+                  disabled={carregando}
+                  className="group relative flex h-36 w-36 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-yellow-400/70 bg-[#111A33] transition hover:border-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label={
+                    fotoPreview
+                      ? "Alterar foto de perfil"
+                      : "Adicionar foto de perfil"
+                  }
+                >
+                  {fotoPreview ? (
+                    <>
+                      <img
+                        src={fotoPreview}
+                        alt="Pré-visualização da foto de perfil"
+                        className="h-full w-full object-cover"
+                      />
+
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/65 px-3 text-sm font-black text-white opacity-0 transition group-hover:opacity-100">
+                        Alterar foto
+                      </span>
+                    </>
+                  ) : (
+                    <div className="px-4">
+                      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-400 text-2xl font-black text-black">
+                        +
+                      </div>
+
+                      <p className="mt-3 text-sm font-black text-yellow-400">
+                        Adicionar foto
+                      </p>
+                    </div>
+                  )}
+                </button>
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-xl font-black text-white">
+                    Foto profissional
+                  </h3>
+
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+                    Escolha uma foto clara, de frente e com boa iluminação.
+                    Essa imagem será exibida no seu perfil e na página de
+                    terapeutas.
+                  </p>
+
+                  <p className="mt-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+                    JPG, PNG ou WEBP · máximo de 5 MB
+                  </p>
+
+                  <input
+                    ref={photoInputRef}
+                    id="foto"
+                    name="foto"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={selecionarFoto}
+                    disabled={carregando}
+                    className="sr-only"
+                  />
+
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={abrirSeletorDeFoto}
+                      disabled={carregando}
+                      className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {foto ? "Trocar foto" : "Escolher foto"}
+                    </button>
+
+                    {foto && (
+                      <button
+                        type="button"
+                        onClick={removerFoto}
+                        disabled={carregando}
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-5 py-3 text-sm font-bold text-slate-200 transition hover:border-red-400 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Remover foto
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {erroFoto && (
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="mt-5 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300"
+                >
+                  {erroFoto}
+                </div>
+              )}
+            </section>
+
             <div>
               <label htmlFor="nome" className="mb-2 block font-bold">
                 Nome completo
@@ -304,7 +507,8 @@ export default function CadastroFundadorPage() {
                 placeholder="Digite seu nome completo"
                 autoComplete="name"
                 required
-                className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 sm:px-5"
+                disabled={carregando}
+                className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
               />
             </div>
 
@@ -322,7 +526,8 @@ export default function CadastroFundadorPage() {
                   placeholder="seuemail@exemplo.com"
                   autoComplete="email"
                   required
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 sm:px-5"
+                  disabled={carregando}
+                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
                 />
               </div>
 
@@ -339,13 +544,17 @@ export default function CadastroFundadorPage() {
                   placeholder="(31) 99999-9999"
                   autoComplete="tel"
                   required
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 sm:px-5"
+                  disabled={carregando}
+                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="especialidade" className="mb-2 block font-bold">
+              <label
+                htmlFor="especialidade"
+                className="mb-2 block font-bold"
+              >
                 Especialidade principal
               </label>
 
@@ -354,7 +563,8 @@ export default function CadastroFundadorPage() {
                 value={especialidade}
                 onChange={(event) => setEspecialidade(event.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 sm:px-5"
+                disabled={carregando}
+                className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
               >
                 <option value="">Selecione uma especialidade</option>
 
@@ -380,7 +590,8 @@ export default function CadastroFundadorPage() {
                   placeholder="Sua cidade"
                   autoComplete="address-level2"
                   required
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 sm:px-5"
+                  disabled={carregando}
+                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
                 />
               </div>
 
@@ -405,12 +616,13 @@ export default function CadastroFundadorPage() {
                   autoComplete="address-level1"
                   maxLength={2}
                   required
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 uppercase outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 sm:px-5"
+                  disabled={carregando}
+                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 uppercase outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
                 />
               </div>
             </div>
 
-            <fieldset>
+            <fieldset disabled={carregando}>
               <legend className="mb-3 font-bold">
                 Modalidade de atendimento
               </legend>
@@ -426,11 +638,15 @@ export default function CadastroFundadorPage() {
                   <input
                     type="checkbox"
                     checked={atendeOnline}
-                    onChange={(event) => setAtendeOnline(event.target.checked)}
+                    onChange={(event) =>
+                      setAtendeOnline(event.target.checked)
+                    }
                     className="h-5 w-5 shrink-0 accent-yellow-400"
                   />
 
-                  <span className="font-medium">Atendimento online</span>
+                  <span className="font-medium">
+                    Atendimento online
+                  </span>
                 </label>
 
                 <label
@@ -449,7 +665,9 @@ export default function CadastroFundadorPage() {
                     className="h-5 w-5 shrink-0 accent-yellow-400"
                   />
 
-                  <span className="font-medium">Atendimento presencial</span>
+                  <span className="font-medium">
+                    Atendimento presencial
+                  </span>
                 </label>
               </div>
             </fieldset>
@@ -469,7 +687,8 @@ export default function CadastroFundadorPage() {
                   autoComplete="new-password"
                   required
                   minLength={6}
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 sm:px-5"
+                  disabled={carregando}
+                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
                 />
               </div>
 
@@ -485,12 +704,15 @@ export default function CadastroFundadorPage() {
                   id="confirmarSenha"
                   type="password"
                   value={confirmarSenha}
-                  onChange={(event) => setConfirmarSenha(event.target.value)}
+                  onChange={(event) =>
+                    setConfirmarSenha(event.target.value)
+                  }
                   placeholder="Digite a senha novamente"
                   autoComplete="new-password"
                   required
                   minLength={6}
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 sm:px-5"
+                  disabled={carregando}
+                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
                 />
               </div>
             </div>
@@ -500,18 +722,22 @@ export default function CadastroFundadorPage() {
                 aceitouTermos
                   ? "border-yellow-400 bg-yellow-400/10"
                   : "border-slate-700 bg-[#080D22] hover:border-slate-500"
-              }`}
+              } ${carregando ? "cursor-not-allowed opacity-60" : ""}`}
             >
               <input
                 type="checkbox"
                 checked={aceitouTermos}
-                onChange={(event) => setAceitouTermos(event.target.checked)}
+                onChange={(event) =>
+                  setAceitouTermos(event.target.checked)
+                }
+                disabled={carregando}
                 className="mt-1 h-5 w-5 shrink-0 accent-yellow-400"
               />
 
               <span className="text-sm leading-6 text-slate-300">
-                Confirmo que as informações fornecidas são verdadeiras e aceito
-                os termos de uso e a política de privacidade do AuraMeets.
+                Confirmo que as informações fornecidas são verdadeiras e
+                aceito os termos de uso e a política de privacidade do
+                AuraMeets.
               </span>
             </label>
 
@@ -531,7 +757,9 @@ export default function CadastroFundadorPage() {
               className="w-full rounded-xl bg-yellow-400 px-5 py-4 text-base font-black text-black shadow-[0_15px_45px_rgba(250,204,21,0.15)] transition hover:-translate-y-0.5 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:px-6 sm:py-5 sm:text-lg"
             >
               {carregando
-                ? "Enviando solicitação..."
+                ? foto
+                  ? "Enviando cadastro e foto..."
+                  : "Enviando solicitação..."
                 : "Solicitar participação como Cofundador"}
             </button>
 

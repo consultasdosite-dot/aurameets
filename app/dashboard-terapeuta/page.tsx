@@ -1,611 +1,698 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useRouter } from "next/navigation";
+
+import {
+  acceptAppointment,
+  getAppointmentsByTherapistId,
+  getTherapistIdByProfileId,
+  proposeNewAppointmentTime,
+  type Appointment,
+} from "@/lib/appointments";
 import { supabase } from "@/lib/supabase";
 
-type StatusSolicitacao =
-  | "pendente"
-  | "aceita"
-  | "novo_horario_proposto"
-  | "recusada"
-  | "cancelada";
+import ApprovalCard from "./components/ApprovalCard";
+import CommunityCard from "./components/CommunityCard";
+import DashboardHeader from "./components/DashboardHeader";
+import DashboardStats from "./components/DashboardStats";
+import ProfileProgress from "./components/ProfileProgress";
+import Sidebar from "./components/Sidebar";
+import SolicitacoesList, {
+  type SolicitacaoAtendimento,
+} from "./components/SolicitacoesList";
 
-type ModalidadeSolicitacao = "online" | "presencial";
+import type { TherapistProfile } from "./types";
 
-type Solicitacao = {
-  id: string;
-  terapeuta_id: string | null;
-  nome_cliente: string;
-  telefone_cliente: string;
-  email_cliente: string;
-  data_atendimento: string;
-  horario_atendimento: string;
-  modalidade: ModalidadeSolicitacao;
-  mensagem: string | null;
-  status: StatusSolicitacao;
-  novo_horario_proposto: string | null;
-  criado_em: string;
-  atualizado_em: string;
-};
-
-function formatarData(data: string) {
-  const [ano, mes, dia] = data.split("-");
-
-  if (!ano || !mes || !dia) {
-    return data;
+function formatarHorario(horario?: string | null) {
+  if (!horario) {
+    return "";
   }
 
-  return `${dia}/${mes}/${ano}`;
-}
-
-function formatarHorario(horario: string) {
   return horario.slice(0, 5);
 }
 
-function obterTextoStatus(status: StatusSolicitacao) {
-  switch (status) {
-    case "aceita":
-      return "Solicitação aceita";
-
-    case "novo_horario_proposto":
-      return "Novo horário proposto";
-
-    case "recusada":
-      return "Solicitação recusada";
-
-    case "cancelada":
-      return "Solicitação cancelada";
-
-    default:
-      return "Aguardando resposta";
+function obterMensagemErro(
+  error: unknown,
+  mensagemPadrao: string,
+) {
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
-}
 
-function obterClasseStatus(status: StatusSolicitacao) {
-  switch (status) {
-    case "aceita":
-      return "bg-emerald-100 text-emerald-700";
-
-    case "novo_horario_proposto":
-      return "bg-blue-100 text-blue-700";
-
-    case "recusada":
-      return "bg-red-100 text-red-700";
-
-    case "cancelada":
-      return "bg-slate-200 text-slate-700";
-
-    default:
-      return "bg-amber-100 text-amber-700";
-  }
+  return mensagemPadrao;
 }
 
 export default function DashboardTerapeutaPage() {
-  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
+  const router = useRouter();
+
+  const [profile, setProfile] =
+    useState<TherapistProfile | null>(null);
+
+  const [therapistId, setTherapistId] =
+    useState<number | null>(null);
+
+  const [carregandoPerfil, setCarregandoPerfil] =
+    useState(true);
+
+  const [solicitacoes, setSolicitacoes] = useState<
+    Appointment[]
+  >([]);
+
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [solicitacaoEmAtualizacao, setSolicitacaoEmAtualizacao] = useState<
-    string | null
-  >(null);
-  const [solicitacaoParaNovoHorario, setSolicitacaoParaNovoHorario] =
-    useState<Solicitacao | null>(null);
+
+  const [
+    solicitacaoEmAtualizacao,
+    setSolicitacaoEmAtualizacao,
+  ] = useState<number | null>(null);
+
+  const [
+    solicitacaoParaNovoHorario,
+    setSolicitacaoParaNovoHorario,
+  ] = useState<Appointment | null>(null);
 
   const [novaData, setNovaData] = useState("");
   const [novoHorario, setNovoHorario] = useState("");
-  const carregarSolicitacoes = useCallback(async () => {
-    setCarregando(true);
+
+  const carregarPerfil = useCallback(async () => {
+    setCarregandoPerfil(true);
     setErro(null);
 
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session?.user) {
+      setProfile(null);
+      setTherapistId(null);
+      setCarregandoPerfil(false);
+      router.replace("/login-terapeuta");
+      return;
+    }
+
     const { data, error } = await supabase
-      .from("solicitacoes_atendimento")
+      .from("profiles")
       .select(
         `
           id,
-          terapeuta_id,
-          nome_cliente,
-          telefone_cliente,
-          email_cliente,
-          data_atendimento,
-          horario_atendimento,
-          modalidade,
-          mensagem,
-          status,
-          novo_horario_proposto,
-          criado_em,
-          atualizado_em
+          name,
+          email,
+          user_type,
+          avatar_url,
+          created_at
         `,
       )
-      .order("criado_em", { ascending: false });
+      .eq("id", session.user.id)
+      .maybeSingle();
 
     if (error) {
-      console.error("Erro ao carregar solicitações:", error);
-
       setErro(
-        "Não foi possível carregar as solicitações. Verifique a conexão com o Supabase.",
+        "Não foi possível carregar os dados do seu perfil.",
       );
-
-      setSolicitacoes([]);
-      setCarregando(false);
+      setProfile(null);
+      setTherapistId(null);
+      setCarregandoPerfil(false);
       return;
     }
 
-    setSolicitacoes((data ?? []) as Solicitacao[]);
-    setCarregando(false);
-  }, []);
+    if (!data) {
+      setErro(
+        "O perfil desta conta não foi localizado.",
+      );
+      setProfile(null);
+      setTherapistId(null);
+      setCarregandoPerfil(false);
+      return;
+    }
+
+    if (data.user_type !== "therapist") {
+      setCarregandoPerfil(false);
+
+      if (data.user_type === "admin") {
+        router.replace("/admin");
+        return;
+      }
+
+      router.replace("/dashboard");
+      return;
+    }
+
+    try {
+      const idDoTerapeuta =
+        await getTherapistIdByProfileId(
+          session.user.id,
+        );
+
+      setProfile(data as TherapistProfile);
+      setTherapistId(idDoTerapeuta);
+    } catch (errorDesconhecido) {
+      setErro(
+        obterMensagemErro(
+          errorDesconhecido,
+          "Não foi possível localizar o cadastro do terapeuta.",
+        ),
+      );
+      setProfile(null);
+      setTherapistId(null);
+    } finally {
+      setCarregandoPerfil(false);
+    }
+  }, [router]);
+
+  const carregarSolicitacoes =
+    useCallback(async () => {
+      if (therapistId === null) {
+        setSolicitacoes([]);
+        setCarregando(false);
+        return;
+      }
+
+      setCarregando(true);
+      setErro(null);
+
+      try {
+        const agendamentos =
+          await getAppointmentsByTherapistId(
+            therapistId,
+          );
+
+        setSolicitacoes(agendamentos);
+      } catch (errorDesconhecido) {
+        setErro(
+          obterMensagemErro(
+            errorDesconhecido,
+            "Não foi possível carregar os agendamentos.",
+          ),
+        );
+        setSolicitacoes([]);
+      } finally {
+        setCarregando(false);
+      }
+    }, [therapistId]);
 
   useEffect(() => {
-    carregarSolicitacoes();
-  }, [carregarSolicitacoes]);
+    void carregarPerfil();
+  }, [carregarPerfil]);
 
-  async function atualizarStatus(
-    id: string,
-    novoStatus: StatusSolicitacao,
+  useEffect(() => {
+    if (therapistId !== null) {
+      void carregarSolicitacoes();
+    }
+  }, [carregarSolicitacoes, therapistId]);
+
+  async function aceitarSolicitacao(
+    solicitacaoRecebida: SolicitacaoAtendimento,
   ) {
-    setSolicitacaoEmAtualizacao(id);
-    setErro(null);
+    const solicitacao = solicitacoes.find(
+      (item) =>
+        item.id === solicitacaoRecebida.id,
+    );
 
-    const { error } = await supabase
-      .from("solicitacoes_atendimento")
-      .update({
-        status: novoStatus,
-      })
-      .eq("id", id);
-
-    if (error) {
-      console.error("Erro ao atualizar solicitação:", error);
-
+    if (!solicitacao) {
       setErro(
-        "Não foi possível atualizar a solicitação. Tente novamente.",
+        "O agendamento selecionado não foi localizado.",
       );
-
-      setSolicitacaoEmAtualizacao(null);
       return;
     }
 
-    setSolicitacoes((solicitacoesAtuais) =>
-      solicitacoesAtuais.map((solicitacao) =>
-        solicitacao.id === id
-          ? {
-              ...solicitacao,
-              status: novoStatus,
-              atualizado_em: new Date().toISOString(),
-            }
-          : solicitacao,
+    setSolicitacaoEmAtualizacao(solicitacao.id);
+    setErro(null);
+
+    try {
+      await acceptAppointment(
+        solicitacao.id,
+        solicitacao.preferred_date,
+        solicitacao.preferred_time,
+      );
+
+      const atualizadoEm = new Date().toISOString();
+
+      setSolicitacoes((solicitacoesAtuais) =>
+        solicitacoesAtuais.map((item) =>
+          item.id === solicitacao.id
+            ? {
+                ...item,
+                status: "awaiting_payment",
+                confirmed_date:
+                  item.preferred_date,
+                confirmed_time:
+                  item.preferred_time,
+                updated_at: atualizadoEm,
+              }
+            : item,
+        ),
+      );
+    } catch (errorDesconhecido) {
+      setErro(
+        obterMensagemErro(
+          errorDesconhecido,
+          "Não foi possível aceitar o agendamento.",
+        ),
+      );
+    } finally {
+      setSolicitacaoEmAtualizacao(null);
+    }
+  }
+
+  function proporOutroHorario(
+    solicitacaoRecebida: SolicitacaoAtendimento,
+  ) {
+    const solicitacao = solicitacoes.find(
+      (item) =>
+        item.id === solicitacaoRecebida.id,
+    );
+
+    if (!solicitacao) {
+      setErro(
+        "O agendamento selecionado não foi localizado.",
+      );
+      return;
+    }
+
+    setSolicitacaoParaNovoHorario(solicitacao);
+
+    setNovaData(
+      solicitacao.proposed_date ??
+        solicitacao.preferred_date ??
+        "",
+    );
+
+    setNovoHorario(
+      formatarHorario(
+        solicitacao.proposed_time ??
+          solicitacao.preferred_time,
       ),
     );
 
-    setSolicitacaoEmAtualizacao(null);
+    setErro(null);
   }
 
-  function aceitarSolicitacao(id: string) {
-    void atualizarStatus(id, "aceita");
+  function fecharModalNovoHorario() {
+    if (
+      solicitacaoParaNovoHorario &&
+      solicitacaoEmAtualizacao ===
+        solicitacaoParaNovoHorario.id
+    ) {
+      return;
+    }
+
+    setSolicitacaoParaNovoHorario(null);
+    setNovaData("");
+    setNovoHorario("");
   }
 
-function proporOutroHorario(id: string) {
-  const solicitacao = solicitacoes.find((item) => item.id === id);
+  async function salvarNovoHorario() {
+    if (!solicitacaoParaNovoHorario) {
+      return;
+    }
 
-  if (!solicitacao) return;
+    if (!novaData || !novoHorario) {
+      setErro(
+        "Informe a nova data e o novo horário.",
+      );
+      return;
+    }
 
-  setSolicitacaoParaNovoHorario(solicitacao);
-
-  setNovaData(solicitacao.data_atendimento);
-  setNovoHorario(formatarHorario(solicitacao.horario_atendimento));
-}
-async function salvarNovoHorario() {
-  if (!solicitacaoParaNovoHorario) {
-    return;
-  }
-
-  if (!novaData || !novoHorario) {
-    setErro("Informe a nova data e o novo horário.");
-    return;
-  }
-
-  setSolicitacaoEmAtualizacao(solicitacaoParaNovoHorario.id);
-  setErro(null);
-
-  const dataHoraLocal = new Date(`${novaData}T${novoHorario}:00`);
-
-  if (Number.isNaN(dataHoraLocal.getTime())) {
-    setErro("A data ou o horário informado é inválido.");
-    setSolicitacaoEmAtualizacao(null);
-    return;
-  }
-
-  const novoHorarioEmIso = dataHoraLocal.toISOString();
-
-  const { error } = await supabase
-    .from("solicitacoes_atendimento")
-    .update({
-      status: "novo_horario_proposto",
-      novo_horario_proposto: novoHorarioEmIso,
-    })
-    .eq("id", solicitacaoParaNovoHorario.id);
-
-  if (error) {
-    console.error("Erro ao propor novo horário:", error);
-
-    setErro(
-      "Não foi possível salvar o novo horário. Tente novamente.",
+    setSolicitacaoEmAtualizacao(
+      solicitacaoParaNovoHorario.id,
     );
+    setErro(null);
 
-    setSolicitacaoEmAtualizacao(null);
-    return;
+    try {
+      await proposeNewAppointmentTime(
+        solicitacaoParaNovoHorario.id,
+        novaData,
+        novoHorario,
+      );
+
+      const atualizadoEm = new Date().toISOString();
+
+      setSolicitacoes((solicitacoesAtuais) =>
+        solicitacoesAtuais.map((solicitacao) =>
+          solicitacao.id ===
+          solicitacaoParaNovoHorario.id
+            ? {
+                ...solicitacao,
+                status: "new_time_proposed",
+                proposed_date: novaData,
+                proposed_time: novoHorario,
+                updated_at: atualizadoEm,
+              }
+            : solicitacao,
+        ),
+      );
+
+      setSolicitacaoParaNovoHorario(null);
+      setNovaData("");
+      setNovoHorario("");
+    } catch (errorDesconhecido) {
+      setErro(
+        obterMensagemErro(
+          errorDesconhecido,
+          "Não foi possível salvar o novo horário.",
+        ),
+      );
+    } finally {
+      setSolicitacaoEmAtualizacao(null);
+    }
   }
 
-  setSolicitacoes((solicitacoesAtuais) =>
-    solicitacoesAtuais.map((solicitacao) =>
-      solicitacao.id === solicitacaoParaNovoHorario.id
-        ? {
-            ...solicitacao,
-            status: "novo_horario_proposto",
-            novo_horario_proposto: novoHorarioEmIso,
-            atualizado_em: new Date().toISOString(),
-          }
-        : solicitacao,
-    ),
-  );
-
-  setSolicitacaoEmAtualizacao(null);
-  setSolicitacaoParaNovoHorario(null);
-  setNovaData("");
-  setNovoHorario("");
-}
   const totalPendentes = solicitacoes.filter(
-    (solicitacao) => solicitacao.status === "pendente",
+    (solicitacao) =>
+      solicitacao.status === "pending",
   ).length;
 
   const totalAceitas = solicitacoes.filter(
-    (solicitacao) => solicitacao.status === "aceita",
+    (solicitacao) =>
+      solicitacao.status ===
+        "awaiting_payment" ||
+      solicitacao.status ===
+        "payment_processing" ||
+      solicitacao.status === "confirmed" ||
+      solicitacao.status === "completed",
   ).length;
 
+  const solicitacoesParaLista =
+    useMemo<SolicitacaoAtendimento[]>(
+      () =>
+        solicitacoes.map((solicitacao) => ({
+          id: solicitacao.id,
+          nome_cliente:
+            solicitacao.client_name,
+          email_cliente:
+            solicitacao.client_email,
+          telefone_cliente:
+            solicitacao.client_phone,
+          mensagem: solicitacao.message,
+          data_preferida:
+            solicitacao.preferred_date,
+          horario_preferido: formatarHorario(
+            solicitacao.preferred_time,
+          ),
+          data_proposta:
+            solicitacao.proposed_date,
+          horario_proposto: formatarHorario(
+            solicitacao.proposed_time,
+          ),
+          data_confirmada:
+            solicitacao.confirmed_date,
+          horario_confirmado: formatarHorario(
+            solicitacao.confirmed_time,
+          ),
+          modalidade: solicitacao.modality,
+          valor:
+            solicitacao.price ??
+            solicitacao.offer?.offer_price ??
+            null,
+          oferta_titulo:
+            solicitacao.offer?.title ?? null,
+          oferta_tipo:
+            solicitacao.offer?.offer_type ??
+            null,
+          oferta_duracao:
+            solicitacao.offer?.duration ??
+            null,
+          status: solicitacao.status,
+          created_at:
+            solicitacao.created_at ??
+            solicitacao.updated_at,
+        })),
+      [solicitacoes],
+    );
+
+  if (carregandoPerfil) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f7f8fc] px-6">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-purple-200 border-t-purple-700" />
+
+          <p className="mt-4 text-sm font-semibold text-slate-600">
+            Carregando seu consultório...
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f7f8fc] px-6">
+        <div className="w-full max-w-md rounded-3xl border border-red-200 bg-white p-7 text-center shadow-sm">
+          <h1 className="text-xl font-bold text-slate-950">
+            Perfil não disponível
+          </h1>
+
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            {erro ??
+              "Não foi possível carregar os dados desta conta."}
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              void carregarPerfil()
+            }
+            className="mt-6 min-h-11 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-800"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-[#f7f5fb]">
-      <header className="border-b border-purple-100 bg-white">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-5 py-6 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-purple-600">
-              AuraMeets
-            </p>
+    <main
+      className="min-h-screen bg-[#f7f8fc]"
+      data-profile-id={profile.id}
+      data-profile-name={profile.name}
+      data-therapist-id={
+        therapistId ?? undefined
+      }
+    >
+      <div className="min-h-screen lg:flex">
+        <Sidebar />
 
-            <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
-              Painel do terapeuta
-            </h1>
+        <div className="min-w-0 flex-1">
+          <DashboardHeader />
 
-            <p className="mt-2 text-sm text-slate-600 sm:text-base">
-              Acompanhe e responda às solicitações de atendimento.
-            </p>
-          </div>
+          <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            <div className="space-y-6">
+              <DashboardStats
+                totalSolicitacoes={
+                  solicitacoes.length
+                }
+                totalPendentes={totalPendentes}
+                totalAceitas={totalAceitas}
+              />
 
-          <div className="flex items-center gap-3 rounded-2xl border border-purple-100 bg-purple-50 px-4 py-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-purple-700 text-base font-bold text-white">
-              OA
-            </div>
+              <ProfileProgress percentage={35} />
 
-            <div>
-              <p className="text-sm font-semibold text-slate-900">
-                Terapeuta fundador
-              </p>
+              <div className="grid gap-6 2xl:grid-cols-2">
+                <ApprovalCard status="em_analise" />
 
-              <p className="text-xs text-slate-500">
-                Perfil em fase de validação
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+                <CommunityCard joined={false} />
+              </div>
 
-      <section className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">
-              Total de solicitações
-            </p>
+              <section className="rounded-3xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-600">
+                      Dados em tempo real
+                    </p>
 
-            <p className="mt-2 text-3xl font-bold text-slate-900">
-              {solicitacoes.length}
-            </p>
-          </article>
+                    <h2 className="mt-2 text-lg font-bold text-slate-950">
+                      Atualização dos agendamentos
+                    </h2>
 
-          <article className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
-            <p className="text-sm font-medium text-amber-700">
-              Aguardando resposta
-            </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      Recarregue os dados para
+                      consultar os agendamentos mais
+                      recentes registrados no
+                      AuraMeets.
+                    </p>
+                  </div>
 
-            <p className="mt-2 text-3xl font-bold text-amber-900">
-              {totalPendentes}
-            </p>
-          </article>
-
-          <article className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
-            <p className="text-sm font-medium text-emerald-700">
-              Solicitações aceitas
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-emerald-900">
-              {totalAceitas}
-            </p>
-          </article>
-        </div>
-
-        <div className="mt-10">
-          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
-                Solicitações recebidas
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-600">
-                Analise os dados do cliente antes de confirmar o atendimento.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => void carregarSolicitacoes()}
-              disabled={carregando}
-              className="min-h-11 w-fit rounded-xl border border-purple-200 bg-white px-5 py-2.5 text-sm font-semibold text-purple-700 transition hover:border-purple-400 hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {carregando ? "Atualizando..." : "Atualizar solicitações"}
-            </button>
-          </div>
-
-          {erro && (
-            <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
-              <p className="text-sm font-medium text-red-700">{erro}</p>
-            </div>
-          )}
-
-          {carregando ? (
-            <div className="rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
-              <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-purple-200 border-t-purple-700" />
-
-              <p className="mt-4 text-sm font-medium text-slate-600">
-                Carregando solicitações...
-              </p>
-            </div>
-          ) : solicitacoes.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Nenhuma solicitação recebida
-              </h3>
-
-              <p className="mt-2 text-sm text-slate-500">
-                As novas solicitações aparecerão aqui.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {solicitacoes.map((solicitacao) => {
-                const estaPendente =
-                  solicitacao.status === "pendente";
-
-                const estaAtualizando =
-                  solicitacaoEmAtualizacao === solicitacao.id;
-
-                return (
-                  <article
-                    key={solicitacao.id}
-                    className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void carregarSolicitacoes()
+                    }
+                    disabled={carregando}
+                    className="min-h-11 w-full rounded-xl border border-purple-200 bg-white px-5 py-2.5 text-sm font-semibold text-purple-700 shadow-sm transition hover:border-purple-400 hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
                   >
-                    <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-5 sm:px-7 lg:flex-row lg:items-center lg:justify-between">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="text-lg font-bold text-slate-900 sm:text-xl">
-                            {solicitacao.nome_cliente}
-                          </h3>
+                    {carregando
+                      ? "Atualizando..."
+                      : "Atualizar agendamentos"}
+                  </button>
+                </div>
+              </section>
 
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${obterClasseStatus(
-                              solicitacao.status,
-                            )}`}
-                          >
-                            {obterTextoStatus(solicitacao.status)}
-                          </span>
-                        </div>
+              {erro && (
+                <div
+                  role="alert"
+                  className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 shadow-sm"
+                >
+                  <p className="text-sm font-medium text-red-700">
+                    {erro}
+                  </p>
+                </div>
+              )}
 
-                        <p className="mt-2 text-sm text-slate-500">
-                          Solicitação de atendimento
-                        </p>
-                      </div>
-
-                      <span
-                        className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${
-                          solicitacao.modalidade === "online"
-                            ? "bg-purple-100 text-purple-700"
-                            : "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        {solicitacao.modalidade === "online"
-                          ? "On-line"
-                          : "Presencial"}
-                      </span>
-                    </div>
-
-                    <div className="grid gap-6 px-5 py-6 sm:px-7 lg:grid-cols-[1fr_1fr_1.3fr]">
-                      <div className="space-y-5">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                            Telefone
-                          </p>
-
-                          <p className="mt-1 break-words text-sm font-medium text-slate-800">
-                            {solicitacao.telefone_cliente}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                            E-mail
-                          </p>
-
-                          <p className="mt-1 break-words text-sm font-medium text-slate-800">
-                            {solicitacao.email_cliente}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-5">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                            Data
-                          </p>
-
-                          <p className="mt-1 text-sm font-medium text-slate-800">
-                            {formatarData(
-                              solicitacao.data_atendimento,
-                            )}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                            Horário
-                          </p>
-
-                          <p className="mt-1 text-sm font-medium text-slate-800">
-                            {formatarHorario(
-                              solicitacao.horario_atendimento,
-                            )}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                          Mensagem
-                        </p>
-
-                        <div className="mt-2 rounded-2xl bg-slate-50 p-4">
-  <p className="text-sm leading-6 text-slate-700">
-    {solicitacao.mensagem?.trim() ||
-      "O cliente não deixou uma mensagem."}
-  </p>
-</div>
-
-{solicitacao.status === "novo_horario_proposto" &&
-  solicitacao.novo_horario_proposto && (
-    <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
-        Novo horário sugerido
-      </p>
-
-      <p className="mt-2 text-sm font-semibold text-blue-900">
-        {new Date(
-          solicitacao.novo_horario_proposto,
-        ).toLocaleDateString("pt-BR")}
-      </p>
-
-      <p className="mt-1 text-sm text-blue-800">
-        às{" "}
-        {new Date(
-          solicitacao.novo_horario_proposto,
-        ).toLocaleTimeString("pt-BR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
-      </p>
-    </div>
-  )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-5 py-5 sm:flex-row sm:justify-end sm:px-7">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          proporOutroHorario(solicitacao.id)
-                        }
-                        disabled={!estaPendente || estaAtualizando}
-                        className="min-h-12 rounded-xl border border-purple-200 bg-white px-5 py-3 text-sm font-semibold text-purple-700 transition hover:border-purple-400 hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {estaAtualizando
-                          ? "Atualizando..."
-                          : "Propor outro horário"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          aceitarSolicitacao(solicitacao.id)
-                        }
-                        disabled={!estaPendente || estaAtualizando}
-                        className="min-h-12 rounded-xl bg-purple-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-                      >
-                        {estaAtualizando
-                          ? "Atualizando..."
-                          : "Aceitar"}
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+              <SolicitacoesList
+                solicitacoes={
+                  solicitacoesParaLista
+                }
+                carregando={carregando}
+                processandoId={
+                  solicitacaoEmAtualizacao
+                }
+                onAceitar={
+                  aceitarSolicitacao
+                }
+                onProporNovoHorario={
+                  proporOutroHorario
+                }
+              />
             </div>
-          )}
+          </div>
         </div>
-      </section>
-            {solicitacaoParaNovoHorario && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-slate-900">
-              Propor novo horário
-            </h2>
+      </div>
 
-            <p className="mt-2 text-sm text-slate-600">
-              Cliente: {solicitacaoParaNovoHorario.nome_cliente}
-            </p>
+      {solicitacaoParaNovoHorario && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="titulo-modal-novo-horario"
+          onMouseDown={(event) => {
+            if (
+              event.currentTarget ===
+              event.target
+            ) {
+              fecharModalNovoHorario();
+            }
+          }}
+        >
+          <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white p-6 shadow-2xl sm:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-600">
+                  Reagendamento
+                </p>
+
+                <h2
+                  id="titulo-modal-novo-horario"
+                  className="mt-2 text-xl font-bold text-slate-950"
+                >
+                  Propor novo horário
+                </h2>
+
+                <p className="mt-2 text-sm text-slate-600">
+                  Cliente:{" "}
+                  <span className="font-semibold text-slate-900">
+                    {solicitacaoParaNovoHorario.client_name ??
+                      "Cliente AuraMeets"}
+                  </span>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  fecharModalNovoHorario
+                }
+                aria-label="Fechar modal"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
+              >
+                ×
+              </button>
+            </div>
 
             <div className="mt-6 space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label
+                  htmlFor="nova-data"
+                  className="mb-2 block text-sm font-semibold text-slate-700"
+                >
                   Nova data
                 </label>
 
                 <input
+                  id="nova-data"
                   type="date"
                   value={novaData}
-                  onChange={(e) => setNovaData(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                  onChange={(event) =>
+                    setNovaData(
+                      event.target.value,
+                    )
+                  }
+                  className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label
+                  htmlFor="novo-horario"
+                  className="mb-2 block text-sm font-semibold text-slate-700"
+                >
                   Novo horário
                 </label>
 
                 <input
+                  id="novo-horario"
                   type="time"
                   value={novoHorario}
-                  onChange={(e) => setNovoHorario(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                  onChange={(event) =>
+                    setNovoHorario(
+                      event.target.value,
+                    )
+                  }
+                  className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900"
                 />
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={() => setSolicitacaoParaNovoHorario(null)}
-                className="rounded-lg border border-slate-300 px-4 py-2"
+                onClick={
+                  fecharModalNovoHorario
+                }
+                disabled={
+                  solicitacaoEmAtualizacao ===
+                  solicitacaoParaNovoHorario.id
+                }
+                className="min-h-11 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancelar
               </button>
 
               <button
-  type="button"
-  onClick={() => void salvarNovoHorario()}
-  disabled={
-    !novaData ||
-    !novoHorario ||
-    solicitacaoEmAtualizacao === solicitacaoParaNovoHorario.id
-  }
-  className="rounded-lg bg-purple-700 px-4 py-2 text-white transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-slate-300"
->
-  {solicitacaoEmAtualizacao === solicitacaoParaNovoHorario.id
-    ? "Salvando..."
-    : "Salvar"}
-</button>
+                type="button"
+                onClick={() =>
+                  void salvarNovoHorario()
+                }
+                disabled={
+                  !novaData ||
+                  !novoHorario ||
+                  solicitacaoEmAtualizacao ===
+                    solicitacaoParaNovoHorario.id
+                }
+                className="min-h-11 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+              >
+                {solicitacaoEmAtualizacao ===
+                solicitacaoParaNovoHorario.id
+                  ? "Salvando..."
+                  : "Salvar novo horário"}
+              </button>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
 import {
@@ -228,10 +228,27 @@ function createSlots(
 
 export default function PublicAppointmentPage() {
   const params = useParams<{ slug: string }>();
+  const searchParams = useSearchParams();
 
   const slug = Array.isArray(params.slug)
     ? params.slug[0]
     : params.slug;
+
+  const offerId = useMemo(() => {
+    const rawOfferId = searchParams.get("oferta");
+
+    if (!rawOfferId) {
+      return null;
+    }
+
+    const parsedOfferId = Number(rawOfferId);
+
+    if (!Number.isInteger(parsedOfferId) || parsedOfferId <= 0) {
+      return null;
+    }
+
+    return parsedOfferId;
+  }, [searchParams]);
 
   const [therapist, setTherapist] =
     useState<Therapist | null>(null);
@@ -488,6 +505,7 @@ export default function PublicAppointmentPage() {
         message: form.message.trim() || null,
         status: "pending",
         price: therapist.price,
+        offer_id: offerId,
       });
 
     setSaving(false);
