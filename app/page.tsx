@@ -293,7 +293,7 @@ export default function HomePage() {
             </p>
 
             <p className="mt-4 text-[16px] font-extrabold text-[#172542]">
-              Você não precisa passar por isso sozinho.
+              Você não precisa passar por isso sozinha/o.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
