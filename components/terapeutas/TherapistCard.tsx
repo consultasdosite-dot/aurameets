@@ -7,7 +7,7 @@ type TherapistCardProps = {
 };
 
 const OSCAR_PAYMENT_URL =
-  "https://invoice.infinitepay.io/oscar_jose_ahumada_/LBCJSjfHjP";
+  "https://link.infinitepay.io/oscar_jose_ahumada_/Ri0x-5I5iS1ZgDU-35,00";
 
 function normalizeText(value: string | null | undefined) {
   return (value ?? "")
