@@ -328,6 +328,16 @@ export async function POST(request: Request) {
     const segredoConfigurado =
       process.env.SYNC_THERAPISTS_SECRET;
 
+    console.log(
+      "SYNC_THERAPISTS_SECRET carregado:",
+      Boolean(segredoConfigurado),
+    );
+
+    console.log(
+      "Tamanho do segredo configurado:",
+      segredoConfigurado?.length ?? 0,
+    );
+
     if (!segredoConfigurado) {
       return NextResponse.json(
         {
@@ -343,6 +353,16 @@ export async function POST(request: Request) {
       confirmacao?: string;
       segredo?: string;
     } | null;
+
+    console.log(
+      "Confirmação recebida:",
+      body?.confirmacao ?? null,
+    );
+
+    console.log(
+      "Tamanho do segredo recebido:",
+      body?.segredo?.length ?? 0,
+    );
 
     if (
       body?.confirmacao !== CONFIRMACAO_OBRIGATORIA ||
@@ -440,6 +460,7 @@ export async function POST(request: Request) {
 
     for (const perfil of perfisTerapeutas) {
       const usuario = usuarioPorId.get(perfil.id);
+
       const terapeutaExistente =
         terapeutaPorProfileId.get(perfil.id);
 
