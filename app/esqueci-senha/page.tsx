@@ -16,28 +16,44 @@ export default function EsqueciSenhaPage() {
     setErro("");
     setEnviado(false);
 
-    if (!email.trim()) {
+    const emailLimpo = email.trim();
+
+    if (!emailLimpo) {
       setErro("Informe seu e-mail.");
       return;
     }
 
     setCarregando(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(
-      email.trim(),
-      {
-        redirectTo: `${window.location.origin}/redefinir-senha`,
-      },
-    );
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        emailLimpo,
+        {
+          redirectTo: `${window.location.origin}/redefinir-senha`,
+        },
+      );
 
-    setCarregando(false);
+      if (error) {
+        console.error("Erro do Supabase ao recuperar senha:", error);
 
-    if (error) {
-      setErro("Não foi possível enviar o e-mail de recuperação.");
-      return;
+        setErro(
+          error.message ||
+            "Não foi possível enviar o e-mail de recuperação.",
+        );
+
+        return;
+      }
+
+      setEnviado(true);
+    } catch (error) {
+      console.error("Erro inesperado ao recuperar senha:", error);
+
+      setErro(
+        "Ocorreu um erro inesperado ao enviar o e-mail de recuperação.",
+      );
+    } finally {
+      setCarregando(false);
     }
-
-    setEnviado(true);
   }
 
   return (
@@ -65,7 +81,7 @@ export default function EsqueciSenhaPage() {
             </p>
 
             <p className="mt-2 break-all font-bold text-yellow-400">
-              {email}
+              {emailLimpoParaExibicao(email)}
             </p>
 
             <p className="mt-4 leading-7 text-slate-400">
@@ -117,7 +133,7 @@ export default function EsqueciSenhaPage() {
               {erro && (
                 <div
                   role="alert"
-                  className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300"
+                  className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm leading-6 text-red-300"
                 >
                   {erro}
                 </div>
@@ -145,4 +161,8 @@ export default function EsqueciSenhaPage() {
       </section>
     </main>
   );
+}
+
+function emailLimpoParaExibicao(email: string) {
+  return email.trim();
 }

@@ -211,12 +211,13 @@ export default function TerapeutaDetalhesPage() {
     await atualizarTerapeuta(
       "aprovar",
       {
-        approval_status: "aprovado",
-        active: true,
-        verified: true,
-        review_required: false,
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: user?.id || null,
+       approval_status: "aprovado",
+active: true,
+verified: true,
+review_required: false,
+plan_status: "active",
+reviewed_at: new Date().toISOString(),
+reviewed_by: user?.id || null,
       },
       "O cadastro foi aprovado com sucesso."
     );

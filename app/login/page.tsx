@@ -53,7 +53,8 @@ export default function LoginPage() {
       console.error("Erro ao entrar:", error);
 
       setMessage(
-        "E-mail ou senha inválidos. Verifique os dados e tente novamente.",
+        error?.message ||
+          "E-mail ou senha inválidos. Verifique os dados e tente novamente."
       );
 
       setLoading(false);

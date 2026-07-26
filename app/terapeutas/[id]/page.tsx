@@ -56,6 +56,11 @@ export default async function TherapistProfilePage({
   const initials = getInitials(therapist.name);
   const specialities = splitSpecialities(therapist.speciality);
 
+  const profilePhotoUrl =
+    therapist.profile_photo_url?.trim() ||
+    therapist.photo_url?.trim() ||
+    null;
+
   const location = [therapist.city, therapist.state]
     .filter(Boolean)
     .join(" - ");
@@ -100,8 +105,18 @@ export default async function TherapistProfilePage({
 
           <div className="mt-10 grid gap-10 lg:grid-cols-[280px_1fr] lg:items-center">
             <div className="flex justify-center lg:justify-start">
-              <div className="flex h-56 w-56 items-center justify-center rounded-full border border-yellow-400/40 bg-yellow-400/10 text-6xl font-black text-yellow-400 shadow-2xl">
-                {initials}
+              <div className="flex h-56 w-56 items-center justify-center overflow-hidden rounded-full border border-yellow-400/40 bg-yellow-400/10 text-6xl font-black text-yellow-400 shadow-2xl">
+                {profilePhotoUrl ? (
+                  <img
+                    src={profilePhotoUrl}
+                    alt={`Foto de ${therapist.name}`}
+                    className="h-full w-full object-cover"
+                    loading="eager"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  initials
+                )}
               </div>
             </div>
 
