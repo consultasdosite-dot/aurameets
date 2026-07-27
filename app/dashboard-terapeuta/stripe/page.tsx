@@ -1,6 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useSearchParams } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
@@ -30,7 +35,7 @@ type StripeStatusResponse = {
   details?: string;
 };
 
-export default function StripePage() {
+function StripePageContent() {
   const searchParams = useSearchParams();
 
   const [loadingConnect, setLoadingConnect] =
@@ -77,13 +82,16 @@ export default function StripePage() {
           );
         }
 
-        const response = await fetch("/api/stripe/status", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
+        const response = await fetch(
+          "/api/stripe/status",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
           },
-        });
+        );
 
         const data =
           (await response.json()) as StripeStatusResponse;
@@ -150,13 +158,16 @@ export default function StripePage() {
         );
       }
 
-      const response = await fetch("/api/stripe/connect", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "/api/stripe/connect",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       const data =
         (await response.json()) as StripeConnectResponse;
@@ -260,26 +271,28 @@ export default function StripePage() {
         </h1>
 
         <p className="mt-4 leading-7 text-gray-600">
-          Conecte sua conta Stripe para receber os pagamentos dos seus
-          atendimentos pelo AuraMeets.
+          Conecte sua conta Stripe para receber os
+          pagamentos dos seus atendimentos pelo
+          AuraMeets.
         </p>
 
         <p className="mt-3 text-sm leading-6 text-gray-500">
-          A Stripe solicitará seus dados profissionais, documentos e
-          informações bancárias em um ambiente seguro.
+          A Stripe solicitará seus dados profissionais,
+          documentos e informações bancárias em um
+          ambiente seguro.
         </p>
 
         {retornouDaStripe && (
           <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
-            Você retornou da Stripe. Estamos verificando o status da
-            sua conta.
+            Você retornou da Stripe. Estamos
+            verificando o status da sua conta.
           </div>
         )}
 
         {onboardingExpirado && (
           <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-            O acesso anterior à Stripe expirou. Clique no botão abaixo
-            para continuar o cadastro.
+            O acesso anterior à Stripe expirou. Clique
+            no botão abaixo para continuar o cadastro.
           </div>
         )}
 
@@ -292,7 +305,9 @@ export default function StripePage() {
               Não foi possível concluir a operação.
             </p>
 
-            <p className="mt-1">{errorMessage}</p>
+            <p className="mt-1">
+              {errorMessage}
+            </p>
           </div>
         )}
 
@@ -339,7 +354,9 @@ export default function StripePage() {
                     </p>
 
                     <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {detailsSubmitted ? "Sim" : "Pendente"}
+                      {detailsSubmitted
+                        ? "Sim"
+                        : "Pendente"}
                     </p>
                   </div>
 
@@ -349,7 +366,9 @@ export default function StripePage() {
                     </p>
 
                     <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {chargesEnabled ? "Ativos" : "Pendentes"}
+                      {chargesEnabled
+                        ? "Ativos"
+                        : "Pendentes"}
                     </p>
                   </div>
 
@@ -359,7 +378,9 @@ export default function StripePage() {
                     </p>
 
                     <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {payoutsEnabled ? "Ativos" : "Pendentes"}
+                      {payoutsEnabled
+                        ? "Ativos"
+                        : "Pendentes"}
                     </p>
                   </div>
                 </div>
@@ -371,7 +392,9 @@ export default function StripePage() {
         {!loadingStatus && !contaConectada && (
           <button
             type="button"
-            onClick={() => void handleConnectStripe()}
+            onClick={() =>
+              void handleConnectStripe()
+            }
             disabled={loadingConnect}
             className="mt-7 w-full rounded-xl bg-purple-600 px-6 py-3.5 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
@@ -382,8 +405,12 @@ export default function StripePage() {
         {!loadingStatus && (
           <button
             type="button"
-            onClick={() => void consultarStatusStripe()}
-            disabled={loadingStatus || loadingConnect}
+            onClick={() =>
+              void consultarStatusStripe()
+            }
+            disabled={
+              loadingStatus || loadingConnect
+            }
             className="mt-4 w-full rounded-xl border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 sm:ml-3 sm:w-auto"
           >
             Atualizar status
@@ -391,5 +418,33 @@ export default function StripePage() {
         )}
       </section>
     </main>
+  );
+}
+
+function StripePageLoading() {
+  return (
+    <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-8">
+      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+          Pagamentos com Stripe
+        </h1>
+
+        <div className="mt-7 flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-200 border-t-purple-700" />
+
+          <p className="text-sm font-semibold text-gray-600">
+            Carregando informações da Stripe...
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export default function StripePage() {
+  return (
+    <Suspense fallback={<StripePageLoading />}>
+      <StripePageContent />
+    </Suspense>
   );
 }
