@@ -212,7 +212,7 @@ export default function DashboardTerapeutaPage() {
   ) {
     const solicitacao = solicitacoes.find(
       (item) =>
-        String(item.id) === solicitacaoRecebida.id,
+        String(item.id) === String(solicitacaoRecebida.id),
     );
 
     if (!solicitacao) {
@@ -227,7 +227,7 @@ export default function DashboardTerapeutaPage() {
 
     try {
       await acceptAppointment(
-        String(solicitacao.id),
+        solicitacao.id,
         solicitacao.preferred_date,
         solicitacao.preferred_time,
       );
@@ -266,7 +266,7 @@ export default function DashboardTerapeutaPage() {
   ) {
     const solicitacao = solicitacoes.find(
       (item) =>
-        String(item.id) === solicitacaoRecebida.id,
+        String(item.id) === String(solicitacaoRecebida.id),
     );
 
     if (!solicitacao) {
@@ -327,7 +327,7 @@ export default function DashboardTerapeutaPage() {
 
     try {
       await proposeNewAppointmentTime(
-        String(solicitacaoParaNovoHorario.id),
+        solicitacaoParaNovoHorario.id,
         novaData,
         novoHorario,
       );
