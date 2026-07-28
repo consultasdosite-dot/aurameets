@@ -7,7 +7,7 @@ type TherapistCardProps = {
 };
 
 const OSCAR_PAYMENT_URL =
-  "https://link.infinitepay.io/oscar_jose_ahumada_/Ri0x-5I5iS1ZgDU-35,00";
+  "https://link.infinitepay.io/oscar_jose_ahumada_/Ri0x-HwSXUxVZzk-80,00";
 
 function normalizeText(value: string | null | undefined) {
   return (value ?? "")
@@ -35,7 +35,7 @@ export default function TherapistCard({
 
   const isOscar =
     normalizedName === "oscarahumada" ||
-    normalizedId === "oscarahumada";
+    normalizedId.startsWith("oscarahumada");
 
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-800 bg-[#111A33] shadow-xl transition hover:-translate-y-1 hover:border-yellow-400/60">
@@ -104,7 +104,7 @@ export default function TherapistCard({
               </span>
 
               <span className="text-3xl font-black text-yellow-400">
-                R$ 35,00
+                R$ 80,00
               </span>
             </div>
           </div>
@@ -118,7 +118,7 @@ export default function TherapistCard({
               rel="noopener noreferrer"
               className="block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-200"
             >
-              Comprar agora
+              Comprar agora — R$ 80,00
             </a>
 
             <Link

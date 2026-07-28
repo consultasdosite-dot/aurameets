@@ -79,7 +79,17 @@ export default async function TherapistProfilePage({
 
   const isOscar =
     normalizedName === "oscarahumada" ||
-    normalizedSlug === "oscarahumada";
+    normalizedSlug.startsWith("oscarahumada");
+
+  const isCristina =
+    normalizedName === "cristinapacheco" ||
+    normalizedName === "cristtinapacheco" ||
+    normalizedSlug.startsWith("cristinapacheco") ||
+    normalizedSlug.startsWith("cristtinapacheco");
+
+  const sessionText = isCristina
+    ? "Entrega de Mapa Astrológico"
+    : "Atendimento terapêutico";
 
   const displayedPrice = isOscar
     ? "R$ 80,00"
@@ -242,6 +252,16 @@ export default async function TherapistProfilePage({
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-700 bg-slate-950/40 p-5">
+                <p className="text-sm font-bold text-slate-400">
+                  Sessão
+                </p>
+
+                <p className="mt-2 text-lg font-black text-white">
+                  {sessionText}
+                </p>
+              </div>
+
               <div className="rounded-2xl border border-slate-700 bg-slate-950/40 p-5">
                 <p className="text-sm font-bold text-slate-400">
                   Modalidade
