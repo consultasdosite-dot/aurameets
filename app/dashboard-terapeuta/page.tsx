@@ -70,7 +70,7 @@ export default function DashboardTerapeutaPage() {
   const [
     solicitacaoEmAtualizacao,
     setSolicitacaoEmAtualizacao,
-  ] = useState<string | null>(null);
+  ] = useState<number | null>(null);
 
   const [
     solicitacaoParaNovoHorario,
@@ -211,8 +211,7 @@ export default function DashboardTerapeutaPage() {
     solicitacaoRecebida: SolicitacaoAtendimento,
   ) {
     const solicitacao = solicitacoes.find(
-      (item) =>
-        String(item.id) === String(solicitacaoRecebida.id),
+      (item) => item.id === solicitacaoRecebida.id,
     );
 
     if (!solicitacao) {
@@ -222,7 +221,7 @@ export default function DashboardTerapeutaPage() {
       return;
     }
 
-    setSolicitacaoEmAtualizacao(String(solicitacao.id));
+    setSolicitacaoEmAtualizacao(solicitacao.id);
     setErro(null);
 
     try {
@@ -265,8 +264,7 @@ export default function DashboardTerapeutaPage() {
     solicitacaoRecebida: SolicitacaoAtendimento,
   ) {
     const solicitacao = solicitacoes.find(
-      (item) =>
-        String(item.id) === String(solicitacaoRecebida.id),
+      (item) => item.id === solicitacaoRecebida.id,
     );
 
     if (!solicitacao) {
@@ -298,7 +296,7 @@ export default function DashboardTerapeutaPage() {
     if (
       solicitacaoParaNovoHorario &&
       solicitacaoEmAtualizacao ===
-        String(solicitacaoParaNovoHorario.id)
+        solicitacaoParaNovoHorario.id
     ) {
       return;
     }
@@ -321,7 +319,7 @@ export default function DashboardTerapeutaPage() {
     }
 
     setSolicitacaoEmAtualizacao(
-      String(solicitacaoParaNovoHorario.id),
+      solicitacaoParaNovoHorario.id,
     );
     setErro(null);
 
@@ -383,7 +381,7 @@ export default function DashboardTerapeutaPage() {
     useMemo<SolicitacaoAtendimento[]>(
       () =>
         solicitacoes.map((solicitacao) => ({
-          id: String(solicitacao.id),
+          id: solicitacao.id,
           nome_cliente:
             solicitacao.client_name,
           email_cliente:
@@ -668,7 +666,7 @@ export default function DashboardTerapeutaPage() {
                 }
                 disabled={
                   solicitacaoEmAtualizacao ===
-                  String(solicitacaoParaNovoHorario.id)
+                  solicitacaoParaNovoHorario.id
                 }
                 className="min-h-11 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -684,12 +682,12 @@ export default function DashboardTerapeutaPage() {
                   !novaData ||
                   !novoHorario ||
                   solicitacaoEmAtualizacao ===
-                    String(solicitacaoParaNovoHorario.id)
+                    solicitacaoParaNovoHorario.id
                 }
                 className="min-h-11 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
               >
                 {solicitacaoEmAtualizacao ===
-                String(solicitacaoParaNovoHorario.id)
+                solicitacaoParaNovoHorario.id
                   ? "Salvando..."
                   : "Salvar novo horário"}
               </button>
