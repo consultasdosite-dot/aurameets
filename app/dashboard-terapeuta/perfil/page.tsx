@@ -318,15 +318,16 @@ export default function PerfilTerapeutaPage() {
         return;
       }
 
-      const nome = perfil.name.trim();
-      const foto =
-        perfil.profile_photo_url.trim() || null;
-
-      const { error: therapistError } =
-        await supabase
-          .from("therapists")
-          .update({
-            name: nome,
+      const response = await fetch(
+        "/api/terapeuta/perfil",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            name: perfil.name.trim(),
             email:
               perfil.email.trim() ||
               session.user.email ||
@@ -339,8 +340,9 @@ export default function PerfilTerapeutaPage() {
               perfil.state.trim().toUpperCase() ||
               null,
             bio: perfil.bio.trim() || null,
-            profile_photo_url: foto,
-            photo_url: foto,
+            profile_photo_url:
+              perfil.profile_photo_url.trim() ||
+              null,
             professional_headline:
               perfil.professional_headline.trim() ||
               null,
@@ -362,28 +364,18 @@ export default function PerfilTerapeutaPage() {
               perfil.education_institution.trim() ||
               null,
             education_year: anoFormacao,
-            review_required: true,
-          })
-          .eq("profile_id", session.user.id);
+          }),
+        },
+      );
 
-      if (therapistError) {
+      const resultado = (await response.json()) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
         throw new Error(
-          `Não foi possível salvar o perfil profissional: ${therapistError.message}`,
-        );
-      }
-
-      const { error: profileError } =
-        await supabase
-          .from("profiles")
-          .update({
-            name: nome,
-            avatar_url: foto,
-          })
-          .eq("id", session.user.id);
-
-      if (profileError) {
-        throw new Error(
-          `O perfil profissional foi atualizado, mas os dados da conta não puderam ser sincronizados: ${profileError.message}`,
+          resultado.error ||
+            "Não foi possível salvar o perfil profissional.",
         );
       }
 

@@ -48,6 +48,13 @@ function obterMensagemErro(
   return mensagemPadrao;
 }
 
+function idsSaoIguais(
+  primeiroId: string | number,
+  segundoId: string | number,
+) {
+  return String(primeiroId) === String(segundoId);
+}
+
 export default function DashboardTerapeutaPage() {
   const router = useRouter();
 
@@ -211,7 +218,11 @@ export default function DashboardTerapeutaPage() {
     solicitacaoRecebida: SolicitacaoAtendimento,
   ) {
     const solicitacao = solicitacoes.find(
-      (item) => item.id === solicitacaoRecebida.id,
+      (item) =>
+        idsSaoIguais(
+          item.id,
+          solicitacaoRecebida.id,
+        ),
     );
 
     if (!solicitacao) {
@@ -264,7 +275,11 @@ export default function DashboardTerapeutaPage() {
     solicitacaoRecebida: SolicitacaoAtendimento,
   ) {
     const solicitacao = solicitacoes.find(
-      (item) => item.id === solicitacaoRecebida.id,
+      (item) =>
+        idsSaoIguais(
+          item.id,
+          solicitacaoRecebida.id,
+        ),
     );
 
     if (!solicitacao) {

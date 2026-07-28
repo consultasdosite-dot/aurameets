@@ -10,7 +10,7 @@ type PageProps = {
 };
 
 const OSCAR_PAYMENT_URL =
-  "https://link.infinitepay.io/oscar_jose_ahumada_/Ri0x-5I5iS1ZgDU-35,00";
+  "https://link.infinitepay.io/oscar_jose_ahumada_/Ri0x-HwSXUxVZzk-80,00";
 
 function getInitials(name: string) {
   return name
@@ -82,7 +82,7 @@ export default async function TherapistProfilePage({
     normalizedSlug === "oscarahumada";
 
   const displayedPrice = isOscar
-    ? "R$ 35,00"
+    ? "R$ 80,00"
     : therapist.price !== null
       ? therapist.price.toLocaleString("pt-BR", {
           style: "currency",
@@ -167,7 +167,7 @@ export default async function TherapistProfilePage({
                     rel="noopener noreferrer"
                     className="rounded-xl bg-yellow-400 px-8 py-4 text-center text-lg font-black text-slate-950 transition hover:bg-yellow-300"
                   >
-                    Comprar Mapa Numerológico — R$ 35,00
+                    Comprar Mapa Numerológico — R$ 80,00
                   </a>
                 ) : (
                   <Link
@@ -309,7 +309,7 @@ export default async function TherapistProfilePage({
               rel="noopener noreferrer"
               className="mt-7 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
             >
-              Comprar por R$ 35,00
+              Comprar por R$ 80,00
             </a>
           ) : (
             <Link
