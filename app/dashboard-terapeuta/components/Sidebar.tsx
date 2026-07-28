@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import type { TherapistProfile } from "../types";
 
 type MenuItem = {
   label: string;
   description: string;
+  href: string;
   icon: ReactNode;
 };
 
@@ -19,6 +21,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Início",
     description: "Visão geral",
+    href: "/dashboard-terapeuta",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -45,6 +48,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Meu Perfil",
     description: "Dados profissionais",
+    href: "/dashboard-terapeuta/perfil",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -65,6 +69,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Especialidades",
     description: "Áreas de atuação",
+    href: "/dashboard-terapeuta/especialidades",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -85,6 +90,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Agenda",
     description: "Horários e sessões",
+    href: "/agenda",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -105,6 +111,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Clientes",
     description: "Pessoas atendidas",
+    href: "/dashboard-terapeuta",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -125,6 +132,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Solicitações",
     description: "Novos atendimentos",
+    href: "/dashboard-terapeuta",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -151,6 +159,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Financeiro",
     description: "Receitas e pagamentos",
+    href: "/dashboard-terapeuta/stripe",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -177,6 +186,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Estatísticas",
     description: "Desempenho do perfil",
+    href: "/dashboard-terapeuta",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -197,6 +207,7 @@ const menuItems: MenuItem[] = [
   {
     label: "Configurações",
     description: "Preferências da conta",
+    href: "/dashboard-terapeuta/dados-profissionais",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -248,8 +259,9 @@ export default function Sidebar({
   profilePercentage = 35,
   pendingRequests = 0,
 }: SidebarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [menuAberto, setMenuAberto] = useState(false);
-  const [itemAtivo, setItemAtivo] = useState("Início");
 
   const nomeTerapeuta =
     profile?.name?.trim() || "Terapeuta fundador";
@@ -261,9 +273,9 @@ export default function Sidebar({
 
   const avatarUrl = profile?.avatar_url?.trim() || null;
 
-  function selecionarItem(label: string) {
-    setItemAtivo(label);
+  function selecionarItem(href: string) {
     setMenuAberto(false);
+    router.push(href);
   }
 
   return (
@@ -461,14 +473,14 @@ export default function Sidebar({
           <ul className="space-y-1">
             {menuItems.map((item) => {
               const ativo =
-                itemAtivo === item.label;
+                pathname === item.href;
 
               return (
                 <li key={item.label}>
                   <button
                     type="button"
                     onClick={() =>
-                      selecionarItem(item.label)
+                      selecionarItem(item.href)
                     }
                     className={`group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${
                       ativo
