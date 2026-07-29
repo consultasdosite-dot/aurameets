@@ -2,8 +2,18 @@ import Link from "next/link";
 
 import type { Therapist } from "./therapists";
 
+export type TherapistCampaign = {
+  name: string;
+  promotionalPrice: number;
+  regularPrice: number;
+  totalQuantity: number;
+  remainingQuantity: number;
+  active: boolean;
+};
+
 type TherapistCardProps = {
   therapist: Therapist;
+  campaign?: TherapistCampaign | null;
 };
 
 const OSCAR_PAYMENT_URL =
@@ -18,8 +28,18 @@ function normalizeText(value: string | null | undefined) {
     .replace(/[^a-z0-9]/g, "");
 }
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
 export default function TherapistCard({
   therapist,
+  campaign = null,
 }: TherapistCardProps) {
   const initials = therapist.nome
     .trim()
@@ -36,6 +56,25 @@ export default function TherapistCard({
   const isOscar =
     normalizedName === "oscarahumada" ||
     normalizedId.startsWith("oscarahumada");
+
+  const activeCampaign =
+    isOscar && campaign?.active ? campaign : null;
+
+  const regularPrice =
+    activeCampaign?.regularPrice ?? 800;
+
+  const promotionalPrice =
+    activeCampaign?.promotionalPrice ?? 80;
+
+  const totalQuantity =
+    activeCampaign?.totalQuantity ?? 10;
+
+  const remainingQuantity = Math.max(
+    0,
+    activeCampaign?.remainingQuantity ?? 10,
+  );
+
+  const offerAvailable = remainingQuantity > 0;
 
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-800 bg-[#111A33] shadow-xl transition hover:-translate-y-1 hover:border-yellow-400/60">
@@ -86,40 +125,85 @@ export default function TherapistCard({
         {isOscar && (
           <div className="mt-6 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-5">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
-              Oferta de lançamento
+              Oferta especial
             </p>
 
-            <h3 className="mt-3 text-xl font-black text-white">
-              Mapa Numerológico Pessoal
+            <h3 className="mt-3 text-xl font-black leading-7 text-white">
+              {activeCampaign?.name ??
+                "10 Mapas Numerológicos Pessoais Completos"}
             </h3>
 
             <p className="mt-3 leading-6 text-slate-300">
-              Descubra os números que influenciam sua vida, seus talentos e seu
-              propósito.
+              Descubra os números que influenciam sua vida, seus talentos, seus
+              desafios e seu propósito.
             </p>
 
             <div className="mt-4 flex flex-wrap items-end gap-3">
               <span className="text-sm font-bold text-slate-500 line-through">
-                De R$ 800,00
+                De {formatCurrency(regularPrice)}
               </span>
 
               <span className="text-3xl font-black text-yellow-400">
-                R$ 80,00
+                {formatCurrency(promotionalPrice)}
               </span>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-yellow-400/25 bg-slate-950/40 p-4">
+              {offerAvailable ? (
+                <>
+                  <p className="text-center text-sm font-bold text-slate-200">
+                    Restam apenas
+                  </p>
+
+                  <div className="mt-2 flex items-center justify-center gap-3">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400 text-2xl font-black text-slate-950">
+                      {remainingQuantity}
+                    </span>
+
+                    <span className="max-w-44 text-sm font-black uppercase leading-5 text-yellow-400">
+                      {remainingQuantity === 1
+                        ? "Mapa Numerológico Pessoal Completo"
+                        : "Mapas Numerológicos Pessoais Completos"}
+                    </span>
+                  </div>
+
+                  <p className="mt-3 text-center text-xs font-semibold leading-5 text-slate-400">
+                    Oferta disponível somente até acabar esta rodada de{" "}
+                    {totalQuantity} mapas.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-center text-lg font-black text-yellow-400">
+                    Esta rodada terminou
+                  </p>
+
+                  <p className="mt-2 text-center text-sm font-semibold leading-6 text-slate-300">
+                    Os mapas desta rodada foram vendidos. Uma nova rodada será
+                    iniciada em breve.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         )}
 
         {isOscar ? (
           <div className="mt-7 grid gap-3">
-            <a
-              href={OSCAR_PAYMENT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-200"
-            >
-              Comprar agora — R$ 80,00
-            </a>
+            {offerAvailable ? (
+              <a
+                href={OSCAR_PAYMENT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-200"
+              >
+                Comprar agora — {formatCurrency(promotionalPrice)}
+              </a>
+            ) : (
+              <div className="cursor-not-allowed rounded-xl bg-slate-700 px-6 py-4 text-center font-black text-slate-400">
+                Rodada encerrada
+              </div>
+            )}
 
             <Link
               href={`/terapeutas/${therapist.id}`}
