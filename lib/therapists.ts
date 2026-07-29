@@ -59,6 +59,31 @@ type SalesCampaignProductRow = {
   active: boolean;
 };
 
+function normalizeName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function getTherapistPriority(name: string): number {
+  const normalizedName = normalizeName(name);
+
+  if (
+    normalizedName.startsWith("cristina") ||
+    normalizedName.startsWith("cristtina")
+  ) {
+    return 1;
+  }
+
+  if (normalizedName.startsWith("solange")) {
+    return 2;
+  }
+
+  return 3;
+}
+
 export async function getActiveTherapists(): Promise<
   SupabaseTherapist[]
 > {
@@ -100,7 +125,14 @@ export async function getActiveTherapists(): Promise<
     return [];
   }
 
-  return data ?? [];
+  const therapists = data ?? [];
+
+  return therapists.sort((firstTherapist, secondTherapist) => {
+    return (
+      getTherapistPriority(firstTherapist.name) -
+      getTherapistPriority(secondTherapist.name)
+    );
+  });
 }
 
 export async function getTherapistBySlug(
