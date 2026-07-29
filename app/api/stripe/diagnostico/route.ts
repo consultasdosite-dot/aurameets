@@ -12,7 +12,7 @@ export async function GET() {
     sucesso: true,
     ambienteVercel: process.env.VERCEL_ENV ?? null,
     chaveExataEncontrada: Boolean(
-      process.env.STRIPE_SECRET_KEY?.trim(),
+      process.env.STRIPE_SECRET_KEY_NEW?.trim()
     ),
     variaveisStripeEncontradas: stripeKeys,
   });
