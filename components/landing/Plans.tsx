@@ -1,42 +1,60 @@
 const plans = [
   {
-    name: "Essencial",
-    price: "Grátis",
-    description: "Para começar sua presença no AuraMeets.",
-    features: [
-      "Perfil básico publicado",
-      "Até 3 especialidades",
-      "Atendimento online ou presencial",
-      "Contato disponível no perfil",
-    ],
-    highlight: false,
-  },
-  {
-    name: "Profissional",
-    price: "R$ 62/mês",
-    description: "Para terapeutas que querem crescer com mais visibilidade.",
-    features: [
-      "Tudo do Essencial",
-      "Mais destaque nas buscas",
-      "Galeria de fotos",
-      "Vídeo de apresentação",
-      "Estatísticas do perfil",
-    ],
-    highlight: false,
-  },
-  {
-    name: "Fundador",
+    name: "Terapeuta Fundador",
+    range: "Do 1º ao 100º terapeuta",
     price: "R$ 17,00/mês",
-    oldPrice: "De R$ 62,00/mês",
-    description: "Oferta exclusiva para os 100 primeiros terapeutas.",
+    description:
+      "Condição exclusiva para os 100 primeiros profissionais cadastrados no AuraMeets.",
     features: [
-      "Tudo do Profissional",
+      "Perfil profissional completo",
+      "Especialidades e modalidades de atendimento",
+      "Serviços avulsos e pacotes",
+      "Galeria de fotos e vídeo de apresentação",
       "Selo Terapeuta Fundador",
       "Prioridade nas primeiras buscas",
       "Destaque nas campanhas oficiais",
-      "Valor especial enquanto permanecer ativo",
+      "Valor preservado enquanto permanecer ativo",
     ],
     highlight: true,
+    badge: "Primeiros 100",
+  },
+  {
+    name: "Plano Expansão",
+    range: "Do 101º ao 200º terapeuta",
+    price: "R$ 35,00/mês",
+    description:
+      "Condição destinada à segunda fase de crescimento da comunidade AuraMeets.",
+    features: [
+      "Perfil profissional completo",
+      "Especialidades e modalidades de atendimento",
+      "Serviços avulsos e pacotes",
+      "Galeria de fotos e vídeo de apresentação",
+      "Maior visibilidade nas buscas",
+      "Estatísticas do perfil",
+      "Participação nas campanhas da plataforma",
+      "Valor preservado enquanto permanecer ativo",
+    ],
+    highlight: false,
+    badge: "Vagas 101 a 200",
+  },
+  {
+    name: "Plano Profissional",
+    range: "Do 201º ao 1.000º terapeuta",
+    price: "R$ 44,00/mês",
+    description:
+      "Plano oficial para os profissionais que ingressarem na fase de consolidação da plataforma.",
+    features: [
+      "Perfil profissional completo",
+      "Especialidades e modalidades de atendimento",
+      "Serviços avulsos e pacotes",
+      "Galeria de fotos e vídeo de apresentação",
+      "Visibilidade nas buscas",
+      "Estatísticas do perfil",
+      "Participação nas campanhas da plataforma",
+      "Valor preservado enquanto permanecer ativo",
+    ],
+    highlight: false,
+    badge: "Vagas 201 a 1.000",
   },
 ];
 
@@ -50,12 +68,13 @@ export default function Plans() {
           </span>
 
           <h2 className="mt-6 text-3xl font-black leading-tight md:text-5xl">
-            Escolha como deseja crescer dentro do AuraMeets.
+            Entre agora e garanta uma condição especial no AuraMeets.
           </h2>
 
           <p className="mt-6 text-lg leading-8 text-slate-300">
-            Comece gratuitamente ou garanta uma das 100 vagas de Terapeuta
-            Fundador com valor especial de lançamento.
+            O valor da mensalidade é definido pela posição de entrada do
+            terapeuta na plataforma e permanece preservado enquanto a assinatura
+            estiver ativa.
           </p>
         </div>
 
@@ -63,41 +82,51 @@ export default function Plans() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative rounded-3xl border p-8 transition hover:-translate-y-2 ${
+              className={`relative flex h-full flex-col rounded-3xl border p-8 transition hover:-translate-y-2 ${
                 plan.highlight
                   ? "border-yellow-400 bg-yellow-400 text-black shadow-2xl"
                   : "border-slate-800 bg-[#111A33] text-white"
               }`}
             >
-              {plan.highlight && (
-                <div className="absolute -top-5 left-8 rounded-full bg-black px-5 py-2 text-sm font-bold text-yellow-400">
-                  Terapeuta Fundador
-                </div>
-              )}
+              <div
+                className={`absolute -top-5 left-8 rounded-full px-5 py-2 text-sm font-bold ${
+                  plan.highlight
+                    ? "bg-black text-yellow-400"
+                    : "border border-slate-700 bg-[#111A33] text-yellow-400"
+                }`}
+              >
+                {plan.badge}
+              </div>
 
-              <h3 className="text-3xl font-black">{plan.name}</h3>
+              <h3 className="mt-3 text-3xl font-black">{plan.name}</h3>
 
               <p
-                className={`mt-4 ${
-                  plan.highlight ? "text-black/70" : "text-slate-400"
+                className={`mt-4 text-sm font-black uppercase tracking-[0.12em] ${
+                  plan.highlight ? "text-black/70" : "text-yellow-400"
+                }`}
+              >
+                {plan.range}
+              </p>
+
+              <p
+                className={`mt-5 leading-7 ${
+                  plan.highlight ? "text-black/75" : "text-slate-300"
                 }`}
               >
                 {plan.description}
               </p>
 
-              {plan.oldPrice && (
-                <p className="mt-8 text-lg font-bold line-through opacity-70">
-                  {plan.oldPrice}
-                </p>
-              )}
+              <div className="mt-8 text-4xl font-black">{plan.price}</div>
 
-              <div className="mt-3 text-4xl font-black">{plan.price}</div>
+              <p
+                className={`mt-3 text-sm font-bold leading-6 ${
+                  plan.highlight ? "text-black/75" : "text-slate-400"
+                }`}
+              >
+                Valor mensal mantido enquanto a assinatura permanecer ativa.
+              </p>
 
-              {plan.highlight && (
-                <p className="mt-2 font-bold">Valor especial enquanto permanecer ativo.</p>
-              )}
-
-              <ul className="mt-8 space-y-4">
+              <ul className="mt-8 flex-1 space-y-4">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex gap-3">
                     <span className="font-black">✓</span>
@@ -114,11 +143,17 @@ export default function Plans() {
                     : "bg-yellow-400 text-black hover:bg-yellow-300"
                 }`}
               >
-                {plan.highlight ? "Quero ser Fundador" : "Quero este plano"}
+                Quero entrar no AuraMeets
               </a>
             </div>
           ))}
         </div>
+
+        <p className="mx-auto mt-10 max-w-3xl text-center text-sm leading-6 text-slate-400">
+          As faixas são preenchidas conforme a ordem de entrada dos terapeutas:
+          do 1º ao 100º por R$ 17,00/mês, do 101º ao 200º por R$ 35,00/mês e do
+          201º ao 1.000º por R$ 44,00/mês.
+        </p>
       </div>
     </section>
   );
