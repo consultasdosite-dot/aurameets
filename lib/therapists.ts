@@ -24,6 +24,8 @@ export type SupabaseTherapist = {
   plan: string | null;
   duration: string | null;
   experience: string | null;
+  featured: boolean;
+  featured_order: number | null;
   slug: string;
 };
 
@@ -59,31 +61,6 @@ type SalesCampaignProductRow = {
   active: boolean;
 };
 
-function normalizeName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-}
-
-function getTherapistPriority(name: string): number {
-  const normalizedName = normalizeName(name);
-
-  if (
-    normalizedName.startsWith("cristina") ||
-    normalizedName.startsWith("cristtina")
-  ) {
-    return 1;
-  }
-
-  if (normalizedName.startsWith("solange")) {
-    return 2;
-  }
-
-  return 3;
-}
-
 export async function getActiveTherapists(): Promise<
   SupabaseTherapist[]
 > {
@@ -113,26 +90,26 @@ export async function getActiveTherapists(): Promise<
       plan,
       duration,
       experience,
+      featured,
+      featured_order,
       slug
     `)
     .eq("active", true)
+    .order("featured", { ascending: false })
+    .order("featured_order", {
+      ascending: true,
+      nullsFirst: false,
+    })
     .order("verified", { ascending: false })
     .order("rating", { ascending: false })
-    .order("id", { ascending: false });
+    .order("id", { ascending: true });
 
   if (error) {
     console.error("Erro ao buscar terapeutas:", error);
     return [];
   }
 
-  const therapists = data ?? [];
-
-  return therapists.sort((firstTherapist, secondTherapist) => {
-    return (
-      getTherapistPriority(firstTherapist.name) -
-      getTherapistPriority(secondTherapist.name)
-    );
-  });
+  return data ?? [];
 }
 
 export async function getTherapistBySlug(
@@ -164,6 +141,8 @@ export async function getTherapistBySlug(
       plan,
       duration,
       experience,
+      featured,
+      featured_order,
       slug
     `)
     .eq("slug", slug)
