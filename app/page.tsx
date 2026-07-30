@@ -254,52 +254,43 @@ export default function HomePage() {
         className="relative min-h-[590px] overflow-hidden bg-[#15101b] lg:min-h-[650px]"
       >
         <picture className="absolute inset-0 block">
-          <source
-            media="(max-width: 767px)"
-            srcSet="/images/logo/hero-maos-mobile.jpg"
-          />
+  <source
+    media="(max-width: 767px)"
+    srcSet="/images/logo/hero-aura-pessoa-mobile.png"
+  />
 
-          <img
-            src="/images/logo/hero-maos.jpg"
-            alt="Mãos representando acolhimento, conexão e cuidado"
-            className="h-full w-full object-cover object-[58%_center] contrast-[1.08] saturate-[1.04] md:object-[57%_center] xl:object-center"
-          />
-        </picture>
+  <img
+    src="/images/logo/hero-aura-pessoa.png"
+    alt="Mãos envolvendo uma pessoa iluminada, representando acolhimento, conexão e cuidado"
+    className="h-full w-full object-cover object-[58%_center] contrast-[1.08] saturate-[1.04] md:object-[57%_center] xl:object-center"
+  />
+</picture>
 
-        {/*
-          Não há máscara branca ou filtro de brilho sobre a fotografia.
-          Existe apenas uma área de conteúdo sólida e translúcida atrás do texto,
-          preservando integralmente a força da imagem.
-        */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#100b18]/90 via-[#100b18]/58 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#100b18]/45 via-transparent to-[#100b18]/10" />
 
-        <div className="relative z-20 mx-auto grid min-h-[590px] max-w-[1560px] items-center gap-10 px-5 py-12 sm:px-8 lg:min-h-[650px] lg:grid-cols-[minmax(0,650px)_1fr] lg:px-12 lg:py-16">
-          <div className="rounded-[30px] border border-white/20 bg-white/[0.88] p-7 shadow-[0_30px_80px_rgba(17,11,25,0.28)] backdrop-blur-md sm:p-10 lg:p-12">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#dbc7ed] bg-[#f8f1fd] px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-[#6d35a5]">
-              <span className="h-2 w-2 rounded-full bg-[#7c3fba]" />
+        <div className="relative z-20 mx-auto flex min-h-[590px] max-w-[1560px] items-center px-5 py-14 sm:px-8 lg:min-h-[650px] lg:px-12 lg:py-16">
+          <div className="max-w-[690px]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
+              <span className="h-2 w-2 rounded-full bg-[#d8b8f2]" />
               Cuidado, conexão e acolhimento
             </div>
 
-            <h1 className="mt-6 text-[39px] font-black leading-[1.04] tracking-[-0.045em] text-[#111e40] sm:text-[47px] lg:text-[55px]">
-              O cuidado certo começa quando alguém{" "}
-              <span className="bg-gradient-to-r from-[#8848bd] to-[#642c9e] bg-clip-text text-transparent">
-                realmente escuta você.
-              </span>
+            <h1 className="mt-6 text-[40px] font-black leading-[1.04] tracking-[-0.045em] text-white drop-shadow-[0_5px_20px_rgba(0,0,0,0.28)] sm:text-[49px] lg:text-[60px]">
+              O cuidado começa quando alguém{" "}
+              <span className="text-[#dfc3f6]">realmente escuta você.</span>
             </h1>
 
-            <p className="mt-6 max-w-[570px] text-[16px] font-medium leading-8 text-[#26344e] lg:text-[18px]">
-              O AuraMeets conecta você ao terapeuta ideal, oferece acolhimento
-              imediato e apresenta experiências especiais para você começar
-              sua jornada com segurança.
-            </p>
-
-            <p className="mt-4 text-[16px] font-extrabold text-[#172542]">
-              Você não precisa passar por isso sozinha/o.
+            <p className="mt-6 max-w-[610px] text-[17px] font-medium leading-8 text-white/90 drop-shadow-[0_3px_12px_rgba(0,0,0,0.28)] lg:text-[19px]">
+              Encontre profissionais qualificados ou viva uma experiência
+              gratuita de até 10 minutos para dar o primeiro passo na sua
+              jornada de transformação.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#ofertas"
-                className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#8147b9] to-[#572992] px-7 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(91,42,148,0.28)] transition hover:-translate-y-0.5"
+                className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#8f51c6] to-[#672fa2] px-7 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(54,18,88,0.38)] transition hover:-translate-y-0.5"
               >
                 Ver experiências gratuitas
                 <ArrowIcon className="h-4 w-4" />
@@ -307,40 +298,16 @@ export default function HomePage() {
 
               <Link
                 href="/terapeutas"
-                className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-xl border border-[#9c83b9] bg-white px-7 text-sm font-extrabold text-[#101d3b] transition hover:bg-[#faf7fd]"
+                className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-xl border border-white/65 bg-white/12 px-7 text-sm font-extrabold text-white shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/20"
               >
                 Encontrar terapeuta
               </Link>
             </div>
-          </div>
 
-          <div className="hidden justify-end lg:flex">
-            <div className="w-full max-w-[350px] rounded-[28px] border border-white/80 bg-white/[0.93] px-7 py-8 text-center shadow-[0_28px_70px_rgba(20,11,31,0.32)] backdrop-blur-md">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#8b4cc1] to-[#602a9a] text-white shadow-[0_12px_28px_rgba(97,42,154,0.28)]">
-                <HeartIcon className="h-8 w-8" />
-              </div>
-
-              <h2 className="mt-5 text-[23px] font-black text-[#6c32a5]">
-                Está difícil hoje?
-              </h2>
-
-              <p className="mt-4 text-[15px] font-medium leading-6 text-[#172542]">
-                Converse com um terapeuta voluntário e receba uma escuta
-                acolhedora.
-              </p>
-
-              <Link
-                href="/acolhimento"
-                className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#8848bd] to-[#63309f] px-5 py-4 text-sm font-extrabold text-white shadow-md transition hover:-translate-y-0.5"
-              >
-                Preciso de acolhimento
-                <ArrowIcon className="h-4 w-4" />
-              </Link>
-
-              <p className="mt-4 flex items-center justify-center gap-2 text-xs text-[#687188]">
-                <LockIcon className="h-4 w-4" />
-                Ambiente seguro e sigiloso
-              </p>
+            <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm font-bold text-white/88">
+              <HeroTrustItem text="Especialistas verificados" />
+              <HeroTrustItem text="Atendimento online" />
+              <HeroTrustItem text="Ambiente seguro" />
             </div>
           </div>
         </div>
@@ -660,6 +627,18 @@ export default function HomePage() {
         </div>
       </footer>
     </main>
+  );
+}
+
+
+function HeroTrustItem({ text }: { text: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/30 bg-white/15 text-[11px] text-white">
+        ✓
+      </span>
+      <span>{text}</span>
+    </div>
   );
 }
 
