@@ -110,6 +110,9 @@ export default function PerfilTerapeutaPage() {
   const [salvando, setSalvando] =
     useState(false);
 
+  const [enviandoFoto, setEnviandoFoto] =
+    useState(false);
+
   const [erro, setErro] =
     useState<string | null>(null);
 
@@ -248,6 +251,110 @@ export default function PerfilTerapeutaPage() {
 
     setErro(null);
     setSucesso(null);
+  }
+
+  async function enviarFoto(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const arquivo = event.target.files?.[0];
+
+    event.target.value = "";
+
+    if (!arquivo) {
+      return;
+    }
+
+    setErro(null);
+    setSucesso(null);
+
+    const formatosPermitidos = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!formatosPermitidos.includes(arquivo.type)) {
+      setErro(
+        "Escolha uma imagem nos formatos JPG, PNG ou WebP.",
+      );
+      return;
+    }
+
+    const tamanhoMaximo = 5 * 1024 * 1024;
+
+    if (arquivo.size > tamanhoMaximo) {
+      setErro("A foto deve ter no máximo 5 MB.");
+      return;
+    }
+
+    setEnviandoFoto(true);
+
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.user) {
+        router.replace("/login-terapeuta");
+        return;
+      }
+
+      const extensaoOriginal =
+        arquivo.name.split(".").pop()?.toLowerCase();
+
+      const extensao =
+        extensaoOriginal &&
+        ["jpg", "jpeg", "png", "webp"].includes(
+          extensaoOriginal,
+        )
+          ? extensaoOriginal
+          : "jpg";
+
+      const caminhoArquivo =
+        `${session.user.id}/foto-perfil.${extensao}`;
+
+      const { error: uploadError } =
+        await supabase.storage
+          .from("therapist-photos")
+          .upload(caminhoArquivo, arquivo, {
+            cacheControl: "3600",
+            contentType: arquivo.type,
+            upsert: true,
+          });
+
+      if (uploadError) {
+        throw new Error(
+          `Não foi possível enviar a foto: ${uploadError.message}`,
+        );
+      }
+
+      const { data: publicUrlData } =
+        supabase.storage
+          .from("therapist-photos")
+          .getPublicUrl(caminhoArquivo);
+
+      const urlComAtualizacao =
+        `${publicUrlData.publicUrl}?v=${Date.now()}`;
+
+      setPerfil((perfilAtual) => ({
+        ...perfilAtual,
+        profile_photo_url: urlComAtualizacao,
+      }));
+
+      setSucesso(
+        "Foto enviada. Agora clique em Salvar perfil para confirmar a alteração.",
+      );
+    } catch (errorDesconhecido) {
+      setErro(
+        obterMensagemErro(
+          errorDesconhecido,
+          "Não foi possível enviar a foto.",
+        ),
+      );
+    } finally {
+      setEnviandoFoto(false);
+    }
   }
 
   async function salvarPerfil(
@@ -472,7 +579,7 @@ export default function PerfilTerapeutaPage() {
                   <img
                     src={perfil.profile_photo_url}
                     alt={`Foto profissional de ${perfil.name}`}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover object-top"
                   />
                 ) : (
                   <span className="text-4xl font-bold text-slate-400">
@@ -490,27 +597,61 @@ export default function PerfilTerapeutaPage() {
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Informe o endereço público da sua
-                  fotografia. O envio direto do arquivo será
-                  conectado na próxima etapa.
+                  Escolha uma foto nítida, com boa iluminação
+                  e o rosto centralizado. Formatos aceitos:
+                  JPG, PNG ou WebP, com até 5 MB.
                 </p>
 
-                <label
-                  htmlFor="profile_photo_url"
-                  className="mt-5 block text-sm font-semibold text-slate-800"
-                >
-                  Endereço da foto
-                </label>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <label
+                    htmlFor="profile_photo_file"
+                    className={`inline-flex min-h-12 cursor-pointer items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white transition ${
+                      enviandoFoto
+                        ? "cursor-not-allowed bg-slate-400"
+                        : "bg-purple-700 hover:bg-purple-800"
+                    }`}
+                  >
+                    {enviandoFoto
+                      ? "Enviando foto..."
+                      : perfil.profile_photo_url
+                        ? "Trocar foto"
+                        : "Escolher foto"}
+                  </label>
 
-                <input
-                  id="profile_photo_url"
-                  name="profile_photo_url"
-                  type="url"
-                  value={perfil.profile_photo_url}
-                  onChange={atualizarCampo}
-                  placeholder="https://..."
-                  className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
-                />
+                  <input
+                    id="profile_photo_file"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={enviarFoto}
+                    disabled={enviandoFoto}
+                    className="sr-only"
+                  />
+
+                  {perfil.profile_photo_url && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPerfil((perfilAtual) => ({
+                          ...perfilAtual,
+                          profile_photo_url: "",
+                        }));
+                        setErro(null);
+                        setSucesso(
+                          "Foto removida da pré-visualização. Clique em Salvar perfil para confirmar.",
+                        );
+                      }}
+                      disabled={enviandoFoto}
+                      className="min-h-12 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Remover foto
+                    </button>
+                  )}
+                </div>
+
+                <p className="mt-3 text-xs leading-5 text-slate-500">
+                  Depois do envio, confira a pré-visualização
+                  e clique em Salvar perfil.
+                </p>
               </div>
             </div>
           </section>
