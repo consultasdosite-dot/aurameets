@@ -54,6 +54,8 @@ type SupabaseOfferRow = Omit<SupabaseOffer, "therapist"> & {
   therapist: OfferTherapist | OfferTherapist[] | null;
 };
 
+const HOME_FEATURED_OFFERS_LIMIT = 6;
+
 const OFFER_SELECT = `
   id,
   created_at,
@@ -161,8 +163,8 @@ function createInitials(name: string): string {
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
-function getOfferBadge(offer: SupabaseOfferRow): string {
-  const searchableText = [
+function getOfferSearchableText(offer: SupabaseOfferRow): string {
+  return [
     offer.offer_type,
     offer.duration,
     offer.service_type,
@@ -172,6 +174,10 @@ function getOfferBadge(offer: SupabaseOfferRow): string {
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+}
+
+function getOfferBadge(offer: SupabaseOfferRow): string {
+  const searchableText = getOfferSearchableText(offer);
 
   if (
     searchableText.includes("diagnóstico") ||
@@ -179,7 +185,7 @@ function getOfferBadge(offer: SupabaseOfferRow): string {
     searchableText.includes("email") ||
     searchableText.includes("e-mail")
   ) {
-    return "Diagnóstico gratuito";
+    return "Diagnóstico Presente";
   }
 
   if (
@@ -187,27 +193,18 @@ function getOfferBadge(offer: SupabaseOfferRow): string {
     searchableText.includes("ebook") ||
     searchableText.includes("e-book")
   ) {
-    return "Material gratuito";
+    return "Material Presente";
   }
 
   if (searchableText.includes("aula")) {
-    return "Aula gratuita";
+    return "Aula Presente";
   }
 
-  return "Experiência gratuita";
+  return "Experiência Presente";
 }
 
 function getOfferFormat(offer: SupabaseOfferRow): string {
-  const searchableText = [
-    offer.offer_type,
-    offer.duration,
-    offer.service_type,
-    offer.subtitle,
-    offer.description,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  const searchableText = getOfferSearchableText(offer);
 
   if (
     searchableText.includes("diagnóstico") ||
@@ -253,6 +250,80 @@ function normalizeOffer(offer: SupabaseOfferRow): FeaturedOffer {
   };
 }
 
+function shuffleOffers<T>(items: T[]): T[] {
+  const shuffledItems = [...items];
+
+  for (let index = shuffledItems.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+
+    [shuffledItems[index], shuffledItems[randomIndex]] = [
+      shuffledItems[randomIndex],
+      shuffledItems[index],
+    ];
+  }
+
+  return shuffledItems;
+}
+
+function selectHomeFeaturedOffers(
+  offers: FeaturedOffer[],
+): FeaturedOffer[] {
+  const shuffledOffers = shuffleOffers(offers);
+
+  const selectedOffers: FeaturedOffer[] = [];
+  const selectedOfferIds = new Set<number>();
+  const selectedTherapistIds = new Set<number>();
+
+  /*
+   * Primeira seleção:
+   * prioriza uma experiência por terapeuta para ampliar a diversidade
+   * da vitrine da página inicial.
+   */
+  for (const offer of shuffledOffers) {
+    if (selectedOffers.length >= HOME_FEATURED_OFFERS_LIMIT) {
+      break;
+    }
+
+    const therapistId = offer.therapist_id;
+
+    if (
+      therapistId !== null &&
+      selectedTherapistIds.has(therapistId)
+    ) {
+      continue;
+    }
+
+    selectedOffers.push(offer);
+    selectedOfferIds.add(offer.id);
+
+    if (therapistId !== null) {
+      selectedTherapistIds.add(therapistId);
+    }
+  }
+
+  /*
+   * Segunda seleção:
+   * caso ainda não existam seis terapeutas diferentes, completa a vitrine
+   * com outras experiências válidas, mesmo que sejam do mesmo profissional.
+   */
+  if (selectedOffers.length < HOME_FEATURED_OFFERS_LIMIT) {
+    for (const offer of shuffledOffers) {
+      if (selectedOffers.length >= HOME_FEATURED_OFFERS_LIMIT) {
+        break;
+      }
+
+      if (selectedOfferIds.has(offer.id)) {
+        continue;
+      }
+
+      selectedOffers.push(offer);
+      selectedOfferIds.add(offer.id);
+    }
+  }
+
+  return selectedOffers;
+}
+
 export function getTherapistInitials(name: string): string {
   return createInitials(name);
 }
@@ -266,7 +337,7 @@ export async function getFeaturedOffers(): Promise<FeaturedOffer[]> {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Erro ao buscar ofertas em destaque:", {
+    console.error("Erro ao buscar Experiências Presente:", {
       message: error.message,
       details: error.details,
       hint: error.hint,
@@ -278,10 +349,12 @@ export async function getFeaturedOffers(): Promise<FeaturedOffer[]> {
 
   const offers = (data ?? []) as unknown as SupabaseOfferRow[];
 
-  return offers
+  const validOffers = offers
     .filter(isOfferValid)
     .map(normalizeOffer)
     .filter((offer) => offer.remaining_slots > 0);
+
+  return selectHomeFeaturedOffers(validOffers);
 }
 
 export async function getOfferById(
@@ -295,7 +368,7 @@ export async function getOfferById(
     .maybeSingle();
 
   if (error) {
-    console.error("Erro ao buscar oferta pelo ID:", {
+    console.error("Erro ao buscar experiência pelo ID:", {
       message: error.message,
       details: error.details,
       hint: error.hint,
@@ -315,7 +388,13 @@ export async function getOfferById(
     return null;
   }
 
-  return normalizeOffer(offer);
+  const normalizedOffer = normalizeOffer(offer);
+
+  if (normalizedOffer.remaining_slots <= 0) {
+    return null;
+  }
+
+  return normalizedOffer;
 }
 
 export async function getOfferBySlug(
@@ -335,7 +414,7 @@ export async function getOfferBySlug(
     .maybeSingle();
 
   if (error) {
-    console.error("Erro ao buscar oferta pelo slug:", {
+    console.error("Erro ao buscar experiência pelo slug:", {
       message: error.message,
       details: error.details,
       hint: error.hint,
@@ -355,5 +434,11 @@ export async function getOfferBySlug(
     return null;
   }
 
-  return normalizeOffer(offer);
+  const normalizedOffer = normalizeOffer(offer);
+
+  if (normalizedOffer.remaining_slots <= 0) {
+    return null;
+  }
+
+  return normalizedOffer;
 }

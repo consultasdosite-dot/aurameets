@@ -106,7 +106,7 @@ export default function HomePage() {
 
           <nav className="hidden items-center gap-8 text-[14px] font-bold text-[#101d3b] xl:flex">
             <a href="#ofertas" className="transition hover:text-[#7342ad]">
-              Ofertas especiais
+              Experiências Presente
             </a>
 
             <a href="#para-voce" className="transition hover:text-[#7342ad]">
@@ -183,7 +183,7 @@ export default function HomePage() {
                 onClick={fecharMenu}
                 className="rounded-xl px-4 py-3 font-bold hover:bg-[#faf7fd]"
               >
-                Ofertas especiais
+                Experiências Presente
               </a>
 
               <a
@@ -282,8 +282,8 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-[610px] text-[17px] font-medium leading-8 text-white/90 drop-shadow-[0_3px_12px_rgba(0,0,0,0.28)] lg:text-[19px]">
-              Encontre profissionais qualificados ou viva uma experiência
-              gratuita de até 10 minutos para dar o primeiro passo na sua
+              Encontre profissionais qualificados ou viva uma Experiência Presente
+              de até 10 minutos para dar o primeiro passo na sua
               jornada de transformação.
             </p>
 
@@ -292,7 +292,7 @@ export default function HomePage() {
                 href="#ofertas"
                 className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#8f51c6] to-[#672fa2] px-7 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(54,18,88,0.38)] transition hover:-translate-y-0.5"
               >
-                Ver experiências gratuitas
+                Ver Experiências Presente
                 <ArrowIcon className="h-4 w-4" />
               </a>
 
@@ -313,7 +313,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* OFERTAS ESPECIAIS */}
+      {/* EXPERIÊNCIAS PRESENTE */}
       <section
         id="ofertas"
         className="scroll-mt-24 bg-gradient-to-b from-[#f8f2fc] to-white px-5 py-16 sm:px-8 sm:py-20 lg:px-12"
@@ -323,17 +323,17 @@ export default function HomePage() {
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#e2cef2] bg-white px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[#713aa8] shadow-sm">
                 <GiftIcon className="h-4 w-4" />
-                Experiências AuraMeets
+                Experiências Presente
               </div>
 
               <h2 className="mt-5 text-[34px] font-black leading-tight tracking-[-0.035em] text-[#101d3b] sm:text-[42px]">
-                Comece com uma experiência especial
+                Receba um presente e conheça um terapeuta
               </h2>
 
               <p className="mt-4 max-w-2xl text-[16px] font-medium leading-7 text-[#4d5870]">
-                Conheça profissionais, experimente novas terapias e descubra
-                caminhos para seu bem-estar com ofertas exclusivas e vagas
-                limitadas.
+                Escolha uma experiência oferecida por um terapeuta, conheça seu trabalho
+                e dê um primeiro passo em direção ao seu bem-estar. Cada presente
+                possui apenas 3 vagas.
               </p>
             </div>
 
@@ -347,12 +347,13 @@ export default function HomePage() {
           </div>
 
           {carregandoOfertas ? (
-            <div className="mt-10 grid gap-6 xl:grid-cols-2">
-              <OfferCardSkeleton />
-              <OfferCardSkeleton />
+            <div className="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <OfferCardSkeleton key={index} />
+              ))}
             </div>
           ) : ofertasEspeciais.length > 0 ? (
-            <div className="mt-10 grid gap-6 xl:grid-cols-2">
+            <div className="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {ofertasEspeciais.map((oferta) => (
                 <OfferCard
                   key={oferta.id}
@@ -362,7 +363,7 @@ export default function HomePage() {
                   description={
                     oferta.description?.trim() ||
                     oferta.subtitle?.trim() ||
-                    "Conheça esta experiência especial e dê o primeiro passo em sua jornada de cuidado."
+                    "Receba este presente, conheça o trabalho do terapeuta e dê o primeiro passo em sua jornada de cuidado."
                   }
                   slots={oferta.remaining_slots}
                   duration={oferta.display_duration}
@@ -381,34 +382,33 @@ export default function HomePage() {
               </div>
 
               <p className="mt-5 text-sm font-extrabold uppercase tracking-[0.15em] text-[#7740aa]">
-                Novas experiências em preparação
+                Novos presentes em preparação
               </p>
 
               <h3 className="mt-3 text-[25px] font-black text-[#101d3b]">
-                Em breve, você encontrará novas oportunidades de cuidado aqui.
+                Em breve, você encontrará novas Experiências Presente aqui.
               </h3>
 
               <p className="mx-auto mt-3 max-w-3xl text-sm font-medium leading-7 text-[#5c667b]">
-                As experiências AuraMeets terão vagas limitadas, prazo de validade
-                e formatos como sessões de até 10 minutos ou diagnósticos enviados
-                por e-mail.
+                As Experiências Presente terão apenas 3 vagas, prazo de validade
+                e formatos como encontros de até 10 minutos ou entregas por e-mail.
               </p>
             </div>
           )}
 
           <div className="mt-8 rounded-[24px] border border-[#e4d4ef] bg-white p-6 text-center shadow-[0_14px_35px_rgba(68,42,103,0.08)] sm:p-8">
             <p className="text-sm font-extrabold uppercase tracking-[0.15em] text-[#7740aa]">
-              Experiências com critérios claros
+              Presentes com critérios claros
             </p>
 
             <h3 className="mt-3 text-[25px] font-black text-[#101d3b]">
-              Ofertas gratuitas com duração máxima de 10 minutos ou diagnóstico
-              entregue por e-mail.
+              Experiências Presente de até 10 minutos ou entregas personalizadas
+              por e-mail.
             </h3>
 
             <p className="mx-auto mt-3 max-w-3xl text-sm font-medium leading-7 text-[#5c667b]">
-              Cada experiência possui quantidade real de vagas, prazo de validade
-              e acompanhamento direto pela plataforma AuraMeets.
+              Cada presente possui 3 vagas, prazo de validade e acompanhamento
+              direto pela plataforma AuraMeets.
             </p>
           </div>
         </div>
@@ -593,8 +593,8 @@ export default function HomePage() {
             </h2>
 
             <p className="mt-5 text-[16px] font-medium leading-8 text-[#b9c2d5]">
-              Publique seu perfil, receba solicitações e, em breve, crie ofertas
-              gratuitas, descontos, eventos e experiências exclusivas.
+              Publique seu perfil, receba solicitações e crie Experiências Presente
+              para apresentar seu trabalho a novos clientes.
             </p>
           </div>
 
@@ -655,114 +655,129 @@ function OfferCard({
   imageUrl,
   href,
 }: OfferCardProps) {
-  return (
-    <article className="group overflow-hidden rounded-[28px] border border-[#e5d8ef] bg-white shadow-[0_16px_45px_rgba(65,39,94,0.10)] transition hover:-translate-y-1 hover:shadow-[0_22px_55px_rgba(65,39,94,0.16)]">
-      <div className="grid h-full md:grid-cols-[190px_1fr]">
-        <div className="relative flex min-h-[210px] items-center justify-center overflow-hidden bg-gradient-to-br from-[#2a1642] via-[#6a359c] to-[#a56fd0]">
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={`Foto de ${therapistName}`}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <>
-              <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full border border-white/20" />
-              <div className="absolute -bottom-12 -right-8 h-40 w-40 rounded-full border border-white/20" />
+  const displayedSlots = Math.min(slots, 3);
+  const slotsLabel =
+    displayedSlots === 1 ? "Resta 1 vaga" : `Restam ${displayedSlots} vagas`;
 
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-white/25 bg-white/15 text-2xl font-black text-white shadow-xl backdrop-blur">
+  return (
+    <article className="group flex h-full flex-col overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.09)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(65,39,94,0.14)]">
+      <div className="relative h-[132px] overflow-hidden bg-gradient-to-br from-[#2a1642] via-[#6a359c] to-[#a56fd0] sm:h-[142px]">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={`Foto de ${therapistName}`}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <>
+            <div className="absolute -left-8 -top-10 h-28 w-28 rounded-full border border-white/20" />
+            <div className="absolute -bottom-14 -right-8 h-36 w-36 rounded-full border border-white/20" />
+
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/25 bg-white/15 text-xl font-black text-white shadow-xl backdrop-blur">
                 {initials}
               </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
 
-          <span className="absolute left-4 top-4 rounded-full border border-white/20 bg-black/25 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white backdrop-blur">
-            {badge}
-          </span>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
 
-        <div className="flex flex-col p-6 sm:p-7">
-          <div>
-            <p className="text-sm font-extrabold text-[#7541ad]">
+        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/30 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white backdrop-blur">
+          <GiftIcon className="h-3.5 w-3.5" />
+          {badge}
+        </span>
+
+        <span className="absolute bottom-3 right-3 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#66359c] shadow-md">
+          {slotsLabel}
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gradient-to-br from-[#7440aa] to-[#a470cb] text-xs font-black text-white shadow-md">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              initials
+            )}
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-black text-[#1c2944]">
+              {therapistName}
+            </p>
+
+            <p className="mt-0.5 line-clamp-1 text-xs font-bold text-[#7541ad]">
               {specialty}
             </p>
-
-            <h3 className="mt-2 text-[25px] font-black leading-tight tracking-[-0.025em] text-[#101d3b]">
-              {title}
-            </h3>
-
-            <p className="mt-2 text-sm font-bold text-[#26344e]">
-              Com {therapistName}
-            </p>
-
-            <p className="mt-4 text-sm font-medium leading-6 text-[#5b6579]">
-              {description}
-            </p>
           </div>
+        </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <OfferInfo
-              icon={<UsersIcon className="h-4 w-4" />}
-              label={`${slots} vagas`}
-            />
+        <h3 className="mt-4 line-clamp-2 text-[20px] font-black leading-[1.18] tracking-[-0.025em] text-[#101d3b]">
+          {title}
+        </h3>
 
-            <OfferInfo
-              icon={<ClockSmallIcon className="h-4 w-4" />}
-              label={duration}
-            />
+        <p className="mt-2 line-clamp-3 text-[13px] font-medium leading-5 text-[#5b6579]">
+          {description}
+        </p>
 
-            <OfferInfo
-              icon={<VideoSmallIcon className="h-4 w-4" />}
-              label={serviceType}
-            />
-          </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <OfferInfo
+            icon={<ClockSmallIcon className="h-3.5 w-3.5" />}
+            label={duration}
+          />
 
-          <div className="mt-6 flex flex-col gap-4 border-t border-[#eee7f2] pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#7c8495]">
-                Valor da experiência
-              </p>
+          <OfferInfo
+            icon={<VideoSmallIcon className="h-3.5 w-3.5" />}
+            label={serviceType}
+          />
+        </div>
 
-              <p className="mt-1 text-[26px] font-black text-[#4a8e39]">
-                Gratuita
-              </p>
-            </div>
-
-            <Link
-              href={href}
-              className="inline-flex min-h-[48px] items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#7d45b5] to-[#57298f] px-6 text-sm font-extrabold text-white shadow-md transition group-hover:-translate-y-0.5"
-            >
-              Quero participar
-              <ArrowIcon className="h-4 w-4" />
-            </Link>
-          </div>
+        <div className="mt-auto pt-5">
+          <Link
+            href={href}
+            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7d45b5] to-[#57298f] px-4 text-[13px] font-extrabold text-white shadow-md transition group-hover:-translate-y-0.5"
+          >
+            Receber meu presente
+            <ArrowIcon className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </article>
   );
 }
 
-
 function OfferCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-[#e5d8ef] bg-white shadow-[0_16px_45px_rgba(65,39,94,0.08)]">
-      <div className="grid min-h-[340px] animate-pulse md:grid-cols-[190px_1fr]">
-        <div className="bg-[#e9def1]" />
+    <div className="overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.07)]">
+      <div className="animate-pulse">
+        <div className="h-[142px] bg-[#e9def1]" />
 
-        <div className="p-6 sm:p-7">
-          <div className="h-4 w-28 rounded bg-[#eee8f2]" />
-          <div className="mt-4 h-8 w-4/5 rounded bg-[#e9e3ed]" />
-          <div className="mt-3 h-4 w-36 rounded bg-[#eee8f2]" />
-          <div className="mt-6 h-4 w-full rounded bg-[#f0ebf3]" />
-          <div className="mt-3 h-4 w-11/12 rounded bg-[#f0ebf3]" />
+        <div className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-full bg-[#e9e3ed]" />
 
-          <div className="mt-7 grid gap-3 sm:grid-cols-3">
-            <div className="h-10 rounded-xl bg-[#f3eef5]" />
-            <div className="h-10 rounded-xl bg-[#f3eef5]" />
-            <div className="h-10 rounded-xl bg-[#f3eef5]" />
+            <div className="flex-1">
+              <div className="h-4 w-32 rounded bg-[#e9e3ed]" />
+              <div className="mt-2 h-3 w-24 rounded bg-[#eee8f2]" />
+            </div>
           </div>
 
-          <div className="mt-7 h-12 rounded-xl bg-[#ece4f1]" />
+          <div className="mt-5 h-6 w-4/5 rounded bg-[#e9e3ed]" />
+          <div className="mt-2 h-4 w-full rounded bg-[#f0ebf3]" />
+          <div className="mt-2 h-4 w-10/12 rounded bg-[#f0ebf3]" />
+
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <div className="h-9 rounded-xl bg-[#f3eef5]" />
+            <div className="h-9 rounded-xl bg-[#f3eef5]" />
+          </div>
+
+          <div className="mt-5 h-11 rounded-xl bg-[#ece4f1]" />
         </div>
       </div>
     </div>
@@ -777,9 +792,9 @@ function OfferInfo({
   label: string;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl bg-[#f8f5fa] px-3 py-2.5 text-xs font-bold text-[#4b5670]">
+    <div className="flex min-w-0 items-center gap-1.5 rounded-xl bg-[#f8f5fa] px-2.5 py-2 text-[11px] font-bold text-[#4b5670]">
       <span className="text-[#7541ad]">{icon}</span>
-      <span>{label}</span>
+      <span className="truncate">{label}</span>
     </div>
   );
 }
