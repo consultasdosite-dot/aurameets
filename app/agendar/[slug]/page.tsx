@@ -31,6 +31,17 @@ type Therapist = {
   slug: string | null;
 };
 
+type Experience = {
+  id: number;
+  therapist_id: number;
+  title: string;
+  description: string | null;
+  duration: string | null;
+  service_type: string | null;
+  whatsapp_message: string | null;
+  button_text: string | null;
+};
+
 type Availability = {
   id: number;
   therapist_id: number;
@@ -253,6 +264,9 @@ export default function PublicAppointmentPage() {
   const [therapist, setTherapist] =
     useState<Therapist | null>(null);
 
+  const [experience, setExperience] =
+    useState<Experience | null>(null);
+
   const [availability, setAvailability] = useState<
     Availability[]
   >([]);
@@ -336,6 +350,53 @@ export default function PublicAppointmentPage() {
         therapistData as Therapist;
 
       setTherapist(professional);
+
+      const {
+        data: experienceData,
+        error: experienceError,
+      } = await supabase
+        .from("experiences")
+        .select(
+          `
+            id,
+            therapist_id,
+            title,
+            description,
+            duration,
+            service_type,
+            whatsapp_message,
+            button_text
+          `,
+        )
+        .eq("therapist_id", professional.id)
+        .eq("active", true)
+        .eq("approval_status", "approved")
+        .order("display_order", {
+          ascending: true,
+          nullsFirst: false,
+        })
+        .order("created_at", {
+          ascending: true,
+        })
+        .limit(1);
+
+      if (!activeComponent) {
+        return;
+      }
+
+      if (experienceError) {
+        console.error(
+          "Erro ao carregar experiência:",
+          experienceError,
+        );
+
+        setExperience(null);
+      } else {
+        const firstExperience =
+          experienceData?.[0] as Experience | undefined;
+
+        setExperience(firstExperience ?? null);
+      }
 
       const {
         data: availabilityData,
@@ -595,6 +656,27 @@ export default function PublicAppointmentPage() {
   const displayedTime =
     selectedTime || form.preferredTime;
 
+  const whatsappNumber = (
+    therapist.phone || ""
+  ).replace(/\D/g, "");
+
+  const defaultWhatsappMessage = `Olá, ${
+    therapist.name || "terapeuta"
+  }! Encontrei seu perfil no AuraMeets e gostaria de solicitar a experiência presente: ${
+    experience?.title || "Experiência Presente"
+  }.`;
+
+  const whatsappMessage =
+    experience?.whatsapp_message?.trim() ||
+    defaultWhatsappMessage;
+
+  const whatsappUrl =
+    whatsappNumber && experience
+      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+          whatsappMessage,
+        )}`
+      : null;
+
   return (
     <main className="min-h-screen bg-[#050816] text-white">
       <header className="border-b border-slate-800 bg-[#050816]/95">
@@ -695,20 +777,6 @@ export default function PublicAppointmentPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm text-slate-500">
-                    Valor
-                  </p>
-
-                  <p className="text-right text-xl font-black">
-                    {therapist.price !== null
-                      ? formatCurrency(
-                          therapist.price,
-                        )
-                      : "Sob consulta"}
-                  </p>
-                </div>
-
                 {therapist.phone && (
                   <div className="flex items-center justify-between gap-4">
                     <p className="text-sm text-slate-500">
@@ -722,6 +790,75 @@ export default function PublicAppointmentPage() {
                     </p>
                   </div>
                 )}
+
+                {experience && (
+                  <div className="mt-6 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-5">
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-400">
+                      Experiência Presente
+                    </p>
+
+                    <h2 className="mt-3 text-xl font-black text-white">
+                      {experience.title}
+                    </h2>
+
+                    {experience.description && (
+                      <p className="mt-3 text-sm leading-6 text-slate-300">
+                        {experience.description}
+                      </p>
+                    )}
+
+                    <div className="mt-4 space-y-2 text-sm">
+                      {experience.duration && (
+                        <p className="text-slate-300">
+                          <span className="font-bold text-white">
+                            Tempo ou entrega:
+                          </span>{" "}
+                          {experience.duration}
+                        </p>
+                      )}
+
+                      {experience.service_type && (
+                        <p className="text-slate-300">
+                          <span className="font-bold text-white">
+                            Formato:
+                          </span>{" "}
+                          {experience.service_type}
+                        </p>
+                      )}
+                    </div>
+
+                    {whatsappUrl ? (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-5 flex w-full items-center justify-center rounded-xl bg-green-600 px-5 py-4 text-center font-black text-white transition hover:bg-green-500"
+                      >
+                        {experience.button_text?.trim() ||
+                          "QUERO MEU PRESENTE"}
+                      </a>
+                    ) : (
+                      <p className="mt-4 rounded-xl border border-slate-700 bg-[#080D22] p-3 text-sm text-slate-300">
+                        O WhatsApp deste profissional ainda
+                        não foi informado.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-4 border-t border-slate-800 pt-4">
+                  <p className="text-sm text-slate-500">
+                    Serviço completo
+                  </p>
+
+                  <p className="text-right text-xl font-black">
+                    {therapist.price !== null
+                      ? formatCurrency(
+                          therapist.price,
+                        )
+                      : "Sob consulta"}
+                  </p>
+                </div>
               </div>
             </div>
           </aside>
