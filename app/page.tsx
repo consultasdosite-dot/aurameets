@@ -347,13 +347,13 @@ export default function HomePage() {
           </div>
 
           {carregandoOfertas ? (
-            <div className="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-9 grid gap-5 xl:grid-cols-2">
               {Array.from({ length: 6 }).map((_, index) => (
                 <OfferCardSkeleton key={index} />
               ))}
             </div>
           ) : ofertasEspeciais.length > 0 ? (
-            <div className="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-9 grid gap-5 xl:grid-cols-2">
               {ofertasEspeciais.map((oferta) => (
                 <OfferCard
                   key={oferta.id}
@@ -550,7 +550,7 @@ export default function HomePage() {
             />
 
             <div className="flex flex-col justify-center border-t border-[#eadff1] p-7 lg:border-l lg:border-t-0">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-4">
                 <CalendarIcon className="mt-0.5 h-7 w-7 shrink-0 text-[#7541ad]" />
 
                 <div>
@@ -660,47 +660,45 @@ function OfferCard({
     displayedSlots === 1 ? "Resta 1 vaga" : `Restam ${displayedSlots} vagas`;
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.09)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(65,39,94,0.14)]">
-      <div className="relative h-[132px] overflow-hidden bg-gradient-to-br from-[#2a1642] via-[#6a359c] to-[#a56fd0] sm:h-[142px]">
+    <article className="group grid h-full overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.09)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(65,39,94,0.14)] md:grid-cols-[40%_60%]">
+      <div className="relative min-h-[240px] overflow-hidden bg-gradient-to-br from-[#f4ecfa] via-white to-[#eadcf5] md:min-h-full">
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={`Foto de ${therapistName}`}
-            className="absolute inset-0 h-full w-full object-cover object-top"
+            alt={`Imagem da experiência ${title}`}
+            className="absolute inset-0 h-full w-full object-cover object-center"
           />
         ) : (
           <>
-            <div className="absolute -left-8 -top-10 h-28 w-28 rounded-full border border-white/20" />
-            <div className="absolute -bottom-14 -right-8 h-36 w-36 rounded-full border border-white/20" />
+            <div className="absolute -left-8 -top-10 h-28 w-28 rounded-full border border-[#7541ad]/15" />
+            <div className="absolute -bottom-14 -right-8 h-36 w-36 rounded-full border border-[#7541ad]/15" />
 
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/25 bg-white/15 text-xl font-black text-white shadow-xl backdrop-blur">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-[#7440aa] to-[#a470cb] text-2xl font-black text-white shadow-xl">
                 {initials}
               </div>
             </div>
           </>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
-
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/30 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white backdrop-blur">
+        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-[#2a1642]/85 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white shadow-md backdrop-blur">
           <GiftIcon className="h-3.5 w-3.5" />
           {badge}
         </span>
 
-        <span className="absolute bottom-3 right-3 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#66359c] shadow-md">
+        <span className="absolute bottom-3 left-3 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#66359c] shadow-md">
           {slotsLabel}
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-gradient-to-br from-[#7440aa] to-[#a470cb] text-xs font-black text-white shadow-md">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-[#7440aa] to-[#a470cb] text-lg font-black text-white shadow-lg">
             {imageUrl ? (
               <img
                 src={imageUrl}
                 alt=""
-                className="h-full w-full object-cover object-top"
+                className="h-full w-full object-cover object-center"
               />
             ) : (
               initials
@@ -718,11 +716,11 @@ function OfferCard({
           </div>
         </div>
 
-        <h3 className="mt-4 line-clamp-2 text-[20px] font-black leading-[1.18] tracking-[-0.025em] text-[#101d3b]">
+        <h3 className="mt-4 line-clamp-2 text-[21px] font-black leading-[1.18] tracking-[-0.025em] text-[#101d3b]">
           {title}
         </h3>
 
-        <p className="mt-2 line-clamp-3 text-[13px] font-medium leading-5 text-[#5b6579]">
+        <p className="mt-3 line-clamp-4 text-[13px] font-medium leading-5 text-[#5b6579]">
           {description}
         </p>
 
@@ -741,7 +739,7 @@ function OfferCard({
         <div className="mt-auto pt-5">
           <Link
             href={href}
-            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7d45b5] to-[#57298f] px-4 text-[13px] font-extrabold text-white shadow-md transition group-hover:-translate-y-0.5"
+            className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7d45b5] to-[#57298f] px-4 text-[13px] font-extrabold text-white shadow-md transition group-hover:-translate-y-0.5"
           >
             Receber meu presente
             <ArrowIcon className="h-4 w-4" />
@@ -754,31 +752,30 @@ function OfferCard({
 
 function OfferCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.07)]">
-      <div className="animate-pulse">
-        <div className="h-[142px] bg-[#e9def1]" />
+    <div className="grid overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.07)] md:grid-cols-[40%_60%]">
+      <div className="min-h-[240px] animate-pulse bg-[#e9def1] md:min-h-full" />
 
-        <div className="p-5">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-full bg-[#e9e3ed]" />
+      <div className="animate-pulse p-5 sm:p-6">
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 rounded-full bg-[#e9e3ed]" />
 
-            <div className="flex-1">
-              <div className="h-4 w-32 rounded bg-[#e9e3ed]" />
-              <div className="mt-2 h-3 w-24 rounded bg-[#eee8f2]" />
-            </div>
+          <div className="flex-1">
+            <div className="h-4 w-32 rounded bg-[#e9e3ed]" />
+            <div className="mt-2 h-3 w-24 rounded bg-[#eee8f2]" />
           </div>
-
-          <div className="mt-5 h-6 w-4/5 rounded bg-[#e9e3ed]" />
-          <div className="mt-2 h-4 w-full rounded bg-[#f0ebf3]" />
-          <div className="mt-2 h-4 w-10/12 rounded bg-[#f0ebf3]" />
-
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            <div className="h-9 rounded-xl bg-[#f3eef5]" />
-            <div className="h-9 rounded-xl bg-[#f3eef5]" />
-          </div>
-
-          <div className="mt-5 h-11 rounded-xl bg-[#ece4f1]" />
         </div>
+
+        <div className="mt-5 h-6 w-4/5 rounded bg-[#e9e3ed]" />
+        <div className="mt-2 h-4 w-full rounded bg-[#f0ebf3]" />
+        <div className="mt-2 h-4 w-10/12 rounded bg-[#f0ebf3]" />
+        <div className="mt-2 h-4 w-8/12 rounded bg-[#f0ebf3]" />
+
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <div className="h-9 rounded-xl bg-[#f3eef5]" />
+          <div className="h-9 rounded-xl bg-[#f3eef5]" />
+        </div>
+
+        <div className="mt-5 h-11 rounded-xl bg-[#ece4f1]" />
       </div>
     </div>
   );
