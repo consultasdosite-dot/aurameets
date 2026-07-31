@@ -39,6 +39,9 @@ const founderBenefits = [
   "Reconhecimento como Terapeuta Cofundador",
 ];
 
+const WHATSAPP_GROUP_URL =
+  "https://chat.whatsapp.com/J3iBwvzqdgQImNgrO5PZBG";
+
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 
 const ALLOWED_PHOTO_TYPES = [
@@ -61,6 +64,8 @@ export default function CadastroFundadorPage() {
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [aceitouTermos, setAceitouTermos] = useState(false);
+  const [abriuGrupoWhatsApp, setAbriuGrupoWhatsApp] = useState(false);
+  const [confirmouGrupoWhatsApp, setConfirmouGrupoWhatsApp] = useState(false);
 
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState("");
@@ -128,6 +133,17 @@ export default function CadastroFundadorPage() {
     photoInputRef.current?.click();
   }
 
+  function abrirGrupoWhatsApp() {
+    window.open(
+      WHATSAPP_GROUP_URL,
+      "_blank",
+      "noopener,noreferrer",
+    );
+
+    setAbriuGrupoWhatsApp(true);
+    setErro("");
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -146,6 +162,13 @@ export default function CadastroFundadorPage() {
 
     if (!telefone.trim()) {
       setErro("Informe seu WhatsApp.");
+      return;
+    }
+
+    if (!confirmouGrupoWhatsApp) {
+      setErro(
+        "Entre no grupo oficial e confirme sua solicitação de entrada para continuar.",
+      );
       return;
     }
 
@@ -211,6 +234,10 @@ export default function CadastroFundadorPage() {
       formData.append("atendePresencial", String(atendePresencial));
       formData.append("senha", senha);
       formData.append("aceitouTermos", String(aceitouTermos));
+      formData.append(
+        "confirmouGrupoWhatsApp",
+        String(confirmouGrupoWhatsApp),
+      );
 
       if (foto) {
         formData.append("foto", foto);
@@ -396,6 +423,57 @@ export default function CadastroFundadorPage() {
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6 sm:mt-10">
             <section className="rounded-2xl border border-slate-700 bg-[#080D22] p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+                    Progresso do cadastro
+                  </p>
+
+                  <p className="mt-2 text-sm text-slate-300">
+                    Complete os passos para criar sua conta de Terapeuta Cofundador.
+                  </p>
+                </div>
+
+                <span className="shrink-0 text-xl font-black text-white">
+                  {confirmouGrupoWhatsApp ? "75%" : telefone.trim() ? "55%" : "35%"}
+                </span>
+              </div>
+
+              <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-800">
+                <div
+                  className="h-full rounded-full bg-yellow-400 transition-all duration-500"
+                  style={{
+                    width: confirmouGrupoWhatsApp
+                      ? "75%"
+                      : telefone.trim()
+                        ? "55%"
+                        : "35%",
+                  }}
+                />
+              </div>
+
+              <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-3">
+                <p className="font-bold text-emerald-300">✓ Dados iniciais</p>
+                <p className={foto ? "font-bold text-emerald-300" : "text-slate-400"}>
+                  {foto ? "✓" : "○"} Foto profissional
+                </p>
+                <p
+                  className={
+                    confirmouGrupoWhatsApp
+                      ? "font-bold text-emerald-300"
+                      : telefone.trim()
+                        ? "font-bold text-yellow-300"
+                        : "text-slate-400"
+                  }
+                >
+                  {confirmouGrupoWhatsApp ? "✓" : telefone.trim() ? "→" : "○"} Grupo oficial
+                </p>
+                <p className="text-slate-400">○ Perfil profissional</p>
+                <p className="text-slate-400">○ Primeiro serviço</p>
+                <p className="text-slate-400">○ Análise da equipe</p>
+              </div>
+            </section>
+            <section className="rounded-2xl border border-slate-700 bg-[#080D22] p-5 sm:p-6">
               <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
                 <button
                   type="button"
@@ -549,6 +627,69 @@ export default function CadastroFundadorPage() {
                 />
               </div>
             </div>
+
+            {telefone.trim() && (
+              <section className="rounded-2xl border border-emerald-400/50 bg-emerald-400/10 p-5 shadow-[0_18px_60px_rgba(16,185,129,0.08)] sm:p-6">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="max-w-2xl">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-xl font-black text-[#052e22]">
+                        W
+                      </span>
+
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
+                          Próximo passo obrigatório
+                        </p>
+
+                        <h3 className="mt-1 text-xl font-black text-white">
+                          Comunidade Oficial AuraMeets
+                        </h3>
+                      </div>
+                    </div>
+
+                    <p className="mt-4 text-sm leading-6 text-slate-200 sm:text-base">
+                      Entre no grupo exclusivo dos Terapeutas AuraMeets para receber
+                      treinamentos, novidades da plataforma, materiais, oportunidades
+                      e orientações diretas da equipe.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={abrirGrupoWhatsApp}
+                    disabled={carregando}
+                    className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-emerald-400 px-5 py-3 text-sm font-black text-[#052e22] transition hover:-translate-y-0.5 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  >
+                    {abriuGrupoWhatsApp
+                      ? "Abrir novamente o grupo"
+                      : "Entrar no Grupo Oficial"}
+                  </button>
+                </div>
+
+                <label
+                  className={`mt-5 flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
+                    confirmouGrupoWhatsApp
+                      ? "border-emerald-400 bg-emerald-400/15"
+                      : "border-emerald-400/40 bg-[#080D22] hover:border-emerald-300"
+                  } ${carregando ? "cursor-not-allowed opacity-60" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={confirmouGrupoWhatsApp}
+                    onChange={(event) =>
+                      setConfirmouGrupoWhatsApp(event.target.checked)
+                    }
+                    disabled={carregando}
+                    className="mt-1 h-5 w-5 shrink-0 accent-emerald-400"
+                  />
+
+                  <span className="text-sm font-semibold leading-6 text-slate-200">
+                    Já solicitei minha entrada no grupo oficial dos terapeutas AuraMeets.
+                  </span>
+                </label>
+              </section>
+            )}
 
             <div>
               <label
@@ -760,7 +901,7 @@ export default function CadastroFundadorPage() {
                 ? foto
                   ? "Enviando cadastro e foto..."
                   : "Enviando solicitação..."
-                : "Solicitar participação como Cofundador"}
+                : "Criar minha conta de Terapeuta Cofundador"}
             </button>
 
             <p className="text-center text-sm leading-6 text-slate-400">

@@ -666,7 +666,7 @@ function OfferCard({
           <img
             src={imageUrl}
             alt={`Foto de ${therapistName}`}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover object-top"
           />
         ) : (
           <>
@@ -700,7 +700,7 @@ function OfferCard({
               <img
                 src={imageUrl}
                 alt=""
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-top"
               />
             ) : (
               initials
