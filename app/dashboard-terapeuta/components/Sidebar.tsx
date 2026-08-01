@@ -88,6 +88,27 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
+    label: "Experiências",
+    description: "Experiências Presente",
+    href: "/dashboard-terapeuta/experiencias",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        className="h-5 w-5"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M20 12v8.25H4V12M2.75 7.5h18.5v4.5H2.75V7.5ZM12 7.5v12.75M12 7.5H7.88a2.63 2.63 0 1 1 2.63-2.63C10.51 6.32 12 7.5 12 7.5Zm0 0h4.12a2.63 2.63 0 1 0-2.63-2.63C13.49 6.32 12 7.5 12 7.5Z"
+        />
+      </svg>
+    ),
+  },
+  {
     label: "Agenda",
     description: "Horários e sessões",
     href: "/agenda",
