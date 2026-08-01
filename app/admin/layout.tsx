@@ -109,8 +109,8 @@ const menuPrincipal: MenuItem[] = [
     ),
   },
   {
-    label: "Solicitações",
-    href: "/admin/solicitacoes",
+    label: "Autorizações",
+    href: "/admin/experiencias",
     icon: (
       <svg
         viewBox="0 0 24 24"
@@ -280,7 +280,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      {/* FUNDO DO MENU NO CELULAR */}
       {menuAberto && (
         <button
           type="button"
@@ -290,7 +289,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         />
       )}
 
-      {/* BARRA LATERAL */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/10 bg-slate-950 transition-transform duration-300 lg:translate-x-0 ${
           menuAberto ? "translate-x-0" : "-translate-x-full"
@@ -310,6 +308,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <p className="text-lg font-bold leading-none">
                 Aura<span className="text-amber-300">Meets</span>
               </p>
+
               <p className="mt-1 text-xs text-slate-500">
                 Painel Administrativo
               </p>
@@ -368,6 +367,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <p className="truncate text-sm font-semibold text-white">
                   Oscar Ahumada
                 </p>
+
                 <p className="truncate text-xs text-slate-500">
                   Administrador
                 </p>
@@ -379,6 +379,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-white/10 px-3 py-2.5 text-xs font-semibold text-slate-400 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
             >
               Ver site público
+
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -392,6 +393,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   strokeLinejoin="round"
                   d="M14 5h5v5M19 5l-8 8"
                 />
+
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -403,9 +405,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </aside>
 
-      {/* CONTEÚDO PRINCIPAL */}
       <div className="min-h-screen lg:pl-72">
-        {/* CABEÇALHO */}
         <header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
           <div className="flex h-20 items-center justify-between gap-4 px-5 sm:px-7 lg:px-10">
             <div className="flex min-w-0 items-center gap-4">
@@ -435,6 +435,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <p className="truncate text-sm font-semibold text-white sm:text-base">
                   Administração AuraMeets
                 </p>
+
                 <p className="hidden text-xs text-slate-500 sm:block">
                   Controle geral da plataforma
                 </p>
@@ -472,7 +473,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <p className="text-sm font-semibold text-white">
                     Oscar Ahumada
                   </p>
-                  <p className="text-xs text-slate-500">Administrador</p>
+
+                  <p className="text-xs text-slate-500">
+                    Administrador
+                  </p>
                 </div>
 
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-300/20 bg-amber-300/10 text-sm font-bold text-amber-300">
@@ -483,7 +487,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </header>
 
-        {/* PÁGINAS INTERNAS */}
         <main className="min-h-[calc(100vh-5rem)] bg-slate-950">
           <div className="mx-auto w-full max-w-[1600px] px-5 py-7 sm:px-7 sm:py-8 lg:px-10 lg:py-10">
             {children}
