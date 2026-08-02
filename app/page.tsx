@@ -46,7 +46,7 @@ type OfferCardProps = {
 
 export default function HomePage() {
   const [menuAberto, setMenuAberto] = useState(false);
-  const [ofertasEspeciais, setOfertasEspeciais] =   useState<FeaturedExperience[]>([]);
+  const [ofertasEspeciais, setOfertasEspeciais] = useState<FeaturedExperience[]>([]);
   const [carregandoOfertas, setCarregandoOfertas] = useState(true);
 
   useEffect(() => {
@@ -362,7 +362,6 @@ export default function HomePage() {
                   title={oferta.title}
                   description={
                     oferta.description?.trim() ||
-                    oferta.subtitle?.trim() ||
                     "Receba este presente, conheça o trabalho do terapeuta e dê o primeiro passo em sua jornada de cuidado."
                   }
                   slots={oferta.remaining_slots}
