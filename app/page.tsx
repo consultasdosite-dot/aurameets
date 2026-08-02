@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  getFeaturedOffers,
+  getFeaturedExperiences,
   getTherapistInitials,
-  type FeaturedOffer,
-} from "../lib/offers";
+  type FeaturedExperience,
+} from "../lib/experiences/home";
 
 type IconProps = {
   className?: string;
@@ -46,7 +46,7 @@ type OfferCardProps = {
 
 export default function HomePage() {
   const [menuAberto, setMenuAberto] = useState(false);
-  const [ofertasEspeciais, setOfertasEspeciais] = useState<FeaturedOffer[]>([]);
+  const [ofertasEspeciais, setOfertasEspeciais] =   useState<FeaturedExperience[]>([]);
   const [carregandoOfertas, setCarregandoOfertas] = useState(true);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function HomePage() {
       setCarregandoOfertas(true);
 
       try {
-        const ofertas = await getFeaturedOffers();
+        const ofertas = await getFeaturedExperiences();
 
         if (componenteAtivo) {
           setOfertasEspeciais(ofertas);
@@ -371,7 +371,7 @@ export default function HomePage() {
                   badge={oferta.display_badge}
                   initials={getTherapistInitials(oferta.therapist_name)}
                   imageUrl={oferta.therapist_photo_url}
-                  href={`/ofertas/${oferta.slug}`}
+                  href="/experiencias"
                 />
               ))}
             </div>
