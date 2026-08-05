@@ -287,21 +287,44 @@ export default function HomePage() {
               jornada de transformação.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 grid max-w-[1040px] gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <a
                 href="#ofertas"
-                className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#8f51c6] to-[#672fa2] px-7 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(54,18,88,0.38)] transition hover:-translate-y-0.5"
+                className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#8f51c6] to-[#672fa2] px-5 text-center text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(54,18,88,0.38)] transition hover:-translate-y-0.5"
               >
-                Ver Experiências Presente
-                <ArrowIcon className="h-4 w-4" />
+                <GiftIcon className="h-5 w-5 shrink-0" />
+                <span>Ver Experiências Presente</span>
+                <ArrowIcon className="h-4 w-4 shrink-0 transition group-hover:translate-x-1" />
               </a>
 
               <Link
                 href="/terapeutas"
-                className="inline-flex min-h-[54px] items-center justify-center gap-3 rounded-xl border border-white/65 bg-white/12 px-7 text-sm font-extrabold text-white shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/20"
+                className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl border border-white/65 bg-white/12 px-5 text-center text-sm font-extrabold text-white shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/20"
               >
-                Encontrar terapeuta
+                <UserIcon className="h-5 w-5 shrink-0" />
+                <span>Encontrar Terapeuta</span>
+                <ArrowIcon className="h-4 w-4 shrink-0 transition group-hover:translate-x-1" />
               </Link>
+
+              <Link
+                href="/fala-sistemica"
+                className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl border border-[#f0c35f]/80 bg-[#2b1b28]/72 px-5 text-center text-sm font-extrabold text-[#ffd777] shadow-[0_12px_28px_rgba(240,195,95,0.14)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-[#3a252f]/86"
+              >
+                <MessageIcon className="h-5 w-5 shrink-0" />
+                <span>Fala Sistêmica</span>
+                <ArrowIcon className="h-4 w-4 shrink-0 transition group-hover:translate-x-1" />
+              </Link>
+
+              <a
+                href="https://wa.me/5551980339532?text=Ol%C3%A1%21%20Estou%20acessando%20o%20AuraMeets%20e%20gostaria%20de%20falar%20com%20o%20atendimento%20para%20entender%20melhor%20como%20funciona%20a%20plataforma."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl border border-[#5de18d]/80 bg-[#167943]/88 px-5 text-center text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(22,121,67,0.28)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-[#128044]"
+              >
+                <WhatsAppIcon className="h-5 w-5 shrink-0" />
+                <span>Atendente Online</span>
+                <ArrowIcon className="h-4 w-4 shrink-0 transition group-hover:translate-x-1" />
+              </a>
             </div>
 
             <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm font-bold text-white/88">
@@ -1233,6 +1256,25 @@ function VideoSmallIcon({ className = "" }: IconProps) {
     >
       <rect x="3" y="6" width="14" height="12" rx="2" />
       <path d="m17 10 4-2v8l-4-2v-4Z" />
+    </svg>
+  );
+}
+
+function WhatsAppIcon({ className = "" }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20.5 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.6-4.7a8.5 8.5 0 1 1 15.9-4.3Z" />
+      <path d="M8.5 8.2c.4 3.5 2.2 5.3 5.7 6.2" />
+      <path d="m8.5 8.2-1 1.2M14.2 14.4l1.2-1.1" />
     </svg>
   );
 }
