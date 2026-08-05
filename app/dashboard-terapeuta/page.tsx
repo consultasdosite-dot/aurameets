@@ -55,6 +55,71 @@ function idsSaoIguais(
   return String(primeiroId) === String(segundoId);
 }
 
+
+type RegistroGenerico = Record<string, unknown>;
+
+function possuiTexto(valor: unknown) {
+  return (
+    typeof valor === "string" &&
+    valor.trim().length > 0
+  );
+}
+
+function possuiAlgumTexto(
+  registro: RegistroGenerico | null,
+  campos: string[],
+) {
+  if (!registro) {
+    return false;
+  }
+
+  return campos.some((campo) =>
+    possuiTexto(registro[campo]),
+  );
+}
+
+function possuiAlgumValor(
+  registro: RegistroGenerico | null,
+  campos: string[],
+) {
+  if (!registro) {
+    return false;
+  }
+
+  return campos.some((campo) => {
+    const valor = registro[campo];
+
+    if (Array.isArray(valor)) {
+      return valor.length > 0;
+    }
+
+    if (
+      typeof valor === "number" &&
+      Number.isFinite(valor)
+    ) {
+      return valor > 0;
+    }
+
+    if (typeof valor === "boolean") {
+      return valor;
+    }
+
+    return possuiTexto(valor);
+  });
+}
+
+function consultaTemRegistros(
+  resultado: {
+    count: number | null;
+    error: { message?: string } | null;
+  },
+) {
+  return (
+    !resultado.error &&
+    (resultado.count ?? 0) > 0
+  );
+}
+
 export default function DashboardTerapeutaPage() {
   const router = useRouter();
 
@@ -100,21 +165,13 @@ export default function DashboardTerapeutaPage() {
           terapeutaResultado,
           ofertasResultado,
           experienciasResultado,
+          servicosResultado,
+          disponibilidadeResultado,
+          agendaResultado,
         ] = await Promise.all([
           supabase
             .from("therapists")
-            .select(
-              `
-                id,
-                name,
-                email,
-                phone,
-                speciality,
-                city,
-                state,
-                photo_url
-              `,
-            )
+            .select("*")
             .eq("id", idDoTerapeuta)
             .maybeSingle(),
 
@@ -133,75 +190,186 @@ export default function DashboardTerapeutaPage() {
               head: true,
             })
             .eq("therapist_id", idDoTerapeuta),
+
+          supabase
+            .from("services")
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
+            .eq("therapist_id", idDoTerapeuta),
+
+          supabase
+            .from("therapist_availability")
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
+            .eq("therapist_id", idDoTerapeuta),
+
+          supabase
+            .from("availability")
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
+            .eq("therapist_id", idDoTerapeuta),
         ]);
 
         const terapeuta =
-          terapeutaResultado.data as
-            | {
-                name: string | null;
-                email: string | null;
-                phone: string | null;
-                speciality: string | null;
-                city: string | null;
-                state: string | null;
-                photo_url: string | null;
-              }
-            | null;
+          (terapeutaResultado.data ??
+            null) as RegistroGenerico | null;
+
+        const perfil =
+          perfilAtual as unknown as RegistroGenerico;
 
         let percentual = 0;
 
-        if (
-          perfilAtual.name?.trim() ||
-          terapeuta?.name?.trim()
-        ) {
+        const nomePreenchido =
+          possuiAlgumTexto(perfil, ["name"]) ||
+          possuiAlgumTexto(terapeuta, [
+            "name",
+            "full_name",
+          ]);
+
+        const emailPreenchido =
+          possuiAlgumTexto(perfil, ["email"]) ||
+          possuiAlgumTexto(terapeuta, ["email"]);
+
+        const fotoPreenchida =
+          possuiAlgumTexto(perfil, [
+            "avatar_url",
+          ]) ||
+          possuiAlgumTexto(terapeuta, [
+            "photo_url",
+            "avatar_url",
+            "profile_photo_url",
+          ]);
+
+        const telefonePreenchido =
+          possuiAlgumTexto(terapeuta, [
+            "phone",
+            "whatsapp",
+            "phone_number",
+          ]);
+
+        const localizacaoPreenchida =
+          possuiAlgumTexto(terapeuta, [
+            "city",
+            "cidade",
+          ]) &&
+          possuiAlgumTexto(terapeuta, [
+            "state",
+            "estado",
+          ]);
+
+        const especialidadePreenchida =
+          possuiAlgumTexto(terapeuta, [
+            "speciality",
+            "specialty",
+            "main_specialty",
+          ]) ||
+          possuiAlgumValor(terapeuta, [
+            "specialties",
+            "speciality_ids",
+            "specialty_ids",
+          ]);
+
+        const apresentacaoPreenchida =
+          possuiAlgumTexto(terapeuta, [
+            "bio",
+            "biography",
+            "about",
+            "description",
+            "presentation",
+            "professional_bio",
+            "professional_presentation",
+            "professional_description",
+          ]);
+
+        const possuiServicos =
+          consultaTemRegistros(
+            servicosResultado,
+          ) ||
+          possuiAlgumValor(terapeuta, [
+            "services",
+            "service_ids",
+          ]);
+
+        const possuiExperiencias =
+          consultaTemRegistros(
+            experienciasResultado,
+          );
+
+        const possuiOfertas =
+          consultaTemRegistros(
+            ofertasResultado,
+          );
+
+        const possuiAgenda =
+          consultaTemRegistros(
+            disponibilidadeResultado,
+          ) ||
+          consultaTemRegistros(
+            agendaResultado,
+          ) ||
+          possuiAlgumValor(terapeuta, [
+            "availability",
+            "available_days",
+            "schedule",
+            "agenda",
+            "working_hours",
+          ]);
+
+        if (nomePreenchido) {
+          percentual += 5;
+        }
+
+        if (emailPreenchido) {
+          percentual += 5;
+        }
+
+        if (fotoPreenchida) {
           percentual += 10;
         }
 
-        if (
-          perfilAtual.email?.trim() ||
-          terapeuta?.email?.trim()
-        ) {
+        if (telefonePreenchido) {
+          percentual += 5;
+        }
+
+        if (localizacaoPreenchida) {
+          percentual += 5;
+        }
+
+        if (especialidadePreenchida) {
           percentual += 10;
         }
 
-        if (
-          perfilAtual.avatar_url?.trim() ||
-          terapeuta?.photo_url?.trim()
-        ) {
+        if (apresentacaoPreenchida) {
           percentual += 15;
         }
 
-        if (terapeuta?.phone?.trim()) {
+        if (possuiServicos) {
+          percentual += 15;
+        }
+
+        if (possuiExperiencias) {
           percentual += 10;
         }
 
-        if (terapeuta?.speciality?.trim()) {
-          percentual += 10;
+        if (possuiOfertas) {
+          percentual += 5;
         }
 
-        if (
-          terapeuta?.city?.trim() &&
-          terapeuta?.state?.trim()
-        ) {
-          percentual += 10;
-        }
-
-        if (
-          !ofertasResultado.error &&
-          (ofertasResultado.count ?? 0) > 0
-        ) {
-          percentual += 20;
-        }
-
-        if (
-          !experienciasResultado.error &&
-          (experienciasResultado.count ?? 0) > 0
-        ) {
+        if (possuiAgenda) {
           percentual += 15;
         }
 
         setProfilePercentage(
-          Math.min(100, Math.max(0, percentual)),
+          Math.min(
+            100,
+            Math.max(0, percentual),
+          ),
         );
       },
       [],
