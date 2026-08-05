@@ -100,6 +100,34 @@ function normalizarAgendamentos(
   );
 }
 
+export async function getTherapistIdByEmail(
+  email: string,
+): Promise<number> {
+  const emailNormalizado = email
+    .trim()
+    .toLowerCase();
+
+  const { data, error } = await supabase
+    .from("therapists")
+    .select("id")
+    .ilike("email", emailNormalizado)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Não foi possível localizar o terapeuta: ${error.message}`,
+    );
+  }
+
+  if (!data) {
+    throw new Error(
+      "Nenhum terapeuta foi encontrado para o e-mail desta conta.",
+    );
+  }
+
+  return data.id;
+}
+
 export async function getTherapistIdByProfileId(
   profileId: string,
 ): Promise<number> {

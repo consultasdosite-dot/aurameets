@@ -86,6 +86,10 @@ export default function NovoServicoPage() {
   const [preco, setPreco] = useState("");
   const [precoPromocional, setPrecoPromocional] = useState("");
   const [moeda, setMoeda] = useState("BRL");
+  const [modoVenda, setModoVenda] = useState<
+    "schedule" | "direct_payment"
+  >("schedule");
+  const [linkPagamento, setLinkPagamento] = useState("");
   const [ativo, setAtivo] = useState(true);
 
   const [foto, setFoto] = useState<File | null>(null);
@@ -224,6 +228,36 @@ export default function NovoServicoPage() {
       }
     }
 
+    if (modoVenda === "direct_payment") {
+      const linkLimpo = linkPagamento.trim();
+
+      if (!linkLimpo) {
+        setErro(
+          "Informe o link de pagamento da InfinitePay para usar a venda direta.",
+        );
+        return;
+      }
+
+      try {
+        const url = new URL(linkLimpo);
+
+        if (
+          url.protocol !== "https:" ||
+          !url.hostname.toLowerCase().includes("infinitepay")
+        ) {
+          setErro(
+            "Informe um link válido da InfinitePay começando com https://.",
+          );
+          return;
+        }
+      } catch {
+        setErro(
+          "Informe um link válido da InfinitePay começando com https://.",
+        );
+        return;
+      }
+    }
+
     if (!ALLOWED_PHOTO_TYPES.includes(foto.type)) {
       setErroFoto("Escolha uma imagem JPG, PNG ou WEBP.");
       return;
@@ -298,6 +332,11 @@ export default function NovoServicoPage() {
           price: precoConvertido,
           promotional_price: precoPromocionalConvertido,
           currency: moeda,
+          sale_mode: modoVenda,
+          payment_url:
+            modoVenda === "direct_payment"
+              ? linkPagamento.trim()
+              : null,
           status: ativo ? "active" : "inactive",
         });
 
@@ -717,6 +756,102 @@ export default function NovoServicoPage() {
                 />
               </div>
             </div>
+          </section>
+
+          <div className="h-px bg-slate-800" />
+
+          <section>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+              Forma de contratação
+            </p>
+
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
+              Escolha se o visitante deverá solicitar um horário ou comprar
+              diretamente pelo seu link de pagamento.
+            </p>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <label
+                className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 transition ${
+                  modoVenda === "schedule"
+                    ? "border-yellow-400 bg-yellow-400/10"
+                    : "border-slate-700 bg-[#080D22]"
+                } ${carregando ? "cursor-not-allowed opacity-60" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="modoVenda"
+                  checked={modoVenda === "schedule"}
+                  onChange={() => setModoVenda("schedule")}
+                  disabled={carregando}
+                  className="mt-1 h-5 w-5 accent-yellow-400"
+                />
+
+                <span>
+                  <strong className="block text-white">
+                    Apenas agendamento
+                  </strong>
+
+                  <span className="mt-2 block text-sm leading-6 text-slate-300">
+                    O perfil mostrará o botão “Agendar consulta”.
+                  </span>
+                </span>
+              </label>
+
+              <label
+                className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 transition ${
+                  modoVenda === "direct_payment"
+                    ? "border-emerald-400 bg-emerald-400/10"
+                    : "border-slate-700 bg-[#080D22]"
+                } ${carregando ? "cursor-not-allowed opacity-60" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="modoVenda"
+                  checked={modoVenda === "direct_payment"}
+                  onChange={() => setModoVenda("direct_payment")}
+                  disabled={carregando}
+                  className="mt-1 h-5 w-5 accent-emerald-400"
+                />
+
+                <span>
+                  <strong className="block text-white">
+                    Venda direta pela InfinitePay
+                  </strong>
+
+                  <span className="mt-2 block text-sm leading-6 text-slate-300">
+                    O perfil mostrará um botão de compra.
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            {modoVenda === "direct_payment" && (
+              <div className="mt-6 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 sm:p-6">
+                <label
+                  htmlFor="linkPagamento"
+                  className="block font-bold text-white"
+                >
+                  Link de pagamento InfinitePay
+                </label>
+
+                <input
+                  id="linkPagamento"
+                  type="url"
+                  value={linkPagamento}
+                  onChange={(event) =>
+                    setLinkPagamento(event.target.value)
+                  }
+                  placeholder="https://link.infinitepay.io/..."
+                  disabled={carregando}
+                  className="mt-3 w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                />
+
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  Gere o link no aplicativo InfinitePay, copie e cole aqui.
+                </p>
+              </div>
+            )}
           </section>
 
           <div className="h-px bg-slate-800" />

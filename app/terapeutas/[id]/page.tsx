@@ -9,6 +9,113 @@ type PageProps = {
   }>;
 };
 
+
+type Offer = {
+  id: number;
+  title: string;
+  offer_type: string | null;
+  offer_price: number | string | null;
+  active: boolean | null;
+};
+
+async function getActiveOffersByTherapistId(
+  therapistId: number,
+): Promise<Offer[]> {
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return [];
+  }
+
+  const query = new URLSearchParams({
+    select: "id,title,offer_type,offer_price,active",
+    therapist_id: `eq.${therapistId}`,
+    active: "eq.true",
+    order: "created_at.asc",
+  });
+
+  try {
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/offers?${query.toString()}`,
+      {
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+        },
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "Não foi possível carregar as ofertas públicas:",
+        await response.text(),
+      );
+
+      return [];
+    }
+
+    return (await response.json()) as Offer[];
+  } catch (error) {
+    console.error(
+      "Erro ao carregar ofertas públicas:",
+      error,
+    );
+
+    return [];
+  }
+}
+
+function formatOfferPrice(
+  value: number | string | null,
+) {
+  const numberValue = Number(value ?? 0);
+
+  if (!Number.isFinite(numberValue) || numberValue <= 0) {
+    return "";
+  }
+
+  return numberValue.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function getOfferButtonLabel(offer: Offer) {
+  const normalizedType = normalizeText(
+    offer.offer_type,
+  );
+
+  const price = formatOfferPrice(
+    offer.offer_price,
+  );
+
+  if (normalizedType.includes("pacote")) {
+    return price
+      ? `Comprar pacote — ${price}`
+      : "Comprar pacote";
+  }
+
+  if (
+    normalizedType.includes("entrega") ||
+    normalizedType.includes("mapa")
+  ) {
+    return price
+      ? `Comprar entrega — ${price}`
+      : "Comprar entrega";
+  }
+
+  return price
+    ? `Comprar consulta — ${price}`
+    : "Comprar consulta";
+}
+
 const OSCAR_PAYMENT_URL =
   "https://link.infinitepay.io/oscar_jose_ahumada_/Ri0x-HwSXUxVZzk-80,00";
 
@@ -52,6 +159,11 @@ export default async function TherapistProfilePage({
   if (!therapist) {
     notFound();
   }
+
+  const activeOffers =
+    await getActiveOffersByTherapistId(
+      therapist.id,
+    );
 
   const initials = getInitials(therapist.name);
   const specialities = splitSpecialities(therapist.speciality);
@@ -169,24 +281,34 @@ export default async function TherapistProfilePage({
                 {bioText}
               </p>
 
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-                {isOscar ? (
+              <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+                <Link
+                  href={`/agendar/${therapist.slug}`}
+                  className="rounded-xl bg-yellow-400 px-8 py-4 text-center text-lg font-black text-slate-950 transition hover:bg-yellow-300"
+                >
+                  Agendar consulta
+                </Link>
+
+                {isOscar && (
                   <a
                     href={OSCAR_PAYMENT_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-xl bg-yellow-400 px-8 py-4 text-center text-lg font-black text-slate-950 transition hover:bg-yellow-300"
+                    className="rounded-xl border border-yellow-400 px-8 py-4 text-center text-lg font-black text-yellow-400 transition hover:bg-yellow-400 hover:text-slate-950"
                   >
                     Comprar Mapa Numerológico — R$ 80,00
                   </a>
-                ) : (
-                  <Link
-                    href={`/agendar/${therapist.slug}`}
-                    className="rounded-xl bg-yellow-400 px-8 py-4 text-center text-lg font-black text-slate-950 transition hover:bg-yellow-300"
-                  >
-                    Agendar atendimento
-                  </Link>
                 )}
+
+                {activeOffers.map((offer) => (
+                  <Link
+                    key={offer.id}
+                    href={`/agendar/${therapist.slug}?oferta=${offer.id}`}
+                    className="rounded-xl border border-purple-400/50 bg-purple-400/10 px-8 py-4 text-center text-lg font-black text-purple-200 transition hover:bg-purple-400 hover:text-slate-950"
+                  >
+                    {getOfferButtonLabel(offer)}
+                  </Link>
+                ))}
 
                 <Link
                   href="/terapeutas"
@@ -311,34 +433,40 @@ export default async function TherapistProfilePage({
           </p>
 
           <h2 className="mt-4 text-2xl font-black">
-            {isOscar
-              ? "Adquira seu Mapa Numerológico Pessoal"
-              : "Deseja conversar com este profissional?"}
+            Escolha como deseja começar
           </h2>
 
           <p className="mt-4 leading-7 text-slate-300">
-            {isOscar
-              ? "Realize o pagamento com segurança e dê o primeiro passo para compreender os principais números da sua vida."
-              : "Escolha um horário disponível e avance para o agendamento."}
+            Você pode solicitar um horário ou escolher uma consulta, entrega ou pacote já cadastrado pelo profissional.
           </p>
 
-          {isOscar ? (
+          <Link
+            href={`/agendar/${therapist.slug}`}
+            className="mt-7 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+          >
+            Agendar consulta
+          </Link>
+
+          {isOscar && (
             <a
               href={OSCAR_PAYMENT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-7 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+              className="mt-4 block rounded-xl border border-yellow-400 px-6 py-4 text-center font-black text-yellow-400 transition hover:bg-yellow-400 hover:text-slate-950"
             >
-              Comprar por R$ 80,00
+              Comprar Mapa Numerológico — R$ 80,00
             </a>
-          ) : (
-            <Link
-              href={`/agendar/${therapist.slug}`}
-              className="mt-7 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
-            >
-              Ver horários disponíveis
-            </Link>
           )}
+
+          {activeOffers.map((offer) => (
+            <Link
+              key={offer.id}
+              href={`/agendar/${therapist.slug}?oferta=${offer.id}`}
+              className="mt-4 block rounded-xl border border-purple-400/50 bg-purple-400/10 px-6 py-4 text-center font-black text-purple-200 transition hover:bg-purple-400 hover:text-slate-950"
+            >
+              {getOfferButtonLabel(offer)}
+            </Link>
+          ))}
 
           {therapist.instagram && (
             <a
@@ -363,9 +491,7 @@ export default async function TherapistProfilePage({
           )}
 
           <p className="mt-5 text-sm leading-6 text-slate-500">
-            {isOscar
-              ? "O pagamento será processado pela InfinitePay."
-              : "O agendamento ainda será conectado à agenda real do profissional."}
+            O agendamento cria uma solicitação para o terapeuta. No perfil de Oscar Ahumada, a compra do Mapa Numerológico continua sendo processada pela InfinitePay.
           </p>
         </aside>
       </section>

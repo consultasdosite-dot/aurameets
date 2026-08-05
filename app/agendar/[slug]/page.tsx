@@ -551,34 +551,39 @@ export default function PublicAppointmentPage() {
 
     setSaving(true);
 
-    const { error } = await supabase
-      .from("appointments")
-      .insert({
-        therapist_id: therapist.id,
-        client_name: form.name.trim(),
-        client_email: form.email
-          .trim()
-          .toLowerCase(),
-        client_phone: form.phone.trim(),
-        preferred_date: requestedDate,
-        preferred_time: `${requestedTime}:00`,
-        modality: form.modality,
-        message: form.message.trim() || null,
-        status: "pending",
-        price: therapist.price,
-        offer_id: offerId,
-      });
+    const normalizedEmail = form.email
+      .trim()
+      .toLowerCase();
+
+    const {
+      data: appointmentId,
+      error: appointmentError,
+    } = await supabase.rpc(
+      "create_public_appointment",
+      {
+        p_therapist_id: therapist.id,
+        p_client_name: form.name.trim(),
+        p_client_email: normalizedEmail,
+        p_client_phone: form.phone.trim(),
+        p_preferred_date: requestedDate,
+        p_preferred_time: `${requestedTime}:00`,
+        p_modality: form.modality,
+        p_message: form.message.trim() || null,
+        p_price: therapist.price,
+        p_offer_id: offerId,
+      },
+    );
 
     setSaving(false);
 
-    if (error) {
+    if (appointmentError || !appointmentId) {
       console.error(
         "Erro ao enviar solicitação:",
-        error,
+        appointmentError,
       );
 
       setErrorMessage(
-        "Não foi possível enviar sua solicitação. Tente novamente.",
+        "Não foi possível concluir sua solicitação. Tente novamente.",
       );
       return;
     }

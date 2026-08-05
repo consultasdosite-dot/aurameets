@@ -131,43 +131,14 @@ export default function AdminAtendimentosPage() {
       return false;
     }
 
-    const authenticatedEmail =
-      user.email?.trim().toLowerCase() || "";
-
-    if (authenticatedEmail === "assessoria3@gmail.com") {
-      return true;
-    }
-
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("user_type,email")
+      .select("user_type")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profileError) {
-      console.error(
-        "Erro ao verificar perfil administrativo:",
-        profileError,
-      );
-
-      setErrorMessage(
-        "Não foi possível validar o acesso administrativo desta conta.",
-      );
-      return false;
-    }
-
-    const profileEmail =
-      profile?.email?.trim().toLowerCase() || "";
-
-    const isAdmin =
-      profile?.user_type?.trim().toLowerCase() ===
-        "admin" ||
-      profileEmail === "assessoria3@gmail.com";
-
-    if (!isAdmin) {
-      setErrorMessage(
-        `A conta conectada (${authenticatedEmail || "e-mail não identificado"}) não possui acesso administrativo.`,
-      );
+    if (profileError || !profile || profile.user_type !== "admin") {
+      router.replace("/");
       return false;
     }
 

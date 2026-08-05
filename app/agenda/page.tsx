@@ -12,7 +12,7 @@ import {
   acceptAppointment,
   declineAppointment,
   getAppointmentsByTherapistId,
-  getTherapistIdByProfileId,
+  getTherapistIdByEmail,
   proposeNewAppointmentTime,
   type Appointment,
 } from "@/lib/appointments";
@@ -183,8 +183,14 @@ export default function AgendaPage() {
     }
 
     try {
-      const therapistId =
-        await getTherapistIdByProfileId(session.user.id);
+      if (!session.user.email) {
+  throw new Error(
+    "Não foi possível identificar o e-mail da conta.",
+  );
+}
+
+const therapistId =
+  await getTherapistIdByEmail(session.user.email);
 
       const dados =
         await getAppointmentsByTherapistId(therapistId);

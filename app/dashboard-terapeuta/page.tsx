@@ -64,6 +64,9 @@ export default function DashboardTerapeutaPage() {
   const [therapistId, setTherapistId] =
     useState<number | null>(null);
 
+  const [profilePercentage, setProfilePercentage] =
+    useState(0);
+
   const [carregandoPerfil, setCarregandoPerfil] =
     useState(true);
 
@@ -86,6 +89,123 @@ export default function DashboardTerapeutaPage() {
 
   const [novaData, setNovaData] = useState("");
   const [novoHorario, setNovoHorario] = useState("");
+
+  const calcularPercentualPerfil =
+    useCallback(
+      async (
+        idDoTerapeuta: number,
+        perfilAtual: TherapistProfile,
+      ) => {
+        const [
+          terapeutaResultado,
+          ofertasResultado,
+          experienciasResultado,
+        ] = await Promise.all([
+          supabase
+            .from("therapists")
+            .select(
+              `
+                id,
+                name,
+                email,
+                phone,
+                speciality,
+                city,
+                state,
+                photo_url
+              `,
+            )
+            .eq("id", idDoTerapeuta)
+            .maybeSingle(),
+
+          supabase
+            .from("offers")
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
+            .eq("therapist_id", idDoTerapeuta),
+
+          supabase
+            .from("experiences")
+            .select("*", {
+              count: "exact",
+              head: true,
+            })
+            .eq("therapist_id", idDoTerapeuta),
+        ]);
+
+        const terapeuta =
+          terapeutaResultado.data as
+            | {
+                name: string | null;
+                email: string | null;
+                phone: string | null;
+                speciality: string | null;
+                city: string | null;
+                state: string | null;
+                photo_url: string | null;
+              }
+            | null;
+
+        let percentual = 0;
+
+        if (
+          perfilAtual.name?.trim() ||
+          terapeuta?.name?.trim()
+        ) {
+          percentual += 10;
+        }
+
+        if (
+          perfilAtual.email?.trim() ||
+          terapeuta?.email?.trim()
+        ) {
+          percentual += 10;
+        }
+
+        if (
+          perfilAtual.avatar_url?.trim() ||
+          terapeuta?.photo_url?.trim()
+        ) {
+          percentual += 15;
+        }
+
+        if (terapeuta?.phone?.trim()) {
+          percentual += 10;
+        }
+
+        if (terapeuta?.speciality?.trim()) {
+          percentual += 10;
+        }
+
+        if (
+          terapeuta?.city?.trim() &&
+          terapeuta?.state?.trim()
+        ) {
+          percentual += 10;
+        }
+
+        if (
+          !ofertasResultado.error &&
+          (ofertasResultado.count ?? 0) > 0
+        ) {
+          percentual += 20;
+        }
+
+        if (
+          !experienciasResultado.error &&
+          (experienciasResultado.count ?? 0) > 0
+        ) {
+          percentual += 15;
+        }
+
+        setProfilePercentage(
+          Math.min(100, Math.max(0, percentual)),
+        );
+      },
+      [],
+    );
 
   const carregarPerfil = useCallback(async () => {
     setCarregandoPerfil(true);
@@ -157,8 +277,16 @@ export default function DashboardTerapeutaPage() {
           session.user.id,
         );
 
-      setProfile(data as TherapistProfile);
+      const perfilAtual =
+        data as TherapistProfile;
+
+      setProfile(perfilAtual);
       setTherapistId(idDoTerapeuta);
+
+      await calcularPercentualPerfil(
+        idDoTerapeuta,
+        perfilAtual,
+      );
     } catch (errorDesconhecido) {
       setErro(
         obterMensagemErro(
@@ -171,7 +299,8 @@ export default function DashboardTerapeutaPage() {
     } finally {
       setCarregandoPerfil(false);
     }
-  }, [router]);
+  }, [calcularPercentualPerfil, router]);
+
 
   const carregarSolicitacoes =
     useCallback(async () => {
@@ -491,7 +620,11 @@ export default function DashboardTerapeutaPage() {
       }
     >
       <div className="min-h-screen lg:flex">
-        <Sidebar />
+        <Sidebar
+          profile={profile}
+          profilePercentage={profilePercentage}
+          pendingRequests={totalPendentes}
+        />
 
         <div className="min-w-0 flex-1">
           <DashboardHeader />
@@ -506,7 +639,9 @@ export default function DashboardTerapeutaPage() {
                 totalAceitas={totalAceitas}
               />
 
-              <ProfileProgress percentage={35} />
+              <ProfileProgress
+                percentage={profilePercentage}
+              />
 
               <div className="grid gap-6 2xl:grid-cols-2">
                 <ApprovalCard status="em_analise" />
