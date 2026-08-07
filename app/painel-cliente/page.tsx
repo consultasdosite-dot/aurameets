@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import ClienteHeader from "@/components/cliente/ClienteHeader";
 import ClienteSidebar from "@/components/cliente/ClienteSidebar";
@@ -171,6 +172,7 @@ export default function PainelClientePage() {
 
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [nomeCliente, setNomeCliente] = useState("Visitante");
 
   const carregarAtendimentos = useCallback(async () => {
     setCarregando(true);
@@ -192,6 +194,14 @@ export default function PainelClientePage() {
         router.replace("/login-cliente");
         return;
       }
+
+      const nomeDaConta =
+        session.user.user_metadata?.full_name?.trim() ||
+        session.user.user_metadata?.name?.trim() ||
+        session.user.email?.split("@")[0] ||
+        "Visitante";
+
+      setNomeCliente(nomeDaConta);
 
       const clientId = await getClientIdByProfileId(
         session.user.id,
@@ -253,6 +263,153 @@ export default function PainelClientePage() {
 
         <section className="min-w-0 space-y-6">
           <HeroCliente />
+
+          <section className="overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-[#20132d] via-[#2d1842] to-[#111827] p-6 text-white shadow-sm sm:p-8">
+            <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-200">
+                  Meu Espaço AuraMeets
+                </p>
+
+                <h1 className="mt-3 text-3xl font-black tracking-[-0.03em] sm:text-4xl">
+                  Olá, {nomeCliente}.
+                </h1>
+
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-white/75 sm:text-base">
+                  Aqui ficam reunidos seus caminhos dentro do AuraMeets: sua Jornada,
+                  sua Fala Sistêmica, seus atendimentos e os próximos passos que podem
+                  fazer sentido para o seu momento.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Link
+                  href="/jornada"
+                  className="rounded-2xl border border-white/10 bg-white/10 p-4 transition hover:bg-white/15"
+                >
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-violet-200">
+                    Minha Jornada
+                  </p>
+                  <p className="mt-2 font-bold text-white">
+                    Continuar ou refazer minha Jornada
+                  </p>
+                </Link>
+
+                <Link
+                  href="/fala-sistemica"
+                  className="rounded-2xl border border-white/10 bg-white/10 p-4 transition hover:bg-white/15"
+                >
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-amber-200">
+                    Minha Fala Sistêmica
+                  </p>
+                  <p className="mt-2 font-bold text-white">
+                    Fazer uma nova solicitação
+                  </p>
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <Link
+              href="/terapeutas"
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <p className="text-sm font-bold text-violet-700">Encontrar terapeuta</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Conheça profissionais alinhados ao que você busca agora.
+              </p>
+            </Link>
+
+            <Link
+              href="/fala-sistemica"
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <p className="text-sm font-bold text-amber-700">Nova Fala Sistêmica</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Expresse o que está vivendo e acompanhe a resposta no seu espaço.
+              </p>
+            </Link>
+
+            <Link
+              href="/experiencias"
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <p className="text-sm font-bold text-emerald-700">Experiências Presente</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Descubra experiências rápidas para conhecer novos caminhos.
+              </p>
+            </Link>
+
+            <Link
+              href="/jornada"
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <p className="text-sm font-bold text-sky-700">Entender meu momento</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Use a Jornada para organizar necessidades e próximos passos.
+              </p>
+            </Link>
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-3">
+            <article className="rounded-2xl border border-violet-100 bg-violet-50 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">
+                Sua Jornada
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-slate-900">
+                Um caminho para entender seu momento
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Sua Jornada ajuda a organizar necessidades, prioridades e possibilidades
+                dentro do AuraMeets.
+              </p>
+              <Link
+                href="/jornada"
+                className="mt-4 inline-flex font-bold text-violet-700 hover:text-violet-900"
+              >
+                Ir para minha Jornada
+              </Link>
+            </article>
+
+            <article className="rounded-2xl border border-amber-100 bg-amber-50 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-700">
+                Sua Fala Sistêmica
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-slate-900">
+                Um espaço para ser ouvido
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Faça sua solicitação e acompanhe por aqui os próximos passos da sua
+                Fala Sistêmica.
+              </p>
+              <Link
+                href="/fala-sistemica"
+                className="mt-4 inline-flex font-bold text-amber-700 hover:text-amber-900"
+              >
+                Acessar Fala Sistêmica
+              </Link>
+            </article>
+
+            <article className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                Recomendado para você
+              </p>
+              <h2 className="mt-2 text-xl font-bold text-slate-900">
+                Continue explorando
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Conheça terapeutas, experiências e caminhos que podem complementar o
+                que você já iniciou.
+              </p>
+              <Link
+                href="/terapeutas"
+                className="mt-4 inline-flex font-bold text-emerald-700 hover:text-emerald-900"
+              >
+                Ver possibilidades
+              </Link>
+            </article>
+          </section>
 
           {erro && (
             <div
