@@ -8,6 +8,7 @@ import {
 import type { ReactNode } from "react";
 import { useState } from "react";
 
+import AdminNotificationBell from "@/components/admin/AdminNotificationBell";
 import { supabase } from "@/lib/supabase";
 
 type AdminLayoutProps = {
@@ -137,25 +138,29 @@ export default function AdminLayout({
           </div>
         </Link>
 
-        <button
-          type="button"
-          onClick={() =>
-            setMenuAberto((valor) => !valor)
-          }
-          aria-label={
-            menuAberto
-              ? "Fechar menu"
-              : "Abrir menu"
-          }
-          aria-expanded={menuAberto}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white"
-        >
-          {menuAberto ? (
-            <CloseIcon />
-          ) : (
-            <MenuIcon />
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <AdminNotificationBell />
+
+          <button
+            type="button"
+            onClick={() =>
+              setMenuAberto((valor) => !valor)
+            }
+            aria-label={
+              menuAberto
+                ? "Fechar menu"
+                : "Abrir menu"
+            }
+            aria-expanded={menuAberto}
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white"
+          >
+            {menuAberto ? (
+              <CloseIcon />
+            ) : (
+              <MenuIcon />
+            )}
+          </button>
+        </div>
       </header>
 
       {menuAberto && (
@@ -289,6 +294,10 @@ export default function AdminLayout({
       </aside>
 
       <div className="min-h-screen lg:pl-[290px]">
+        <div className="sticky top-0 z-40 hidden min-h-[70px] items-center justify-end border-b border-white/10 bg-[#080d1b]/95 px-6 backdrop-blur-xl lg:flex lg:px-8">
+          <AdminNotificationBell />
+        </div>
+
         <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <div className="mx-auto w-full max-w-[1650px]">
             {children}

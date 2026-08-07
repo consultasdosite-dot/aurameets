@@ -1,0 +1,894 @@
+[
+  {
+    "route": "/dashboard-terapeuta",
+    "firstLoadUncompressedJsBytes": 796238,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\3nnk9oasw2_g0.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/",
+    "firstLoadUncompressedJsBytes": 791706,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1rxncug86bump.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\2o8gxaqc7d19l.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/admin/terapeutas/[id]",
+    "firstLoadUncompressedJsBytes": 791050,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2uzbbr1dj-qja.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3ojgkzov1meh6.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/admin/terapeutas",
+    "firstLoadUncompressedJsBytes": 789691,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2uzbbr1dj-qja.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\30jval4w6yxzg.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/admin/ofertas",
+    "firstLoadUncompressedJsBytes": 785476,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2uzbbr1dj-qja.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\2yg1m7zwg5sxh.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/admin/experiencias",
+    "firstLoadUncompressedJsBytes": 781857,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2uzbbr1dj-qja.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3j2l63mn-tow6.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/admin",
+    "firstLoadUncompressedJsBytes": 781297,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2uzbbr1dj-qja.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\0_vojqvl8poik.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/admin/falas-sistemicas",
+    "firstLoadUncompressedJsBytes": 780527,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2uzbbr1dj-qja.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3bh6qv8lght67.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/admin/atendimentos",
+    "firstLoadUncompressedJsBytes": 776960,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2uzbbr1dj-qja.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\2qtui6-27n6de.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/painel-cliente",
+    "firstLoadUncompressedJsBytes": 773822,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1yivet671mx99.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard-terapeuta/experiencias",
+    "firstLoadUncompressedJsBytes": 773698,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1_-44qlm-fd19.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/fala-sistemica",
+    "firstLoadUncompressedJsBytes": 772064,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\31ejnvsrao7a5.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/agendar/[slug]",
+    "firstLoadUncompressedJsBytes": 770442,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\33usfl_ipunv9.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard-terapeuta/perfil",
+    "firstLoadUncompressedJsBytes": 768612,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\4407cwqacshb_.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard-terapeuta/servicos/novo",
+    "firstLoadUncompressedJsBytes": 768605,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0iz0h2nodhzd4.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/admin/pagamentos",
+    "firstLoadUncompressedJsBytes": 766212,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2uzbbr1dj-qja.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard-terapeuta/financeiro",
+    "firstLoadUncompressedJsBytes": 766051,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2vj7p7k58a0-o.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/agenda",
+    "firstLoadUncompressedJsBytes": 764251,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0k8b7t9gn60oc.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard/solicitacoes",
+    "firstLoadUncompressedJsBytes": 764251,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0k8b7t9gn60oc.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/terapeuta/editar",
+    "firstLoadUncompressedJsBytes": 764244,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\248246ntweupq.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard",
+    "firstLoadUncompressedJsBytes": 762044,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2evqen8tzz2ob.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/experiencias",
+    "firstLoadUncompressedJsBytes": 762001,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0daku7fce21ld.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/login",
+    "firstLoadUncompressedJsBytes": 759506,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2gcttvob49cdh.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/painel-cliente/atendimentos",
+    "firstLoadUncompressedJsBytes": 758426,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0l1k708zprva-.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/painel-cliente/avaliacao",
+    "firstLoadUncompressedJsBytes": 758426,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0l1k708zprva-.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/painel-cliente/terapeutas",
+    "firstLoadUncompressedJsBytes": 758426,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0l1k708zprva-.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard-terapeuta/servicos",
+    "firstLoadUncompressedJsBytes": 758381,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2eb2_gmrja-15.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/redefinir-senha",
+    "firstLoadUncompressedJsBytes": 755555,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0fa9sxjljzcau.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/pagamento",
+    "firstLoadUncompressedJsBytes": 755482,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\162q0tg8mu024.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/esqueci-senha",
+    "firstLoadUncompressedJsBytes": 754381,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\04kymlide-1sp.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard-terapeuta/dados-profissionais",
+    "firstLoadUncompressedJsBytes": 752069,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1-680orl2fwog.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard-terapeuta/especialidades",
+    "firstLoadUncompressedJsBytes": 751437,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\24mkznnn8lux6.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/login-terapeuta",
+    "firstLoadUncompressedJsBytes": 749165,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1xy8gpjngjok7.js",
+      ".next-build\\static\\chunks\\44ogc1mxqnvuj.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/cadastro-fundador",
+    "firstLoadUncompressedJsBytes": 543210,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0i-gbe9h8xaew.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/acolhimento/perguntas",
+    "firstLoadUncompressedJsBytes": 536498,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2szq7fh6qf81y.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/empresas",
+    "firstLoadUncompressedJsBytes": 525934,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1j213b6xxk6jl.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/resultado",
+    "firstLoadUncompressedJsBytes": 525628,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\43t65odxf7lik.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada",
+    "firstLoadUncompressedJsBytes": 524031,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\3o9lhfvhl3l_m.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/acolhimento",
+    "firstLoadUncompressedJsBytes": 520476,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1rxncug86bump.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/cadastro",
+    "firstLoadUncompressedJsBytes": 520476,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1rxncug86bump.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/ofertas/[slug]",
+    "firstLoadUncompressedJsBytes": 520476,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1rxncug86bump.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/planos",
+    "firstLoadUncompressedJsBytes": 520476,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1rxncug86bump.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/seja-terapeuta",
+    "firstLoadUncompressedJsBytes": 520476,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1rxncug86bump.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/terapeuta/[id]",
+    "firstLoadUncompressedJsBytes": 520476,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1rxncug86bump.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/terapeutas",
+    "firstLoadUncompressedJsBytes": 520476,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1rxncug86bump.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/terapeutas/[id]",
+    "firstLoadUncompressedJsBytes": 520476,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1rxncug86bump.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-2",
+    "firstLoadUncompressedJsBytes": 519373,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2gwtoxd7fr1aw.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-6",
+    "firstLoadUncompressedJsBytes": 519078,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2as5rvc_73wue.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-7",
+    "firstLoadUncompressedJsBytes": 518969,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\41jp14_av5_u5.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-8",
+    "firstLoadUncompressedJsBytes": 518930,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\3j40o9v2gzm_k.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-10",
+    "firstLoadUncompressedJsBytes": 518615,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0aiubq-sw2dka.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-9",
+    "firstLoadUncompressedJsBytes": 518568,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2i1alo1agpib6.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-3",
+    "firstLoadUncompressedJsBytes": 518347,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\0ndk3qa0td9pk.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-12",
+    "firstLoadUncompressedJsBytes": 518283,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\1efd4cx_0v4ah.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-11",
+    "firstLoadUncompressedJsBytes": 518281,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\2hu10qmhf_xek.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-5",
+    "firstLoadUncompressedJsBytes": 517779,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\040ytxuw5vs08.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-4",
+    "firstLoadUncompressedJsBytes": 517712,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\3vzus35bq7p_z.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/jornada/pergunta-1",
+    "firstLoadUncompressedJsBytes": 516344,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\168b5spsb-839.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/_not-found",
+    "firstLoadUncompressedJsBytes": 514648,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/dashboard-terapeuta/stripe",
+    "firstLoadUncompressedJsBytes": 514648,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  },
+  {
+    "route": "/seja-visitante",
+    "firstLoadUncompressedJsBytes": 514648,
+    "firstLoadChunkPaths": [
+      ".next-build\\static\\chunks\\05-c3ty_6dwfk.js",
+      ".next-build\\static\\chunks\\14mrh2-p_w84d.js",
+      ".next-build\\static\\chunks\\3yiddnbtmgj46.js",
+      ".next-build\\static\\chunks\\27jktro2p5rq9.js",
+      ".next-build\\static\\chunks\\3rxl-jt3pdxgx.js",
+      ".next-build\\static\\chunks\\0vc5ll91764mx.js",
+      ".next-build\\static\\chunks\\turbopack-3axx7hy2dl6ce.js"
+    ]
+  }
+]

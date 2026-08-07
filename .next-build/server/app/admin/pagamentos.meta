@@ -1,0 +1,16 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/admin/layout,_N_T_/admin/pagamentos/layout,_N_T_/admin/pagamentos/page,_N_T_/admin/pagamentos"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/admin/pagamentos/__PAGE__",
+    "/admin/pagamentos",
+    "/admin",
+    "/_index",
+    "/_head"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/fala-sistemica/layout,_N_T_/fala-sistemica/page,_N_T_/fala-sistemica"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/fala-sistemica/__PAGE__",
+    "/fala-sistemica",
+    "/_index",
+    "/_head"
+  ]
+}

@@ -1,0 +1,476 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/admin/terapeutas/[id]",
+      "regex": "^/admin/terapeutas/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/admin/terapeutas/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/agendar/[slug]",
+      "regex": "^/agendar/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/agendar/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/ofertas/[slug]",
+      "regex": "^/ofertas/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/ofertas/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/terapeuta/[id]",
+      "regex": "^/terapeuta/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/terapeuta/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/terapeutas/[id]",
+      "regex": "^/terapeutas/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/terapeutas/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/acolhimento",
+      "regex": "^/acolhimento(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/acolhimento(?:/)?$"
+    },
+    {
+      "page": "/acolhimento/perguntas",
+      "regex": "^/acolhimento/perguntas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/acolhimento/perguntas(?:/)?$"
+    },
+    {
+      "page": "/admin",
+      "regex": "^/admin(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin(?:/)?$"
+    },
+    {
+      "page": "/admin/atendimentos",
+      "regex": "^/admin/atendimentos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/atendimentos(?:/)?$"
+    },
+    {
+      "page": "/admin/experiencias",
+      "regex": "^/admin/experiencias(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/experiencias(?:/)?$"
+    },
+    {
+      "page": "/admin/falas-sistemicas",
+      "regex": "^/admin/falas\\-sistemicas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/falas\\-sistemicas(?:/)?$"
+    },
+    {
+      "page": "/admin/ofertas",
+      "regex": "^/admin/ofertas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/ofertas(?:/)?$"
+    },
+    {
+      "page": "/admin/pagamentos",
+      "regex": "^/admin/pagamentos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/pagamentos(?:/)?$"
+    },
+    {
+      "page": "/admin/terapeutas",
+      "regex": "^/admin/terapeutas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/terapeutas(?:/)?$"
+    },
+    {
+      "page": "/agenda",
+      "regex": "^/agenda(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/agenda(?:/)?$"
+    },
+    {
+      "page": "/api/cadastro-fundador",
+      "regex": "^/api/cadastro\\-fundador(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/cadastro\\-fundador(?:/)?$"
+    },
+    {
+      "page": "/api/sincronizar-terapeutas",
+      "regex": "^/api/sincronizar\\-terapeutas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/sincronizar\\-terapeutas(?:/)?$"
+    },
+    {
+      "page": "/api/stripe/checkout",
+      "regex": "^/api/stripe/checkout(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/stripe/checkout(?:/)?$"
+    },
+    {
+      "page": "/api/stripe/connect",
+      "regex": "^/api/stripe/connect(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/stripe/connect(?:/)?$"
+    },
+    {
+      "page": "/api/stripe/diagnostico",
+      "regex": "^/api/stripe/diagnostico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/stripe/diagnostico(?:/)?$"
+    },
+    {
+      "page": "/api/stripe/status",
+      "regex": "^/api/stripe/status(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/stripe/status(?:/)?$"
+    },
+    {
+      "page": "/api/terapeuta/perfil",
+      "regex": "^/api/terapeuta/perfil(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/terapeuta/perfil(?:/)?$"
+    },
+    {
+      "page": "/cadastro",
+      "regex": "^/cadastro(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cadastro(?:/)?$"
+    },
+    {
+      "page": "/cadastro-fundador",
+      "regex": "^/cadastro\\-fundador(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cadastro\\-fundador(?:/)?$"
+    },
+    {
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/dashboard/solicitacoes",
+      "regex": "^/dashboard/solicitacoes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/solicitacoes(?:/)?$"
+    },
+    {
+      "page": "/dashboard-terapeuta",
+      "regex": "^/dashboard\\-terapeuta(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard\\-terapeuta(?:/)?$"
+    },
+    {
+      "page": "/dashboard-terapeuta/dados-profissionais",
+      "regex": "^/dashboard\\-terapeuta/dados\\-profissionais(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard\\-terapeuta/dados\\-profissionais(?:/)?$"
+    },
+    {
+      "page": "/dashboard-terapeuta/especialidades",
+      "regex": "^/dashboard\\-terapeuta/especialidades(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard\\-terapeuta/especialidades(?:/)?$"
+    },
+    {
+      "page": "/dashboard-terapeuta/experiencias",
+      "regex": "^/dashboard\\-terapeuta/experiencias(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard\\-terapeuta/experiencias(?:/)?$"
+    },
+    {
+      "page": "/dashboard-terapeuta/financeiro",
+      "regex": "^/dashboard\\-terapeuta/financeiro(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard\\-terapeuta/financeiro(?:/)?$"
+    },
+    {
+      "page": "/dashboard-terapeuta/perfil",
+      "regex": "^/dashboard\\-terapeuta/perfil(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard\\-terapeuta/perfil(?:/)?$"
+    },
+    {
+      "page": "/dashboard-terapeuta/servicos",
+      "regex": "^/dashboard\\-terapeuta/servicos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard\\-terapeuta/servicos(?:/)?$"
+    },
+    {
+      "page": "/dashboard-terapeuta/servicos/novo",
+      "regex": "^/dashboard\\-terapeuta/servicos/novo(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard\\-terapeuta/servicos/novo(?:/)?$"
+    },
+    {
+      "page": "/dashboard-terapeuta/stripe",
+      "regex": "^/dashboard\\-terapeuta/stripe(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard\\-terapeuta/stripe(?:/)?$"
+    },
+    {
+      "page": "/empresas",
+      "regex": "^/empresas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/empresas(?:/)?$"
+    },
+    {
+      "page": "/esqueci-senha",
+      "regex": "^/esqueci\\-senha(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/esqueci\\-senha(?:/)?$"
+    },
+    {
+      "page": "/experiencias",
+      "regex": "^/experiencias(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/experiencias(?:/)?$"
+    },
+    {
+      "page": "/fala-sistemica",
+      "regex": "^/fala\\-sistemica(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/fala\\-sistemica(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/jornada",
+      "regex": "^/jornada(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-1",
+      "regex": "^/jornada/pergunta\\-1(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-1(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-10",
+      "regex": "^/jornada/pergunta\\-10(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-10(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-11",
+      "regex": "^/jornada/pergunta\\-11(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-11(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-12",
+      "regex": "^/jornada/pergunta\\-12(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-12(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-2",
+      "regex": "^/jornada/pergunta\\-2(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-2(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-3",
+      "regex": "^/jornada/pergunta\\-3(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-3(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-4",
+      "regex": "^/jornada/pergunta\\-4(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-4(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-5",
+      "regex": "^/jornada/pergunta\\-5(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-5(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-6",
+      "regex": "^/jornada/pergunta\\-6(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-6(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-7",
+      "regex": "^/jornada/pergunta\\-7(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-7(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-8",
+      "regex": "^/jornada/pergunta\\-8(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-8(?:/)?$"
+    },
+    {
+      "page": "/jornada/pergunta-9",
+      "regex": "^/jornada/pergunta\\-9(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/pergunta\\-9(?:/)?$"
+    },
+    {
+      "page": "/jornada/resultado",
+      "regex": "^/jornada/resultado(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/jornada/resultado(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/login-terapeuta",
+      "regex": "^/login\\-terapeuta(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login\\-terapeuta(?:/)?$"
+    },
+    {
+      "page": "/pagamento",
+      "regex": "^/pagamento(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/pagamento(?:/)?$"
+    },
+    {
+      "page": "/painel-cliente",
+      "regex": "^/painel\\-cliente(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/painel\\-cliente(?:/)?$"
+    },
+    {
+      "page": "/painel-cliente/atendimentos",
+      "regex": "^/painel\\-cliente/atendimentos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/painel\\-cliente/atendimentos(?:/)?$"
+    },
+    {
+      "page": "/painel-cliente/avaliacao",
+      "regex": "^/painel\\-cliente/avaliacao(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/painel\\-cliente/avaliacao(?:/)?$"
+    },
+    {
+      "page": "/painel-cliente/terapeutas",
+      "regex": "^/painel\\-cliente/terapeutas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/painel\\-cliente/terapeutas(?:/)?$"
+    },
+    {
+      "page": "/planos",
+      "regex": "^/planos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/planos(?:/)?$"
+    },
+    {
+      "page": "/redefinir-senha",
+      "regex": "^/redefinir\\-senha(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/redefinir\\-senha(?:/)?$"
+    },
+    {
+      "page": "/seja-terapeuta",
+      "regex": "^/seja\\-terapeuta(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/seja\\-terapeuta(?:/)?$"
+    },
+    {
+      "page": "/seja-visitante",
+      "regex": "^/seja\\-visitante(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/seja\\-visitante(?:/)?$"
+    },
+    {
+      "page": "/terapeuta/editar",
+      "regex": "^/terapeuta/editar(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/terapeuta/editar(?:/)?$"
+    },
+    {
+      "page": "/terapeutas",
+      "regex": "^/terapeutas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/terapeutas(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/acolhimento/layout,_N_T_/acolhimento/perguntas/layout,_N_T_/acolhimento/perguntas/page,_N_T_/acolhimento/perguntas"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/acolhimento/perguntas/__PAGE__",
+    "/acolhimento/perguntas",
+    "/acolhimento",
+    "/_index",
+    "/_head"
+  ]
+}

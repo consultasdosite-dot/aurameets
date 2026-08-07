@@ -1,0 +1,16 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/dashboard-terapeuta/layout,_N_T_/dashboard-terapeuta/experiencias/layout,_N_T_/dashboard-terapeuta/experiencias/page,_N_T_/dashboard-terapeuta/experiencias"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/dashboard-terapeuta/experiencias/__PAGE__",
+    "/dashboard-terapeuta/experiencias",
+    "/dashboard-terapeuta",
+    "/_index",
+    "/_head"
+  ]
+}

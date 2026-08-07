@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import JornadaHome from "@/components/home/JornadaHome";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   getFeaturedExperiences,
@@ -335,6 +336,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <JornadaHome />
 
       {/* EXPERIÊNCIAS PRESENTE */}
       <section

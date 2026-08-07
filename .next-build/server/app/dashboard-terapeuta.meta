@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/dashboard-terapeuta/layout,_N_T_/dashboard-terapeuta/page,_N_T_/dashboard-terapeuta"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/dashboard-terapeuta/__PAGE__",
+    "/dashboard-terapeuta",
+    "/_index",
+    "/_head"
+  ]
+}

@@ -1,0 +1,3 @@
+module.exports=[62956,a=>{"use strict";var b=a.i(7997);a.s(["default",0,function({children:a}){return(0,b.jsx)("div",{className:"min-h-screen bg-slate-50",children:a})},"metadata",0,{title:"Painel do Cliente | AuraMeets",description:"Acompanhe seus atendimentos, avaliações e recomendações personalizadas no AuraMeets."}])},39688,a=>{a.n(a.i(62956))}];
+
+//# sourceMappingURL=app_painel-cliente_layout_tsx_1q1r063._.js.map
