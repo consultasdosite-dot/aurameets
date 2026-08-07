@@ -11,6 +11,7 @@ type AtualizarPerfilBody = {
   state?: string | null;
   bio?: string | null;
   profile_photo_url?: string | null;
+  presentation_video_url?: string | null;
   professional_headline?: string | null;
   service_type?: string | null;
   price?: number | null;
@@ -30,6 +31,26 @@ function textoOuNull(valor: unknown) {
 
   const texto = valor.trim();
   return texto || null;
+}
+
+function urlValidaOuNull(valor: unknown) {
+  const texto = textoOuNull(valor);
+
+  if (!texto) {
+    return null;
+  }
+
+  try {
+    const url = new URL(texto);
+
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return null;
+    }
+
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 export async function PUT(request: NextRequest) {
@@ -99,6 +120,22 @@ export async function PUT(request: NextRequest) {
     }
 
     const foto = textoOuNull(body.profile_photo_url);
+    const videoInformado = textoOuNull(
+      body.presentation_video_url,
+    );
+    const video = urlValidaOuNull(
+      body.presentation_video_url,
+    );
+
+    if (videoInformado && !video) {
+      return NextResponse.json(
+        {
+          error:
+            "Informe um link válido para o vídeo de apresentação.",
+        },
+        { status: 400 },
+      );
+    }
 
     const {
       data: therapist,
@@ -114,11 +151,15 @@ export async function PUT(request: NextRequest) {
         phone: textoOuNull(body.phone),
         speciality,
         city: textoOuNull(body.city),
-        state: textoOuNull(body.state)?.toUpperCase() ?? null,
+        state:
+          textoOuNull(body.state)?.toUpperCase() ??
+          null,
         bio,
         profile_photo_url: foto,
         photo_url: foto,
-        professional_headline: professionalHeadline,
+        presentation_video_url: video,
+        professional_headline:
+          professionalHeadline,
         service_type:
           textoOuNull(body.service_type) ??
           "Online e Presencial",
@@ -147,7 +188,9 @@ export async function PUT(request: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq("profile_id", user.id)
-      .select("id, profile_id, name")
+      .select(
+        "id, profile_id, name, presentation_video_url",
+      )
       .maybeSingle();
 
     if (therapistError) {
@@ -181,7 +224,8 @@ export async function PUT(request: NextRequest) {
     if (profileError) {
       return NextResponse.json(
         {
-          error: `O perfil profissional foi salvo, mas os dados da conta não puderam ser sincronizados: ${profileError.message}`,
+          error:
+            `O perfil profissional foi salvo, mas os dados da conta não puderam ser sincronizados: ${profileError.message}`,
         },
         { status: 500 },
       );
@@ -199,7 +243,8 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error: `Não foi possível salvar o perfil: ${message}`,
+        error:
+          `Não foi possível salvar o perfil: ${message}`,
       },
       { status: 500 },
     );

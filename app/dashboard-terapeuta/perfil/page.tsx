@@ -21,6 +21,7 @@ type PerfilTerapeuta = {
   state: string;
   bio: string;
   profile_photo_url: string;
+  presentation_video_url: string;
   professional_headline: string;
   service_type: string;
   price: string;
@@ -44,6 +45,7 @@ const perfilInicial: PerfilTerapeuta = {
   state: "",
   bio: "",
   profile_photo_url: "",
+  presentation_video_url: "",
   professional_headline: "",
   service_type: "Online e Presencial",
   price: "",
@@ -98,6 +100,56 @@ function converterPrecoParaNumero(valor: string) {
   return numero;
 }
 
+function obterYoutubeVideoId(valor: string) {
+  const link = valor.trim();
+
+  if (!link) {
+    return null;
+  }
+
+  try {
+    const url = new URL(link);
+    const hostname = url.hostname
+      .replace(/^www\./, "")
+      .toLowerCase();
+
+    if (hostname === "youtu.be") {
+      return url.pathname.split("/").filter(Boolean)[0] || null;
+    }
+
+    if (
+      hostname === "youtube.com" ||
+      hostname === "m.youtube.com"
+    ) {
+      if (url.pathname === "/watch") {
+        return url.searchParams.get("v");
+      }
+
+      const partes = url.pathname.split("/").filter(Boolean);
+
+      if (
+        partes[0] === "embed" ||
+        partes[0] === "shorts" ||
+        partes[0] === "live"
+      ) {
+        return partes[1] || null;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function obterYoutubeEmbedUrl(valor: string) {
+  const videoId = obterYoutubeVideoId(valor);
+
+  return videoId
+    ? `https://www.youtube.com/embed/${videoId}`
+    : null;
+}
+
 export default function PerfilTerapeutaPage() {
   const router = useRouter();
 
@@ -150,6 +202,7 @@ export default function PerfilTerapeutaPage() {
             bio,
             profile_photo_url,
             photo_url,
+            presentation_video_url,
             professional_headline,
             service_type,
             price,
@@ -193,6 +246,9 @@ export default function PerfilTerapeutaPage() {
         bio: normalizarTexto(data.bio),
         profile_photo_url: normalizarTexto(
           data.profile_photo_url ?? data.photo_url,
+        ),
+        presentation_video_url: normalizarTexto(
+          data.presentation_video_url,
         ),
         professional_headline: normalizarTexto(
           data.professional_headline,
@@ -412,6 +468,18 @@ export default function PerfilTerapeutaPage() {
       return;
     }
 
+    if (
+      perfil.presentation_video_url.trim() &&
+      !obterYoutubeVideoId(
+        perfil.presentation_video_url,
+      )
+    ) {
+      setErro(
+        "Informe um link válido do YouTube para o vídeo de apresentação.",
+      );
+      return;
+    }
+
     setSalvando(true);
 
     try {
@@ -449,6 +517,9 @@ export default function PerfilTerapeutaPage() {
             bio: perfil.bio.trim() || null,
             profile_photo_url:
               perfil.profile_photo_url.trim() ||
+              null,
+            presentation_video_url:
+              perfil.presentation_video_url.trim() ||
               null,
             professional_headline:
               perfil.professional_headline.trim() ||
@@ -652,6 +723,125 @@ export default function PerfilTerapeutaPage() {
                   Depois do envio, confira a pré-visualização
                   e clique em Salvar perfil.
                 </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="overflow-hidden rounded-3xl border border-purple-200 bg-white shadow-sm">
+            <div className="border-b border-purple-100 bg-gradient-to-r from-purple-50 to-fuchsia-50 p-6 sm:p-8">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-purple-600">
+                Conexão com seus clientes
+              </p>
+
+              <h2 className="mt-2 text-2xl font-bold text-slate-950">
+                Vídeo de apresentação
+              </h2>
+
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                Cole o link de um vídeo do YouTube, de preferência com
+                duração entre 30 segundos e 2 minutos. Apresente quem você é,
+                sua abordagem e como pode ajudar seus clientes.
+              </p>
+            </div>
+
+            <div className="grid gap-7 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+              <div>
+                <label
+                  htmlFor="presentation_video_url"
+                  className="mb-2 block text-sm font-semibold text-slate-800"
+                >
+                  Link do YouTube
+                </label>
+
+                <input
+                  id="presentation_video_url"
+                  name="presentation_video_url"
+                  type="url"
+                  value={perfil.presentation_video_url}
+                  onChange={atualizarCampo}
+                  placeholder="https://youtu.be/seu-video"
+                  className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
+                />
+
+                <p className="mt-3 text-xs leading-5 text-slate-500">
+                  Aceitamos links youtube.com, youtu.be, Shorts e transmissões
+                  salvas. O vídeo pode estar como público ou não listado.
+                </p>
+
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-sm font-bold text-slate-900">
+                    Sugestão de roteiro
+                  </p>
+
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                    <li>1. Diga seu nome e sua especialidade.</li>
+                    <li>2. Explique brevemente como funciona seu trabalho.</li>
+                    <li>3. Conte quais pessoas você costuma ajudar.</li>
+                    <li>4. Termine com um convite acolhedor.</li>
+                  </ul>
+                </div>
+
+                {perfil.presentation_video_url && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPerfil((perfilAtual) => ({
+                        ...perfilAtual,
+                        presentation_video_url: "",
+                      }));
+                      setErro(null);
+                      setSucesso(
+                        "Vídeo removido da pré-visualização. Clique em Salvar perfil para confirmar.",
+                      );
+                    }}
+                    className="mt-5 min-h-11 rounded-xl border border-red-200 bg-white px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                  >
+                    Remover vídeo
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-semibold text-slate-800">
+                  Pré-visualização
+                </p>
+
+                {obterYoutubeEmbedUrl(
+                  perfil.presentation_video_url,
+                ) ? (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm">
+                    <div className="aspect-video">
+                      <iframe
+                        src={
+                          obterYoutubeEmbedUrl(
+                            perfil.presentation_video_url,
+                          ) ?? undefined
+                        }
+                        title="Pré-visualização do vídeo de apresentação"
+                        className="h-full w-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-purple-200 bg-purple-50 px-6 text-center">
+                    <div>
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-purple-100 text-2xl text-purple-700">
+                        ▶
+                      </div>
+
+                      <p className="mt-4 font-semibold text-slate-900">
+                        Seu vídeo aparecerá aqui
+                      </p>
+
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        Cole um link válido do YouTube para conferir a
+                        pré-visualização antes de salvar.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </section>
