@@ -191,7 +191,7 @@ export default function PainelClientePage() {
       }
 
       if (!session?.user) {
-        router.replace("/login-cliente");
+        router.replace("/login");
         return;
       }
 
