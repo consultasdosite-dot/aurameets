@@ -67,11 +67,11 @@ export default function TherapistCard({
     activeCampaign?.promotionalPrice ?? 80;
 
   const totalQuantity =
-    activeCampaign?.totalQuantity ?? 10;
+    activeCampaign?.totalQuantity ?? 1;
 
   const remainingQuantity = Math.max(
     0,
-    activeCampaign?.remainingQuantity ?? 10,
+    activeCampaign?.remainingQuantity ?? 1,
   );
 
   const offerAvailable = remainingQuantity > 0;

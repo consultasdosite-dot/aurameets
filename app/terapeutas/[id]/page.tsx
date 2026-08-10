@@ -300,7 +300,7 @@ export default async function TherapistProfilePage({
                   </a>
                 )}
 
-                {activeOffers.map((offer) => (
+                {activeOffers.slice(0, 1).map((offer) => (
                   <Link
                     key={offer.id}
                     href={`/agendar/${therapist.slug}?oferta=${offer.id}`}
@@ -458,7 +458,7 @@ export default async function TherapistProfilePage({
             </a>
           )}
 
-          {activeOffers.map((offer) => (
+          {activeOffers.slice(0, 1).map((offer) => (
             <Link
               key={offer.id}
               href={`/agendar/${therapist.slug}?oferta=${offer.id}`}
