@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import JornadaHome from "@/components/home/JornadaHome";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   getFeaturedExperiences,
@@ -249,95 +248,94 @@ export default function HomePage() {
         )}
       </header>
 
-      {/* HERO PRINCIPAL */}
-      <section
-        id="para-voce"
-        className="relative min-h-[590px] overflow-hidden bg-[#15101b] lg:min-h-[650px]"
-      >
+      {/* ENTRADA PRINCIPAL */}
+      <section className="relative overflow-hidden bg-[#15101b] px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
         <picture className="absolute inset-0 block">
-  <source
-    media="(max-width: 767px)"
-    srcSet="/images/logo/hero-aura-pessoa-mobile.png"
-  />
+          <source
+            media="(max-width: 767px)"
+            srcSet="/images/logo/hero-aura-pessoa-mobile.png"
+          />
+          <img
+            src="/images/logo/hero-aura-pessoa.png"
+            alt="Acolhimento, conexão e cuidado no AuraMeets"
+            className="h-full w-full object-cover object-[58%_center] contrast-[1.05] saturate-[1.08] md:object-[57%_center] xl:object-center"
+          />
+        </picture>
 
-  <img
-    src="/images/logo/hero-aura-pessoa.png"
-    alt="Mãos envolvendo uma pessoa iluminada, representando acolhimento, conexão e cuidado"
-    className="h-full w-full object-cover object-[58%_center] contrast-[1.08] saturate-[1.04] md:object-[57%_center] xl:object-center"
-  />
-</picture>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#100b18]/78 via-[#100b18]/44 to-[#100b18]/12" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#100b18]/38 via-transparent to-[#100b18]/8" />
 
-        <div className="absolute inset-0 bg-gradient-to-r from-[#100b18]/90 via-[#100b18]/58 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#100b18]/45 via-transparent to-[#100b18]/10" />
-
-        <div className="relative z-20 mx-auto flex min-h-[590px] max-w-[1560px] items-center px-5 py-14 sm:px-8 lg:min-h-[650px] lg:px-12 lg:py-16">
-          <div className="max-w-[690px]">
+        <div className="relative z-20 mx-auto max-w-[1180px]">
+          <div className="mx-auto max-w-[820px] text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
               <span className="h-2 w-2 rounded-full bg-[#d8b8f2]" />
-              Cuidado, conexão e acolhimento
+              Bem-vindo ao AuraMeets
             </div>
 
-            <h1 className="mt-6 text-[40px] font-black leading-[1.04] tracking-[-0.045em] text-white drop-shadow-[0_5px_20px_rgba(0,0,0,0.28)] sm:text-[49px] lg:text-[60px]">
-              O cuidado começa quando alguém{" "}
-              <span className="text-[#dfc3f6]">realmente escuta você.</span>
+            <h1 className="mt-6 text-[39px] font-black leading-[1.04] tracking-[-0.045em] text-white sm:text-[50px] lg:text-[60px]">
+              Seu caminho começa com uma escolha simples.
             </h1>
 
-            <p className="mt-6 max-w-[610px] text-[17px] font-medium leading-8 text-white/90 drop-shadow-[0_3px_12px_rgba(0,0,0,0.28)] lg:text-[19px]">
-              Encontre profissionais qualificados ou viva uma Experiência Presente
-              de até 10 minutos para dar o primeiro passo na sua
-              jornada de transformação.
+            <p className="mx-auto mt-6 max-w-[700px] text-[17px] font-medium leading-8 text-white/88 lg:text-[19px]">
+              Diga como você chega ao AuraMeets e nós conduzimos os próximos passos.
+              Sem menus complicados e sem precisar descobrir sozinho por onde começar.
             </p>
-
-            <div className="mt-8 grid max-w-[1040px] gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <a
-                href="#ofertas"
-                className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#8f51c6] to-[#672fa2] px-5 text-center text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(54,18,88,0.38)] transition hover:-translate-y-0.5"
-              >
-                <GiftIcon className="h-5 w-5 shrink-0" />
-                <span>Ver Experiências Presente</span>
-                <ArrowIcon className="h-4 w-4 shrink-0 transition group-hover:translate-x-1" />
-              </a>
-
-              <Link
-                href="/terapeutas"
-                className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl border border-white/65 bg-white/12 px-5 text-center text-sm font-extrabold text-white shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/20"
-              >
-                <UserIcon className="h-5 w-5 shrink-0" />
-                <span>Encontrar Terapeuta</span>
-                <ArrowIcon className="h-4 w-4 shrink-0 transition group-hover:translate-x-1" />
-              </Link>
-
-              <Link
-                href="/fala-sistemica"
-                className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl border border-[#f0c35f]/80 bg-[#2b1b28]/72 px-5 text-center text-sm font-extrabold text-[#ffd777] shadow-[0_12px_28px_rgba(240,195,95,0.14)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-[#3a252f]/86"
-              >
-                <MessageIcon className="h-5 w-5 shrink-0" />
-                <span>Fala Sistêmica</span>
-                <ArrowIcon className="h-4 w-4 shrink-0 transition group-hover:translate-x-1" />
-              </Link>
-
-              <a
-                href="https://wa.me/5551980339532?text=Ol%C3%A1%21%20Estou%20acessando%20o%20AuraMeets%20e%20gostaria%20de%20falar%20com%20o%20atendimento%20para%20entender%20melhor%20como%20funciona%20a%20plataforma."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl border border-[#5de18d]/80 bg-[#167943]/88 px-5 text-center text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(22,121,67,0.28)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-[#128044]"
-              >
-                <WhatsAppIcon className="h-5 w-5 shrink-0" />
-                <span>Atendente Online</span>
-                <ArrowIcon className="h-4 w-4 shrink-0 transition group-hover:translate-x-1" />
-              </a>
-            </div>
-
-            <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm font-bold text-white/88">
-              <HeroTrustItem text="Especialistas verificados" />
-              <HeroTrustItem text="Atendimento online" />
-              <HeroTrustItem text="Ambiente seguro" />
-            </div>
           </div>
+
+          <div className="mx-auto mt-10 grid max-w-[920px] gap-5 md:grid-cols-2">
+            <Link
+              href="/quero-ser-acolhido"
+              className="group rounded-[26px] border border-white/20 bg-white p-7 text-left shadow-[0_18px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 sm:p-8"
+            >
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#8d4dc2] to-[#62259d] text-white shadow-lg">
+                <UserIcon className="h-9 w-9" />
+              </div>
+              <p className="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-[#7541ad]">
+                Para quem busca cuidado
+              </p>
+              <h2 className="mt-2 text-[29px] font-black tracking-[-0.035em] text-[#101d3b]">
+                Sou Visitante
+              </h2>
+              <p className="mt-3 text-[15px] font-medium leading-7 text-[#536078]">
+                Faça seu cadastro rápido e comece sua jornada. Depois você terá acesso às
+                Experiências Presente, Fala Sistêmica e aos terapeutas do AuraMeets.
+              </p>
+              <span className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#7e46b9] to-[#542c91] px-5 text-sm font-black uppercase tracking-[0.04em] text-white shadow-md">
+                Começar minha jornada
+                <ArrowIcon className="h-4 w-4 transition group-hover:translate-x-1" />
+              </span>
+            </Link>
+
+            <Link
+              href="/cadastro-fundador"
+              className="group rounded-[26px] border border-[#ead9b2] bg-[#fffaf0] p-7 text-left shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 sm:p-8"
+            >
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#ffc246] to-[#eda41d] text-white shadow-lg">
+                <HandsHeartIcon className="h-10 w-10" />
+              </div>
+              <p className="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-[#9b6107]">
+                Para profissionais
+              </p>
+              <h2 className="mt-2 text-[29px] font-black tracking-[-0.035em] text-[#101d3b]">
+                Sou Terapeuta
+              </h2>
+              <p className="mt-3 text-[15px] font-medium leading-7 text-[#536078]">
+                Cadastre-se como terapeuta fundador, apresente seu trabalho e prepare seu
+                perfil para receber novos clientes pelo AuraMeets.
+              </p>
+              <span className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-[#101d3b] px-5 text-sm font-black uppercase tracking-[0.04em] text-white shadow-md">
+                Quero fazer parte
+                <ArrowIcon className="h-4 w-4 transition group-hover:translate-x-1" />
+              </span>
+            </Link>
+          </div>
+
+          <p className="mt-7 text-center text-sm font-bold text-white/75">
+            Visitantes começam pelo cadastro. Terapeutas seguem diretamente para o cadastro fundador.
+          </p>
         </div>
       </section>
 
-      <JornadaHome />
 
       {/* EXPERIÊNCIAS PRESENTE */}
       <section
