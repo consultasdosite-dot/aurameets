@@ -1,19 +1,11 @@
 "use client";
 
-import {
-  FormEvent,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
-import {
-  formatCurrency,
-  formatPhone,
-} from "@/lib/utils";
+import { formatCurrency, formatPhone } from "@/lib/utils";
 
 type Therapist = {
   id: number;
@@ -29,6 +21,7 @@ type Therapist = {
   duration: string | null;
   service_type: string | null;
   slug: string | null;
+  profile_id: string | null;
 };
 
 type Experience = {
@@ -42,30 +35,53 @@ type Experience = {
   button_text: string | null;
 };
 
-type Availability = {
-  id: number;
-  therapist_id: number;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
+type SelectedService = {
+  id: string;
+  therapist_id: string;
+  name: string;
+  category: string;
+  description: string;
+  cover_photo_url: string | null;
+  online: boolean;
+  in_person: boolean;
+  duration_minutes: number;
+  price: number | string;
+  promotional_price: number | string | null;
+  currency: string;
+  status: "active" | "inactive" | "under_review";
+  approval_status: string | null;
+  sale_mode: string | null;
+  payment_url: string | null;
+};
+
+type ServiceFormField = {
+  id: string;
+  service_id: string;
+  field_key: string;
+  label: string;
+  field_type:
+    | "text"
+    | "email"
+    | "tel"
+    | "date"
+    | "time"
+    | "textarea"
+    | "select"
+    | "checkbox";
+  placeholder: string | null;
+  help_text: string | null;
+  required: boolean;
+  options: unknown;
+  sort_order: number;
   active: boolean;
 };
 
-type AvailableDate = {
-  isoDate: string;
-  dayOfWeek: number;
-  weekDay: string;
-  day: string;
-  month: string;
-};
+type ServiceAnswers = Record<string, string>;
 
 type FormData = {
   name: string;
   email: string;
   phone: string;
-  modality: string;
-  preferredDate: string;
-  preferredTime: string;
   message: string;
 };
 
@@ -73,14 +89,76 @@ const initialForm: FormData = {
   name: "",
   email: "",
   phone: "",
-  modality: "Online",
-  preferredDate: "",
-  preferredTime: "",
   message: "",
 };
 
 const inputClassName =
   "w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10";
+
+function normalizeText(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isDeliveryService(service: SelectedService | null) {
+  if (!service) {
+    return false;
+  }
+
+  const saleMode = normalizeText(service.sale_mode);
+  const category = normalizeText(service.category);
+
+  return (
+    saleMode === "delivery" ||
+    saleMode === "entrega" ||
+    category.includes("entrega")
+  );
+}
+
+function getServicePrice(service: SelectedService | null) {
+  if (!service) {
+    return null;
+  }
+
+  const promotional =
+    service.promotional_price !== null
+      ? Number(service.promotional_price)
+      : null;
+
+  if (promotional !== null && Number.isFinite(promotional)) {
+    return promotional;
+  }
+
+  const regular = Number(service.price);
+  return Number.isFinite(regular) ? regular : null;
+}
+
+function getSelectOptions(options: unknown): string[] {
+  if (!Array.isArray(options)) {
+    return [];
+  }
+
+  return options
+    .map((option) => {
+      if (typeof option === "string") {
+        return option;
+      }
+
+      if (
+        option &&
+        typeof option === "object" &&
+        "label" in option
+      ) {
+        return String((option as { label: unknown }).label);
+      }
+
+      return "";
+    })
+    .filter(Boolean);
+}
 
 function formatRating(value: number | null) {
   if (value === null || value === undefined) {
@@ -93,157 +171,19 @@ function formatRating(value: number | null) {
   });
 }
 
-function formatTime(value: string) {
-  return value.slice(0, 5);
-}
-
-function timeToMinutes(value: string) {
-  const [hours, minutes] = value
-    .slice(0, 5)
-    .split(":")
-    .map(Number);
-
-  return hours * 60 + minutes;
-}
-
-function minutesToTime(value: number) {
-  const hours = Math.floor(value / 60);
-  const minutes = value % 60;
-
-  return `${String(hours).padStart(2, "0")}:${String(
-    minutes,
-  ).padStart(2, "0")}`;
-}
-
-function extractDurationMinutes(
-  duration: string | null,
-) {
-  if (!duration) {
-    return 60;
-  }
-
-  const match = duration.match(/\d+/);
-
-  if (!match) {
-    return 60;
-  }
-
-  const minutes = Number(match[0]);
-
-  if (!Number.isFinite(minutes) || minutes <= 0) {
-    return 60;
-  }
-
-  return minutes;
-}
-
 function dateToIso(date: Date) {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(
-    2,
-    "0",
-  );
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
-}
-
-function createAvailableDates(
-  availability: Availability[],
-  totalDays = 30,
-): AvailableDate[] {
-  const activeDays = new Set(
-    availability
-      .filter((item) => item.active)
-      .map((item) => item.day_of_week),
-  );
-
-  const dates: AvailableDate[] = [];
-  const today = new Date();
-
-  today.setHours(12, 0, 0, 0);
-
-  for (
-    let index = 0;
-    index < totalDays;
-    index += 1
-  ) {
-    const date = new Date(today);
-
-    date.setDate(today.getDate() + index);
-
-    if (!activeDays.has(date.getDay())) {
-      continue;
-    }
-
-    dates.push({
-      isoDate: dateToIso(date),
-      dayOfWeek: date.getDay(),
-      weekDay: new Intl.DateTimeFormat("pt-BR", {
-        weekday: "short",
-      })
-        .format(date)
-        .replace(".", ""),
-      day: new Intl.DateTimeFormat("pt-BR", {
-        day: "2-digit",
-      }).format(date),
-      month: new Intl.DateTimeFormat("pt-BR", {
-        month: "short",
-      })
-        .format(date)
-        .replace(".", ""),
-    });
-  }
-
-  return dates;
-}
-
-function createSlots(
-  availability: Availability[],
-  dayOfWeek: number | null,
-  durationMinutes: number,
-) {
-  if (dayOfWeek === null) {
-    return [];
-  }
-
-  const rules = availability
-    .filter(
-      (item) =>
-        item.active &&
-        item.day_of_week === dayOfWeek,
-    )
-    .sort(
-      (first, second) =>
-        timeToMinutes(first.start_time) -
-        timeToMinutes(second.start_time),
-    );
-
-  const slots = new Set<string>();
-
-  rules.forEach((rule) => {
-    const start = timeToMinutes(rule.start_time);
-    const end = timeToMinutes(rule.end_time);
-
-    for (
-      let current = start;
-      current + durationMinutes <= end;
-      current += durationMinutes
-    ) {
-      slots.add(minutesToTime(current));
-    }
-  });
-
-  return Array.from(slots).sort();
 }
 
 export default function PublicAppointmentPage() {
   const params = useParams<{ slug: string }>();
   const searchParams = useSearchParams();
 
-  const slug = Array.isArray(params.slug)
-    ? params.slug[0]
-    : params.slug;
+  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
 
   const offerId = useMemo(() => {
     const rawOfferId = searchParams.get("oferta");
@@ -261,31 +201,21 @@ export default function PublicAppointmentPage() {
     return parsedOfferId;
   }, [searchParams]);
 
-  const [therapist, setTherapist] =
-    useState<Therapist | null>(null);
+  const serviceId = useMemo(() => {
+    const rawServiceId = searchParams.get("servico");
+    return rawServiceId?.trim() || null;
+  }, [searchParams]);
 
-  const [experience, setExperience] =
-    useState<Experience | null>(null);
-
-  const [availability, setAvailability] = useState<
-    Availability[]
-  >([]);
-
-  const [selectedDate, setSelectedDate] =
-    useState<AvailableDate | null>(null);
-
-  const [selectedTime, setSelectedTime] =
-    useState("");
-
-  const [form, setForm] =
-    useState<FormData>(initialForm);
-
+  const [therapist, setTherapist] = useState<Therapist | null>(null);
+  const [experience, setExperience] = useState<Experience | null>(null);
+  const [selectedService, setSelectedService] =
+    useState<SelectedService | null>(null);
+  const [serviceFields, setServiceFields] = useState<ServiceFormField[]>([]);
+  const [serviceAnswers, setServiceAnswers] = useState<ServiceAnswers>({});
+  const [form, setForm] = useState<FormData>(initialForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const [errorMessage, setErrorMessage] =
-    useState("");
-
+  const [errorMessage, setErrorMessage] = useState("");
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -294,19 +224,14 @@ export default function PublicAppointmentPage() {
     async function loadPage() {
       if (!slug) {
         setLoading(false);
-        setErrorMessage(
-          "Perfil profissional não encontrado.",
-        );
+        setErrorMessage("Perfil profissional não encontrado.");
         return;
       }
 
       setLoading(true);
       setErrorMessage("");
 
-      const {
-        data: therapistData,
-        error: therapistError,
-      } = await supabase
+      const { data: therapistData, error: therapistError } = await supabase
         .from("therapists")
         .select(
           `
@@ -322,39 +247,114 @@ export default function PublicAppointmentPage() {
             price,
             duration,
             service_type,
-            slug
+            slug,
+            profile_id
           `,
         )
         .eq("slug", slug)
         .eq("active", true)
         .maybeSingle();
 
-      if (!activeComponent) {
-        return;
-      }
+      if (!activeComponent) return;
 
       if (therapistError || !therapistData) {
-        console.error(
-          "Erro ao carregar terapeuta:",
-          therapistError,
-        );
-
-        setErrorMessage(
-          "Não foi possível encontrar este profissional.",
-        );
+        console.error("Erro ao carregar terapeuta:", therapistError);
+        setErrorMessage("Não foi possível encontrar este profissional.");
         setLoading(false);
         return;
       }
 
-      const professional =
-        therapistData as Therapist;
-
+      const professional = therapistData as Therapist;
       setTherapist(professional);
 
-      const {
-        data: experienceData,
-        error: experienceError,
-      } = await supabase
+      if (serviceId && professional.profile_id) {
+        const { data: serviceData, error: serviceError } = await supabase
+          .from("services")
+          .select(
+            `
+              id,
+              therapist_id,
+              name,
+              category,
+              description,
+              cover_photo_url,
+              online,
+              in_person,
+              duration_minutes,
+              price,
+              promotional_price,
+              currency,
+              status,
+              approval_status,
+              sale_mode,
+              payment_url
+            `,
+          )
+          .eq("id", serviceId)
+          .eq("therapist_id", professional.profile_id)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (!activeComponent) return;
+
+        if (serviceError) {
+          console.error("Erro ao carregar serviço selecionado:", serviceError);
+          setSelectedService(null);
+          setServiceFields([]);
+          setServiceAnswers({});
+        } else if (serviceData) {
+          const normalizedService = serviceData as SelectedService;
+          setSelectedService(normalizedService);
+
+          const { data: fieldsData, error: fieldsError } = await supabase
+            .from("service_form_fields")
+            .select(
+              `
+                id,
+                service_id,
+                field_key,
+                label,
+                field_type,
+                placeholder,
+                help_text,
+                required,
+                options,
+                sort_order,
+                active
+              `,
+            )
+            .eq("service_id", serviceId)
+            .eq("active", true)
+            .order("sort_order", { ascending: true });
+
+          if (!activeComponent) return;
+
+          if (fieldsError) {
+            console.error(
+              "Erro ao carregar campos personalizados:",
+              fieldsError,
+            );
+            setServiceFields([]);
+            setServiceAnswers({});
+          } else {
+            const normalizedFields =
+              (fieldsData ?? []) as ServiceFormField[];
+            setServiceFields(normalizedFields);
+
+            const initialAnswers: ServiceAnswers = {};
+            normalizedFields.forEach((field) => {
+              initialAnswers[field.field_key] = "";
+            });
+            setServiceAnswers(initialAnswers);
+          }
+        }
+      } else {
+        setSelectedService(null);
+        setServiceFields([]);
+        setServiceAnswers({});
+      }
+
+      const { data: experienceData, error: experienceError } = await supabase
         .from("experiences")
         .select(
           `
@@ -375,161 +375,82 @@ export default function PublicAppointmentPage() {
           ascending: true,
           nullsFirst: false,
         })
-        .order("created_at", {
-          ascending: true,
-        })
+        .order("created_at", { ascending: true })
         .limit(1);
 
-      if (!activeComponent) {
-        return;
-      }
+      if (!activeComponent) return;
 
       if (experienceError) {
-        console.error(
-          "Erro ao carregar experiência:",
-          experienceError,
-        );
-
+        console.error("Erro ao carregar experiência:", experienceError);
         setExperience(null);
       } else {
-        const firstExperience =
-          experienceData?.[0] as Experience | undefined;
-
+        const firstExperience = experienceData?.[0] as Experience | undefined;
         setExperience(firstExperience ?? null);
-      }
-
-      const {
-        data: availabilityData,
-        error: availabilityError,
-      } = await supabase
-        .from("availability")
-        .select(
-          `
-            id,
-            therapist_id,
-            day_of_week,
-            start_time,
-            end_time,
-            active
-          `,
-        )
-        .eq("therapist_id", professional.id)
-        .eq("active", true)
-        .order("day_of_week", {
-          ascending: true,
-        })
-        .order("start_time", {
-          ascending: true,
-        });
-
-      if (!activeComponent) {
-        return;
-      }
-
-      if (availabilityError) {
-        console.error(
-          "Erro ao carregar disponibilidade:",
-          availabilityError,
-        );
-
-        setAvailability([]);
-      } else {
-        setAvailability(
-          (availabilityData ?? []) as Availability[],
-        );
       }
 
       setLoading(false);
     }
 
-    loadPage();
+    void loadPage();
 
     return () => {
       activeComponent = false;
     };
-  }, [slug]);
+  }, [slug, serviceId]);
 
-  const durationMinutes = useMemo(
-    () =>
-      extractDurationMinutes(
-        therapist?.duration ?? null,
-      ),
-    [therapist?.duration],
-  );
+  const selectedServicePrice = getServicePrice(selectedService);
+  const deliveryService = isDeliveryService(selectedService);
 
-  const availableDates = useMemo(
-    () => createAvailableDates(availability),
-    [availability],
-  );
+  function updateForm(field: keyof FormData, value: string) {
+    setForm((current) => ({ ...current, [field]: value }));
+    setErrorMessage("");
+  }
 
-  const availableTimes = useMemo(
-    () =>
-      createSlots(
-        availability,
-        selectedDate?.dayOfWeek ?? null,
-        durationMinutes,
-      ),
-    [
-      availability,
-      selectedDate,
-      durationMinutes,
-    ],
-  );
-
-  const hasConfiguredAvailability =
-    availability.length > 0;
-
-  function updateForm(
-    field: keyof FormData,
-    value: string,
-  ) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [field]: value,
+  function updateServiceAnswer(field: ServiceFormField, value: string) {
+    setServiceAnswers((current) => ({
+      ...current,
+      [field.field_key]: value,
     }));
 
-    setErrorMessage("");
+    const normalizedKey = normalizeText(field.field_key);
+
+    if (
+      normalizedKey === "nome_completo" ||
+      normalizedKey === "nome" ||
+      normalizedKey === "name"
+    ) {
+      updateForm("name", value);
+    } else if (normalizedKey === "email") {
+      updateForm("email", value);
+    } else if (
+      normalizedKey === "whatsapp" ||
+      normalizedKey === "telefone" ||
+      normalizedKey === "phone"
+    ) {
+      updateForm("phone", value);
+    } else {
+      setErrorMessage("");
+    }
   }
 
-  function selectDate(date: AvailableDate) {
-    setSelectedDate(date);
-    setSelectedTime("");
-    setErrorMessage("");
+  function getAnswer(field: ServiceFormField) {
+    return serviceAnswers[field.field_key] ?? "";
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setErrorMessage("");
 
     if (!therapist) {
-      setErrorMessage(
-        "Não foi possível identificar o profissional.",
-      );
+      setErrorMessage("Não foi possível identificar o profissional.");
       return;
     }
 
-    const requestedDate =
-      selectedDate?.isoDate ||
-      form.preferredDate;
-
-    const requestedTime =
-      selectedTime || form.preferredTime;
-
-    if (!requestedDate) {
-      setErrorMessage(
-        "Informe uma data de preferência.",
-      );
-      return;
-    }
-
-    if (!requestedTime) {
-      setErrorMessage(
-        "Informe um horário de preferência.",
-      );
-      return;
+    for (const field of serviceFields) {
+      if (field.required && !getAnswer(field).trim()) {
+        setErrorMessage(`Preencha o campo obrigatório: ${field.label}.`);
+        return;
+      }
     }
 
     if (!form.name.trim()) {
@@ -543,45 +464,57 @@ export default function PublicAppointmentPage() {
     }
 
     if (!form.phone.trim()) {
-      setErrorMessage(
-        "Informe seu telefone ou WhatsApp.",
-      );
+      setErrorMessage("Informe seu telefone ou WhatsApp.");
       return;
     }
 
     setSaving(true);
 
-    const normalizedEmail = form.email
-      .trim()
-      .toLowerCase();
+    const normalizedEmail = form.email.trim().toLowerCase();
 
-    const {
-      data: appointmentId,
-      error: appointmentError,
-    } = await supabase.rpc(
-      "create_public_appointment",
-      {
+    const customAnswersText = serviceFields.length
+      ? serviceFields
+          .map((field) => {
+            const answer = getAnswer(field).trim();
+            return `${field.label}: ${answer || "Não informado"}`;
+          })
+          .join("\n")
+      : "";
+
+    const requestParts = [
+      selectedService ? `Serviço selecionado: ${selectedService.name}` : "",
+      selectedService ? `Serviço ID: ${selectedService.id}` : "",
+      customAnswersText
+        ? `Dados complementares do serviço:\n${customAnswersText}`
+        : "",
+      form.message.trim()
+        ? `Mensagem do cliente:\n${form.message.trim()}`
+        : "",
+    ].filter(Boolean);
+
+    const appointmentMessage =
+      requestParts.length > 0 ? requestParts.join("\n\n") : null;
+
+    const appointmentPrice = selectedServicePrice ?? therapist.price;
+
+    const { data: appointmentId, error: appointmentError } =
+      await supabase.rpc("create_public_appointment", {
         p_therapist_id: therapist.id,
         p_client_name: form.name.trim(),
         p_client_email: normalizedEmail,
         p_client_phone: form.phone.trim(),
-        p_preferred_date: requestedDate,
-        p_preferred_time: `${requestedTime}:00`,
-        p_modality: form.modality,
-        p_message: form.message.trim() || null,
-        p_price: therapist.price,
+        p_preferred_date: dateToIso(new Date()),
+        p_preferred_time: "00:00:00",
+        p_modality: deliveryService ? "Entrega personalizada" : "A combinar",
+        p_message: appointmentMessage,
+        p_price: appointmentPrice,
         p_offer_id: offerId,
-      },
-    );
+      });
 
     setSaving(false);
 
     if (appointmentError || !appointmentId) {
-      console.error(
-        "Erro ao enviar solicitação:",
-        appointmentError,
-      );
-
+      console.error("Erro ao enviar solicitação:", appointmentError);
       setErrorMessage(
         "Não foi possível concluir sua solicitação. Tente novamente.",
       );
@@ -589,22 +522,6 @@ export default function PublicAppointmentPage() {
     }
 
     setSuccess(true);
-
-    if (!selectedDate) {
-      setSelectedDate({
-        isoDate: requestedDate,
-        dayOfWeek: new Date(
-          `${requestedDate}T12:00:00`,
-        ).getDay(),
-        weekDay: "",
-        day: requestedDate.slice(8, 10),
-        month: requestedDate.slice(5, 7),
-      });
-    }
-
-    if (!selectedTime) {
-      setSelectedTime(requestedTime);
-    }
   }
 
   if (loading) {
@@ -612,10 +529,7 @@ export default function PublicAppointmentPage() {
       <main className="flex min-h-screen items-center justify-center bg-[#050816] px-5 text-white">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-yellow-400" />
-
-          <p className="mt-5 text-slate-300">
-            Preparando o atendimento...
-          </p>
+          <p className="mt-5 text-slate-300">Preparando sua solicitação...</p>
         </div>
       </main>
     );
@@ -625,19 +539,11 @@ export default function PublicAppointmentPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#050816] px-5 text-white">
         <section className="w-full max-w-lg rounded-3xl border border-slate-800 bg-[#111A33] p-8 text-center">
-          <p className="text-2xl font-black text-yellow-400">
-            AuraMeets
-          </p>
-
-          <h1 className="mt-7 text-3xl font-black">
-            Profissional não encontrado
-          </h1>
-
+          <p className="text-2xl font-black text-yellow-400">AuraMeets</p>
+          <h1 className="mt-7 text-3xl font-black">Profissional não encontrado</h1>
           <p className="mt-4 leading-7 text-slate-300">
-            {errorMessage ||
-              "Não encontramos este profissional."}
+            {errorMessage || "Não encontramos este profissional."}
           </p>
-
           <Link
             href="/terapeutas"
             className="mt-8 inline-block rounded-xl bg-yellow-400 px-6 py-4 font-black text-black"
@@ -650,20 +556,22 @@ export default function PublicAppointmentPage() {
   }
 
   const location =
-    [therapist.city, therapist.state]
-      .filter(Boolean)
-      .join(" • ") || "Atendimento online";
+    [therapist.city, therapist.state].filter(Boolean).join(" • ") ||
+    "Atendimento online";
 
-  const displayedDate =
-    selectedDate?.isoDate ||
-    form.preferredDate;
+  const whatsappNumber = (therapist.phone || "").replace(/\D/g, "");
 
-  const displayedTime =
-    selectedTime || form.preferredTime;
+  const appointmentWhatsappMessage = `Olá, ${
+    therapist.name || "profissional"
+  }! Acabei de enviar uma solicitação pelo AuraMeets${
+    selectedService ? ` para o serviço ${selectedService.name}` : ""
+  }. Por favor, acesse seu painel para visualizar e responder ao meu pedido.`;
 
-  const whatsappNumber = (
-    therapist.phone || ""
-  ).replace(/\D/g, "");
+  const appointmentWhatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+        appointmentWhatsappMessage,
+      )}`
+    : null;
 
   const defaultWhatsappMessage = `Olá, ${
     therapist.name || "terapeuta"
@@ -671,25 +579,37 @@ export default function PublicAppointmentPage() {
     experience?.title || "Experiência Presente"
   }.`;
 
-  const whatsappMessage =
-    experience?.whatsapp_message?.trim() ||
-    defaultWhatsappMessage;
+  const experienceWhatsappMessage =
+    experience?.whatsapp_message?.trim() || defaultWhatsappMessage;
 
-  const whatsappUrl =
+  const experienceWhatsappUrl =
     whatsappNumber && experience
       ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-          whatsappMessage,
+          experienceWhatsappMessage,
         )}`
       : null;
+
+  const hasNameField = serviceFields.some((field) =>
+    ["nome_completo", "nome", "name"].includes(
+      normalizeText(field.field_key),
+    ),
+  );
+
+  const hasEmailField = serviceFields.some(
+    (field) => normalizeText(field.field_key) === "email",
+  );
+
+  const hasPhoneField = serviceFields.some((field) =>
+    ["whatsapp", "telefone", "phone"].includes(
+      normalizeText(field.field_key),
+    ),
+  );
 
   return (
     <main className="min-h-screen bg-[#050816] text-white">
       <header className="border-b border-slate-800 bg-[#050816]/95">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-          <Link
-            href="/"
-            className="text-2xl font-black text-yellow-400"
-          >
+          <Link href="/" className="text-2xl font-black text-yellow-400">
             AuraMeets
           </Link>
 
@@ -711,24 +631,20 @@ export default function PublicAppointmentPage() {
                   <img
                     src={therapist.photo_url}
                     alt={`Foto profissional de ${
-                      therapist.name ||
-                      "terapeuta"
+                      therapist.name || "terapeuta"
                     }`}
                     className="h-24 w-24 rounded-2xl object-cover"
                   />
                 ) : (
                   <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-yellow-400 text-4xl font-black text-black">
-                    {(therapist.name || "T")
-                      .charAt(0)
-                      .toUpperCase()}
+                    {(therapist.name || "T").charAt(0).toUpperCase()}
                   </div>
                 )}
 
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-xl font-black">
-                      {therapist.name ||
-                        "Profissional AuraMeets"}
+                      {therapist.name || "Profissional AuraMeets"}
                     </p>
 
                     {therapist.verified && (
@@ -739,64 +655,53 @@ export default function PublicAppointmentPage() {
                   </div>
 
                   <p className="mt-2 text-sm font-bold text-slate-300">
-                    {therapist.speciality ||
-                      "Especialidade não informada"}
+                    {therapist.speciality || "Especialidade não informada"}
                   </p>
 
-                  <p className="mt-2 text-sm text-slate-500">
-                    {location}
-                  </p>
+                  <p className="mt-2 text-sm text-slate-500">{location}</p>
                 </div>
               </div>
 
               <div className="mt-7 space-y-4 border-t border-slate-800 pt-6">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm text-slate-500">
-                    Avaliação
-                  </p>
-
+                  <p className="text-sm text-slate-500">Avaliação</p>
                   <p className="font-black text-yellow-400">
                     ★ {formatRating(therapist.rating)}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm text-slate-500">
-                    Atendimento
-                  </p>
-
-                  <p className="text-right font-bold">
-                    {therapist.service_type ||
-                      "Não informado"}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm text-slate-500">
-                    Duração
-                  </p>
-
-                  <p className="text-right font-bold">
-                    {therapist.duration ||
-                      `${durationMinutes} minutos`}
-                  </p>
-                </div>
-
                 {therapist.phone && (
                   <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm text-slate-500">
-                      Telefone
-                    </p>
-
+                    <p className="text-sm text-slate-500">Contato</p>
                     <p className="text-right font-bold">
-                      {formatPhone(
-                        therapist.phone,
-                      )}
+                      {formatPhone(therapist.phone)}
                     </p>
                   </div>
                 )}
 
-                {experience && (
+                {selectedService && (
+                  <div className="mt-6 rounded-2xl border border-purple-400/30 bg-purple-400/10 p-5">
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-purple-300">
+                      Serviço selecionado
+                    </p>
+
+                    <h2 className="mt-3 text-xl font-black text-white">
+                      {selectedService.name}
+                    </h2>
+
+                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                      {selectedService.description}
+                    </p>
+
+                    {selectedServicePrice !== null && (
+                      <p className="mt-5 text-2xl font-black text-yellow-400">
+                        {formatCurrency(selectedServicePrice)}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {!selectedService && experience && (
                   <div className="mt-6 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-5">
                     <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-400">
                       Experiência Presente
@@ -812,56 +717,27 @@ export default function PublicAppointmentPage() {
                       </p>
                     )}
 
-                    <div className="mt-4 space-y-2 text-sm">
-                      {experience.duration && (
-                        <p className="text-slate-300">
-                          <span className="font-bold text-white">
-                            Tempo ou entrega:
-                          </span>{" "}
-                          {experience.duration}
-                        </p>
-                      )}
-
-                      {experience.service_type && (
-                        <p className="text-slate-300">
-                          <span className="font-bold text-white">
-                            Formato:
-                          </span>{" "}
-                          {experience.service_type}
-                        </p>
-                      )}
-                    </div>
-
-                    {whatsappUrl ? (
+                    {experienceWhatsappUrl && (
                       <a
-                        href={whatsappUrl}
+                        href={experienceWhatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-5 flex w-full items-center justify-center rounded-xl bg-green-600 px-5 py-4 text-center font-black text-white transition hover:bg-green-500"
                       >
-                        {experience.button_text?.trim() ||
-                          "QUERO MEU PRESENTE"}
+                        {experience.button_text?.trim() || "QUERO MEU PRESENTE"}
                       </a>
-                    ) : (
-                      <p className="mt-4 rounded-xl border border-slate-700 bg-[#080D22] p-3 text-sm text-slate-300">
-                        O WhatsApp deste profissional ainda
-                        não foi informado.
-                      </p>
                     )}
                   </div>
                 )}
 
                 <div className="flex items-center justify-between gap-4 border-t border-slate-800 pt-4">
-                  <p className="text-sm text-slate-500">
-                    Serviço completo
-                  </p>
-
+                  <p className="text-sm text-slate-500">Valor</p>
                   <p className="text-right text-xl font-black">
-                    {therapist.price !== null
-                      ? formatCurrency(
-                          therapist.price,
-                        )
-                      : "Sob consulta"}
+                    {selectedServicePrice !== null
+                      ? formatCurrency(selectedServicePrice)
+                      : therapist.price !== null
+                        ? formatCurrency(therapist.price)
+                        : "Sob consulta"}
                   </p>
                 </div>
               </div>
@@ -880,76 +756,46 @@ export default function PublicAppointmentPage() {
                 </p>
 
                 <h1 className="mt-4 text-3xl font-black sm:text-4xl">
-                  Sua solicitação foi recebida
+                  Seu pedido foi recebido
                 </h1>
 
                 <p className="mt-5 leading-8 text-slate-300">
-                  Enviamos sua preferência de
-                  atendimento para{" "}
-                  <strong>
-                    {therapist.name}
-                  </strong>
-                  .
+                  Sua solicitação foi registrada para{" "}
+                  <strong>{therapist.name}</strong>. Agora você pode avisar o
+                  profissional pelo WhatsApp.
                 </p>
 
+                {appointmentWhatsappUrl ? (
+                  <a
+                    href={appointmentWhatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-8 flex w-full items-center justify-center rounded-xl bg-green-600 px-7 py-4 text-lg font-black text-white transition hover:bg-green-500"
+                  >
+                    Avisar terapeuta pelo WhatsApp
+                  </a>
+                ) : (
+                  <div className="mt-8 rounded-2xl border border-slate-700 bg-[#080D22] p-5 text-left text-slate-300">
+                    O WhatsApp deste profissional ainda não está cadastrado.
+                  </div>
+                )}
+
                 <div className="mt-7 rounded-2xl bg-[#080D22] p-6 text-left">
-                  <p className="text-sm text-slate-500">
-                    Data desejada
-                  </p>
-
-                  <p className="mt-1 text-lg font-black">
-                    {displayedDate}
-                  </p>
-
-                  <p className="mt-5 text-sm text-slate-500">
-                    Horário desejado
-                  </p>
-
-                  <p className="mt-1 text-lg font-black">
-                    {displayedTime}
-                  </p>
-
-                  <p className="mt-5 text-sm text-slate-500">
-                    Modalidade
-                  </p>
-
-                  <p className="mt-1 text-lg font-black">
-                    {form.modality}
-                  </p>
-
-                  <p className="mt-5 text-sm text-slate-500">
-                    Status
-                  </p>
-
+                  <p className="text-sm text-slate-500">Status</p>
                   <p className="mt-1 font-black text-yellow-400">
-                    Aguardando resposta do terapeuta
-                  </p>
-                </div>
-
-                <div className="mt-7 rounded-2xl border border-yellow-400/20 bg-yellow-400/5 p-6 text-left">
-                  <p className="font-bold text-yellow-400">
-                    Uma pausa antes do próximo passo
-                  </p>
-
-                  <p className="mt-3 leading-7 text-slate-300">
-                    Ao compartilhar sua história, você
-                    já iniciou um movimento de cuidado.
-                    Agora permita que o encontro aconteça
-                    no tempo certo, com presença, respeito
-                    e abertura para o que sua jornada
-                    deseja revelar.
+                    Aguardando resposta do profissional
                   </p>
                 </div>
 
                 <p className="mt-6 leading-7 text-slate-400">
-                  O terapeuta poderá confirmar o horário
-                  ou sugerir uma nova possibilidade de
-                  atendimento.
+                  O profissional poderá entrar em contato para combinar os
+                  próximos passos, inclusive data, horário e modalidade quando
+                  necessário.
                 </p>
 
                 <Link
                   href={`/terapeutas/${therapist.slug}`}
-                  className="mt-8 inline-block rounded-xl bg-yellow-400 px-7 py-4 font-black text-black"
+                  className="mt-8 inline-block rounded-xl border border-slate-700 px-7 py-4 font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400"
                 >
                   Voltar ao perfil
                 </Link>
@@ -962,312 +808,220 @@ export default function PublicAppointmentPage() {
                   </p>
 
                   <h1 className="mt-4 text-3xl font-black sm:text-4xl">
-                    Encontre um momento possível para
-                    este encontro
+                    Fale com este profissional
                   </h1>
 
                   <p className="mt-4 leading-7 text-slate-300">
-                    Informe sua preferência de data e
-                    horário. O terapeuta poderá confirmar
-                    ou sugerir uma nova possibilidade.
+                    Envie seus dados de contato. O profissional receberá sua
+                    solicitação e vocês poderão combinar os detalhes do
+                    atendimento diretamente.
                   </p>
                 </div>
 
-                {hasConfiguredAvailability ? (
-                  <>
-                    <section className="mt-9">
-                      <h2 className="text-xl font-black">
-                        1. Escolha uma data disponível
-                      </h2>
-
-                      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-                        {availableDates.map(
-                          (date) => {
-                            const selected =
-                              selectedDate?.isoDate ===
-                              date.isoDate;
-
-                            return (
-                              <button
-                                key={date.isoDate}
-                                type="button"
-                                onClick={() =>
-                                  selectDate(date)
-                                }
-                                className={`rounded-2xl border p-4 text-center transition ${
-                                  selected
-                                    ? "border-yellow-400 bg-yellow-400 text-black"
-                                    : "border-slate-700 bg-[#080D22] hover:border-yellow-400"
-                                }`}
-                              >
-                                <span className="block text-xs font-black uppercase">
-                                  {date.weekDay}
-                                </span>
-
-                                <span className="mt-2 block text-2xl font-black">
-                                  {date.day}
-                                </span>
-
-                                <span className="mt-1 block text-sm font-bold uppercase">
-                                  {date.month}
-                                </span>
-                              </button>
-                            );
-                          },
-                        )}
-                      </div>
-                    </section>
-
-                    <section className="mt-9">
-                      <h2 className="text-xl font-black">
-                        2. Escolha um horário
-                      </h2>
-
-                      {!selectedDate ? (
-                        <p className="mt-4 text-slate-400">
-                          Primeiro, selecione uma data.
-                        </p>
-                      ) : (
-                        <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
-                          {availableTimes.map(
-                            (time) => (
-                              <button
-                                key={time}
-                                type="button"
-                                onClick={() =>
-                                  setSelectedTime(
-                                    time,
-                                  )
-                                }
-                                className={`rounded-xl border px-4 py-3 font-black transition ${
-                                  selectedTime ===
-                                  time
-                                    ? "border-yellow-400 bg-yellow-400 text-black"
-                                    : "border-slate-700 bg-[#080D22] hover:border-yellow-400 hover:text-yellow-400"
-                                }`}
-                              >
-                                {formatTime(time)}
-                              </button>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </section>
-                  </>
-                ) : (
-                  <div className="mt-8 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-6">
-                    <p className="font-bold text-yellow-300">
-                      A agenda automática deste
-                      profissional ainda está em
-                      configuração.
-                    </p>
-
-                    <p className="mt-3 leading-7 text-slate-300">
-                      Você já pode enviar uma preferência
-                      de dia e horário. O terapeuta
-                      receberá sua solicitação e entrará
-                      em contato para confirmar.
-                    </p>
-                  </div>
-                )}
-
                 <form
                   onSubmit={handleSubmit}
-                  className="mt-10 border-t border-slate-800 pt-9"
+                  className="mt-9 border-t border-slate-800 pt-8"
                 >
-                  <h2 className="text-xl font-black">
-                    {hasConfiguredAvailability
-                      ? "3. Informe seus dados"
-                      : "Informe sua preferência e seus dados"}
-                  </h2>
+                  {serviceFields.length > 0 && (
+                    <section className="mb-8 rounded-2xl border border-purple-400/25 bg-purple-400/5 p-5 sm:p-6">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-300">
+                        Dados necessários para o serviço
+                      </p>
 
-                  {!hasConfiguredAvailability && (
-                    <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                      <div>
-                        <label
-                          htmlFor="preferredDate"
-                          className="mb-2 block font-bold"
-                        >
-                          Data de preferência
-                        </label>
+                      <h2 className="mt-3 text-xl font-black">
+                        Preencha as informações abaixo
+                      </h2>
 
-                        <input
-                          id="preferredDate"
-                          type="date"
-                          min={dateToIso(
-                            new Date(),
-                          )}
-                          value={
-                            form.preferredDate
-                          }
-                          onChange={(event) =>
-                            updateForm(
-                              "preferredDate",
-                              event.target.value,
-                            )
-                          }
-                          required
-                          className={
-                            inputClassName
-                          }
-                        />
+                      <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                        {serviceFields.map((field) => {
+                          const answer = getAnswer(field);
+                          const options = getSelectOptions(field.options);
+                          const fullWidth =
+                            field.field_type === "textarea" || field.help_text;
+
+                          return (
+                            <div
+                              key={field.id}
+                              className={fullWidth ? "sm:col-span-2" : ""}
+                            >
+                              {field.field_type === "checkbox" ? (
+                                <label className="flex items-start gap-3 rounded-xl border border-slate-700 bg-[#080D22] p-4">
+                                  <input
+                                    type="checkbox"
+                                    checked={answer === "true"}
+                                    onChange={(event) =>
+                                      updateServiceAnswer(
+                                        field,
+                                        event.target.checked ? "true" : "",
+                                      )
+                                    }
+                                    required={field.required}
+                                    className="mt-1"
+                                  />
+
+                                  <span>
+                                    <span className="font-bold">
+                                      {field.label}
+                                      {field.required ? " *" : ""}
+                                    </span>
+
+                                    {field.help_text && (
+                                      <span className="mt-1 block text-sm leading-6 text-slate-400">
+                                        {field.help_text}
+                                      </span>
+                                    )}
+                                  </span>
+                                </label>
+                              ) : (
+                                <>
+                                  <label
+                                    htmlFor={`service-field-${field.id}`}
+                                    className="mb-2 block font-bold"
+                                  >
+                                    {field.label}
+                                    {field.required ? " *" : ""}
+                                  </label>
+
+                                  {field.field_type === "textarea" ? (
+                                    <textarea
+                                      id={`service-field-${field.id}`}
+                                      value={answer}
+                                      onChange={(event) =>
+                                        updateServiceAnswer(
+                                          field,
+                                          event.target.value,
+                                        )
+                                      }
+                                      placeholder={field.placeholder ?? undefined}
+                                      required={field.required}
+                                      rows={4}
+                                      className={`${inputClassName} resize-y`}
+                                    />
+                                  ) : field.field_type === "select" ? (
+                                    <select
+                                      id={`service-field-${field.id}`}
+                                      value={answer}
+                                      onChange={(event) =>
+                                        updateServiceAnswer(
+                                          field,
+                                          event.target.value,
+                                        )
+                                      }
+                                      required={field.required}
+                                      className={inputClassName}
+                                    >
+                                      <option value="">Selecione</option>
+                                      {options.map((option) => (
+                                        <option key={option} value={option}>
+                                          {option}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <input
+                                      id={`service-field-${field.id}`}
+                                      type={field.field_type}
+                                      value={answer}
+                                      onChange={(event) =>
+                                        updateServiceAnswer(
+                                          field,
+                                          event.target.value,
+                                        )
+                                      }
+                                      placeholder={field.placeholder ?? undefined}
+                                      required={field.required}
+                                      className={inputClassName}
+                                    />
+                                  )}
+
+                                  {field.help_text && (
+                                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                                      {field.help_text}
+                                    </p>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-
-                      <div>
-                        <label
-                          htmlFor="preferredTime"
-                          className="mb-2 block font-bold"
-                        >
-                          Horário de preferência
-                        </label>
-
-                        <input
-                          id="preferredTime"
-                          type="time"
-                          value={
-                            form.preferredTime
-                          }
-                          onChange={(event) =>
-                            updateForm(
-                              "preferredTime",
-                              event.target.value,
-                            )
-                          }
-                          required
-                          className={
-                            inputClassName
-                          }
-                        />
-                      </div>
-                    </div>
+                    </section>
                   )}
 
-                  <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                    <div className="sm:col-span-2">
-                      <label
-                        htmlFor="modality"
-                        className="mb-2 block font-bold"
-                      >
-                        Modalidade
-                      </label>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    {!hasNameField && (
+                      <div className="sm:col-span-2">
+                        <label htmlFor="name" className="mb-2 block font-bold">
+                          Nome completo
+                        </label>
+                        <input
+                          id="name"
+                          type="text"
+                          value={form.name}
+                          onChange={(event) =>
+                            updateForm("name", event.target.value)
+                          }
+                          placeholder="Seu nome"
+                          required
+                          className={inputClassName}
+                        />
+                      </div>
+                    )}
 
-                      <select
-                        id="modality"
-                        value={form.modality}
-                        onChange={(event) =>
-                          updateForm(
-                            "modality",
-                            event.target.value,
-                          )
-                        }
-                        className={inputClassName}
-                      >
-                        <option value="Online">
-                          Online
-                        </option>
+                    {!hasEmailField && (
+                      <div>
+                        <label htmlFor="email" className="mb-2 block font-bold">
+                          E-mail
+                        </label>
+                        <input
+                          id="email"
+                          type="email"
+                          value={form.email}
+                          onChange={(event) =>
+                            updateForm("email", event.target.value)
+                          }
+                          placeholder="seuemail@exemplo.com"
+                          required
+                          className={inputClassName}
+                        />
+                      </div>
+                    )}
 
-                        <option value="Presencial">
-                          Presencial
-                        </option>
-
-                        <option value="A combinar">
-                          A combinar
-                        </option>
-                      </select>
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label
-                        htmlFor="name"
-                        className="mb-2 block font-bold"
-                      >
-                        Nome completo
-                      </label>
-
-                      <input
-                        id="name"
-                        type="text"
-                        value={form.name}
-                        onChange={(event) =>
-                          updateForm(
-                            "name",
-                            event.target.value,
-                          )
-                        }
-                        placeholder="Seu nome"
-                        required
-                        className={inputClassName}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className="mb-2 block font-bold"
-                      >
-                        E-mail
-                      </label>
-
-                      <input
-                        id="email"
-                        type="email"
-                        value={form.email}
-                        onChange={(event) =>
-                          updateForm(
-                            "email",
-                            event.target.value,
-                          )
-                        }
-                        placeholder="seuemail@exemplo.com"
-                        required
-                        className={inputClassName}
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="mb-2 block font-bold"
-                      >
-                        Telefone ou WhatsApp
-                      </label>
-
-                      <input
-                        id="phone"
-                        type="tel"
-                        value={form.phone}
-                        onChange={(event) =>
-                          updateForm(
-                            "phone",
-                            event.target.value,
-                          )
-                        }
-                        placeholder="(31) 99999-9999"
-                        required
-                        className={inputClassName}
-                      />
-                    </div>
+                    {!hasPhoneField && (
+                      <div>
+                        <label htmlFor="phone" className="mb-2 block font-bold">
+                          WhatsApp
+                        </label>
+                        <input
+                          id="phone"
+                          type="tel"
+                          value={form.phone}
+                          onChange={(event) =>
+                            updateForm("phone", event.target.value)
+                          }
+                          placeholder="(31) 99999-9999"
+                          required
+                          className={inputClassName}
+                        />
+                      </div>
+                    )}
 
                     <div className="sm:col-span-2">
-                      <label
-                        htmlFor="message"
-                        className="mb-2 block font-bold"
-                      >
-                        Conte um pouco sobre o que você
-                        busca
+                      <label htmlFor="message" className="mb-2 block font-bold">
+                        Mensagem ao profissional
+                        <span className="ml-2 text-sm font-normal text-slate-500">
+                          opcional
+                        </span>
                       </label>
 
                       <textarea
                         id="message"
                         value={form.message}
                         onChange={(event) =>
-                          updateForm(
-                            "message",
-                            event.target.value,
-                          )
+                          updateForm("message", event.target.value)
                         }
-                        placeholder="Compartilhe apenas o que se sentir confortável para contar."
-                        rows={5}
+                        placeholder="Se desejar, escreva uma breve mensagem."
+                        rows={4}
                         className={`${inputClassName} resize-y`}
                       />
                     </div>
@@ -1287,15 +1041,12 @@ export default function PublicAppointmentPage() {
                     disabled={saving}
                     className="mt-7 w-full rounded-xl bg-yellow-400 px-7 py-4 text-lg font-black text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {saving
-                      ? "Enviando solicitação..."
-                      : "Solicitar atendimento"}
+                    {saving ? "Enviando solicitação..." : "Enviar solicitação"}
                   </button>
 
                   <p className="mt-4 text-center text-sm leading-6 text-slate-500">
-                    O envio não confirma automaticamente
-                    a consulta. O terapeuta poderá
-                    confirmar ou propor um novo horário.
+                    Depois do envio, você poderá avisar o profissional pelo
+                    WhatsApp.
                   </p>
                 </form>
               </>

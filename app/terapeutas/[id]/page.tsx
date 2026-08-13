@@ -34,15 +34,29 @@ type Service = {
   created_at: string;
 };
 
-async function getActiveOffersByTherapistId(
-  therapistId: number,
-): Promise<Offer[]> {
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL;
+type PublicProfileExtra = {
+  profile_id: string | null;
+  presentation_video_url: string | null;
+  professional_headline: string | null;
+};
 
+function getSupabasePublicConfig() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabasePublicKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  return {
+    supabaseUrl,
+    supabasePublicKey,
+  };
+}
+
+async function getActiveOffersByTherapistId(
+  therapistId: number,
+): Promise<Offer[]> {
+  const { supabaseUrl, supabasePublicKey } =
+    getSupabasePublicConfig();
 
   if (!supabaseUrl || !supabasePublicKey) {
     return [];
@@ -71,17 +85,12 @@ async function getActiveOffersByTherapistId(
         "Não foi possível carregar as ofertas públicas:",
         await response.text(),
       );
-
       return [];
     }
 
     return (await response.json()) as Offer[];
   } catch (error) {
-    console.error(
-      "Erro ao carregar ofertas públicas:",
-      error,
-    );
-
+    console.error("Erro ao carregar ofertas públicas:", error);
     return [];
   }
 }
@@ -93,12 +102,8 @@ async function getActiveServicesByProfileId(
     return [];
   }
 
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  const supabasePublicKey =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { supabaseUrl, supabasePublicKey } =
+    getSupabasePublicConfig();
 
   if (!supabaseUrl || !supabasePublicKey) {
     return [];
@@ -128,24 +133,67 @@ async function getActiveServicesByProfileId(
         "Não foi possível carregar os serviços públicos:",
         await response.text(),
       );
-
       return [];
     }
 
     return (await response.json()) as Service[];
   } catch (error) {
-    console.error(
-      "Erro ao carregar serviços públicos:",
-      error,
-    );
-
+    console.error("Erro ao carregar serviços públicos:", error);
     return [];
   }
 }
 
-function normalizeText(
-  value: string | null | undefined,
-) {
+async function getPublicProfileExtra(
+  slug: string,
+): Promise<PublicProfileExtra> {
+  const { supabaseUrl, supabasePublicKey } =
+    getSupabasePublicConfig();
+
+  const emptyValue: PublicProfileExtra = {
+    profile_id: null,
+    presentation_video_url: null,
+    professional_headline: null,
+  };
+
+  if (!supabaseUrl || !supabasePublicKey) {
+    return emptyValue;
+  }
+
+  const query = new URLSearchParams({
+    select: "profile_id,presentation_video_url,professional_headline",
+    slug: `eq.${slug}`,
+    active: "eq.true",
+    limit: "1",
+  });
+
+  try {
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/therapists?${query.toString()}`,
+      {
+        headers: {
+          apikey: supabasePublicKey,
+        },
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "Não foi possível carregar os dados extras do perfil:",
+        await response.text(),
+      );
+      return emptyValue;
+    }
+
+    const data = (await response.json()) as PublicProfileExtra[];
+    return data[0] ?? emptyValue;
+  } catch (error) {
+    console.error("Erro ao carregar dados extras do perfil:", error);
+    return emptyValue;
+  }
+}
+
+function normalizeText(value: string | null | undefined) {
   return (value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -200,44 +248,38 @@ function splitParagraphs(value: string) {
     .filter(Boolean);
 }
 
-function isSessionService(service: Service) {
-  const text = normalizeText(
-    `${service.category} ${service.name}`,
-  );
-
-  return (
-    text.includes("consulta") ||
-    text.includes("sessao") ||
-    text.includes("terapia") ||
-    text.includes("atendimento")
-  );
-}
-
-function isPackageOffer(offer: Offer) {
-  return normalizeText(
-    offer.offer_type,
-  ).includes("pacote");
-}
-
-function ServiceCard({
-  service,
-  therapistSlug,
-  buttonLabel,
-}: {
-  service: Service;
-  therapistSlug: string;
-  buttonLabel: string;
-}) {
-  const regularPrice = Number(service.price);
-
+function getServiceFinalPrice(service: Service) {
   const promotionalPrice =
     service.promotional_price !== null
       ? Number(service.promotional_price)
       : null;
 
+  if (
+    promotionalPrice !== null &&
+    Number.isFinite(promotionalPrice)
+  ) {
+    return promotionalPrice;
+  }
+
+  return Number(service.price);
+}
+
+function ServiceCard({
+  service,
+  therapistSlug,
+}: {
+  service: Service;
+  therapistSlug: string;
+}) {
+  const regularPrice = Number(service.price);
+  const finalPrice = getServiceFinalPrice(service);
+  const hasPromotion =
+    service.promotional_price !== null &&
+    Number.isFinite(Number(service.promotional_price));
+
   return (
-    <article className="group overflow-hidden rounded-3xl border border-slate-700 bg-[#111A33] transition hover:-translate-y-1 hover:border-yellow-400/50">
-      <div className="relative flex h-56 items-center justify-center overflow-hidden bg-[#1B2444]">
+    <article className="group overflow-hidden rounded-[28px] border border-slate-800 bg-[#10182D] shadow-xl transition hover:-translate-y-1 hover:border-yellow-400/40">
+      <div className="relative h-48 overflow-hidden bg-[#18223D]">
         {service.cover_photo_url ? (
           <img
             src={service.cover_photo_url}
@@ -245,12 +287,13 @@ function ServiceCard({
             className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="text-center">
-            <div className="text-5xl">✦</div>
-
-            <p className="mt-3 text-sm font-bold text-slate-400">
-              Atendimento AuraMeets
-            </p>
+          <div className="flex h-full items-center justify-center text-center">
+            <div>
+              <div className="text-4xl text-yellow-400">✦</div>
+              <p className="mt-3 text-sm font-bold text-slate-400">
+                Serviço AuraMeets
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -264,60 +307,45 @@ function ServiceCard({
           {service.name}
         </h3>
 
-        <p className="mt-4 leading-7 text-slate-300">
+        <p className="mt-3 line-clamp-3 leading-7 text-slate-300">
           {service.description}
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {service.online && (
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">
+            <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
               Online
             </span>
           )}
-
           {service.in_person && (
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">
+            <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
               Presencial
             </span>
           )}
-
-          <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">
-            {service.duration_minutes} minutos
-          </span>
+          {service.duration_minutes > 0 && (
+            <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
+              {service.duration_minutes} min
+            </span>
+          )}
         </div>
 
-        <div className="mt-6 border-t border-slate-700 pt-5">
-          {promotionalPrice !== null ? (
-            <>
-              <p className="text-sm font-semibold text-slate-500 line-through">
-                {formatCurrency(
-                  regularPrice,
-                  service.currency,
-                )}
-              </p>
-
-              <p className="mt-1 text-3xl font-black text-yellow-400">
-                {formatCurrency(
-                  promotionalPrice,
-                  service.currency,
-                )}
-              </p>
-            </>
-          ) : (
-            <p className="text-3xl font-black text-yellow-400">
-              {formatCurrency(
-                regularPrice,
-                service.currency,
-              )}
+        <div className="mt-6 border-t border-slate-800 pt-5">
+          {hasPromotion && (
+            <p className="text-sm font-semibold text-slate-500 line-through">
+              {formatCurrency(regularPrice, service.currency)}
             </p>
           )}
+
+          <p className="mt-1 text-3xl font-black text-yellow-400">
+            {formatCurrency(finalPrice, service.currency)}
+          </p>
         </div>
 
         <Link
           href={`/agendar/${therapistSlug}?servico=${service.id}`}
           className="mt-6 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
         >
-          {buttonLabel}
+          QUERO COMPRAR
         </Link>
       </div>
     </article>
@@ -332,115 +360,99 @@ export default async function TherapistProfilePage({
 }: PageProps) {
   const { id } = await params;
 
-  const therapist =
-    await getTherapistBySlug(id);
+  const therapist = await getTherapistBySlug(id);
 
   if (!therapist) {
     notFound();
   }
 
-  const [activeOffers, activeServices] =
-    await Promise.all([
-      getActiveOffersByTherapistId(
-        therapist.id,
-      ),
-      getActiveServicesByProfileId(
-        therapist.profile_id,
-      ),
-    ]);
+  const profileExtra = await getPublicProfileExtra(therapist.slug);
 
-  const initials = getInitials(
-    therapist.name,
-  );
+  const [activeOffers, activeServices] = await Promise.all([
+    getActiveOffersByTherapistId(therapist.id),
+    getActiveServicesByProfileId(profileExtra.profile_id),
+  ]);
 
-  const specialities =
-    splitSpecialities(
-      therapist.speciality,
-    );
+  const initials = getInitials(therapist.name);
+  const specialities = splitSpecialities(therapist.speciality);
 
   const profilePhotoUrl =
     therapist.profile_photo_url?.trim() ||
     therapist.photo_url?.trim() ||
     null;
 
-  const location = [
-    therapist.city,
-    therapist.state,
-  ]
+  const presentationVideoUrl =
+    profileExtra.presentation_video_url?.trim() || null;
+
+  const location = [therapist.city, therapist.state]
     .filter(Boolean)
     .join(" - ");
-
-  const experienceText =
-    therapist.experience ??
-    "Experiência não informada";
 
   const bioText =
     therapist.bio ??
     "Profissional cadastrado no AuraMeets, com atendimento voltado ao cuidado, escuta e desenvolvimento humano.";
 
-  const bioParagraphs =
-    splitParagraphs(bioText);
+  const bioParagraphs = splitParagraphs(bioText);
+  const shortBio = bioParagraphs.slice(0, 2);
 
-  const compatibility =
-    therapist.verified ? 95 : 85;
-
-  const normalizedName =
-    normalizeText(therapist.name);
-
-  const normalizedSlug =
-    normalizeText(therapist.slug);
+  const normalizedName = normalizeText(therapist.name);
+  const normalizedSlug = normalizeText(therapist.slug);
 
   const isOscar =
     normalizedName === "oscarahumada" ||
-    normalizedSlug.startsWith(
-      "oscarahumada",
-    );
+    normalizedSlug.startsWith("oscarahumada");
 
-  const sessionServices =
-    activeServices.filter(
-      isSessionService,
-    );
+  const featuredService =
+    activeServices.find((service) => {
+      const serviceName = normalizeText(service.name);
+      return isOscar && serviceName.includes("mapanumerologico");
+    }) ?? activeServices[0] ?? null;
 
-  const otherServices =
-    activeServices.filter(
-      (service) =>
-        !isSessionService(service),
-    );
+  const remainingServices = featuredService
+    ? activeServices.filter(
+        (service) => service.id !== featuredService.id,
+      )
+    : activeServices;
 
-  const packageOffers =
-    activeOffers.filter(
-      isPackageOffer,
-    );
+  const specialOffer = activeOffers[0] ?? null;
 
-  const otherOffers =
-    activeOffers.filter(
-      (offer) =>
-        !isPackageOffer(offer),
-    );
+  const featuredRegularPrice = featuredService
+    ? Number(featuredService.price)
+    : null;
 
-  const hasSessions =
-    sessionServices.length > 0;
+  const featuredFinalPrice = featuredService
+    ? getServiceFinalPrice(featuredService)
+    : null;
 
-  const hasServices =
-    otherServices.length > 0;
+  const featuredHasPromotion =
+    featuredService?.promotional_price !== null &&
+    featuredService?.promotional_price !== undefined &&
+    Number.isFinite(Number(featuredService.promotional_price));
 
-  const hasPackages =
-    packageOffers.length > 0;
+  const primaryPurchaseHref =
+    isOscar && featuredService
+      ? OSCAR_PAYMENT_URL
+      : featuredService
+        ? `/agendar/${therapist.slug}?servico=${featuredService.id}`
+        : `/agendar/${therapist.slug}`;
+
+  const primaryPurchaseExternal =
+    isOscar && Boolean(featuredService);
 
   return (
     <main className="min-h-screen bg-[#060B1A] text-white">
-      <section className="border-b border-slate-800 bg-[#0B1224]">
-        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+      <section className="border-b border-slate-800 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.08),_transparent_34%),#0B1224]">
+        <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12">
           <Link
             href="/terapeutas"
             className="text-sm font-bold text-slate-400 transition hover:text-yellow-400"
           >
-            ← Voltar aos terapeutas
+            ← Voltar aos profissionais
           </Link>
 
-          <div className="mt-9 grid gap-10 lg:grid-cols-[260px_1fr] lg:items-center">
-            <div className="flex justify-center lg:justify-start">
-              <div className="flex h-56 w-56 items-center justify-center overflow-hidden rounded-full border-2 border-yellow-400/50 bg-yellow-400/10 text-6xl font-black text-yellow-400 shadow-2xl">
+          <div className="mt-8 grid gap-8 lg:grid-cols-[420px_minmax(0,1fr)] lg:items-stretch">
+            <div className="overflow-hidden rounded-[32px] border border-slate-700 bg-[#111A33] shadow-2xl">
+              <div className="relative aspect-[4/5] bg-[#17213A]">
                 {profilePhotoUrl ? (
                   <img
                     src={profilePhotoUrl}
@@ -450,496 +462,278 @@ export default async function TherapistProfilePage({
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  initials
+                  <div className="flex h-full items-center justify-center text-7xl font-black text-yellow-400">
+                    {initials}
+                  </div>
                 )}
-              </div>
-            </div>
-
-            <div>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full bg-yellow-400 px-4 py-2 text-sm font-black text-slate-950">
-                  {compatibility}% compatível
-                </span>
-
-                <span className="rounded-full border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300">
-                  {experienceText}
-                </span>
 
                 {therapist.verified && (
-                  <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-300">
-                    Perfil verificado
-                  </span>
+                  <div className="absolute left-5 top-5 rounded-full border border-emerald-400/40 bg-[#07131D]/90 px-4 py-2 text-xs font-black text-emerald-300 backdrop-blur">
+                    ✓ Perfil verificado
+                  </div>
                 )}
+              </div>
 
-                {therapist.plan ===
-                  "Fundador" && (
-                  <span className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-bold text-yellow-300">
+              {presentationVideoUrl && (
+                <details className="border-t border-slate-800 bg-[#0D152A]">
+                  <summary className="cursor-pointer list-none px-6 py-5 text-center font-black text-yellow-400 transition hover:bg-yellow-400/5">
+                    ▶ ASSISTIR APRESENTAÇÃO
+                  </summary>
+
+                  <div className="border-t border-slate-800 p-4">
+                    <video
+                      controls
+                      preload="metadata"
+                      className="w-full rounded-2xl bg-black"
+                    >
+                      <source src={presentationVideoUrl} />
+                      Seu navegador não conseguiu reproduzir este vídeo.
+                    </video>
+                  </div>
+                </details>
+              )}
+            </div>
+
+            <div className="flex flex-col rounded-[32px] border border-slate-800 bg-[#0E172B]/80 p-6 shadow-2xl backdrop-blur sm:p-8 lg:p-10">
+              <div className="flex flex-wrap gap-2">
+                {therapist.plan === "Fundador" && (
+                  <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
                     Terapeuta Fundador
                   </span>
                 )}
+
+                <span className="rounded-full border border-slate-700 bg-slate-950/40 px-4 py-2 text-xs font-bold text-slate-300">
+                  {location || "Atendimento online"}
+                </span>
               </div>
 
               <h1 className="mt-6 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
                 {therapist.name}
               </h1>
 
-              <p className="mt-4 text-lg font-bold text-yellow-400 sm:text-xl">
-                {specialities.join(" • ")}
+              <p className="mt-4 text-lg font-black text-yellow-400 sm:text-xl">
+                {profileExtra.professional_headline?.trim() ||
+                  specialities.join(" • ")}
               </p>
 
-              <p className="mt-3 text-slate-400">
-                {location ||
-                  "Atendimento online"}
-              </p>
-
-              <div className="mt-6 max-w-3xl space-y-4">
-                {bioParagraphs
-                  .slice(0, 2)
-                  .map(
-                    (
-                      paragraph,
-                      index,
-                    ) => (
-                      <p
-                        key={index}
-                        className="text-lg leading-8 text-slate-300"
-                      >
-                        {paragraph}
-                      </p>
-                    ),
-                  )}
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <a
-                  href="#atendimentos"
-                  className="rounded-xl bg-yellow-400 px-7 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
-                >
-                  Escolher atendimento
-                </a>
-
-                {isOscar && (
-                  <a
-                    href={
-                      OSCAR_PAYMENT_URL
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-xl border border-yellow-400 px-7 py-4 text-center font-black text-yellow-400 transition hover:bg-yellow-400 hover:text-slate-950"
-                  >
-                    Mapa Numerológico —
-                    R$ 800,00
-                  </a>
-                )}
-
-                <Link
-                  href="/terapeutas"
-                  className="rounded-xl border border-slate-700 px-7 py-4 text-center font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400"
-                >
-                  Ver outros terapeutas
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="atendimentos"
-        className="border-b border-slate-800 bg-[#090F20]"
-      >
-        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-yellow-400">
-            Como você deseja começar?
-          </p>
-
-          <h2 className="mt-3 text-3xl font-black sm:text-4xl">
-            Escolha a experiência ideal para você
-          </h2>
-
-          <p className="mt-4 max-w-3xl leading-7 text-slate-300">
-            Conheça as opções disponíveis
-            com este profissional e escolha
-            aquela que melhor combina com
-            seu momento.
-          </p>
-
-          <div className="mt-7 grid gap-4 sm:grid-cols-3">
-            {hasSessions && (
-              <a
-                href="#sessoes"
-                className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-5 transition hover:border-yellow-400 hover:bg-yellow-400/15"
-              >
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
-                  Atendimento
-                </p>
-
-                <p className="mt-2 text-xl font-black">
-                  Sessões
-                </p>
-
-                <p className="mt-2 text-sm text-slate-400">
-                  {sessionServices.length}{" "}
-                  {sessionServices.length ===
-                  1
-                    ? "opção disponível"
-                    : "opções disponíveis"}
-                </p>
-              </a>
-            )}
-
-            {hasServices && (
-              <a
-                href="#servicos"
-                className="rounded-2xl border border-purple-400/30 bg-purple-400/10 p-5 transition hover:border-purple-300 hover:bg-purple-400/15"
-              >
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-purple-300">
-                  Experiências
-                </p>
-
-                <p className="mt-2 text-xl font-black">
-                  Serviços
-                </p>
-
-                <p className="mt-2 text-sm text-slate-400">
-                  {otherServices.length}{" "}
-                  {otherServices.length ===
-                  1
-                    ? "opção disponível"
-                    : "opções disponíveis"}
-                </p>
-              </a>
-            )}
-
-            {hasPackages && (
-              <a
-                href="#pacotes"
-                className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 transition hover:border-emerald-300 hover:bg-emerald-400/15"
-              >
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
-                  Mais vantagens
-                </p>
-
-                <p className="mt-2 text-xl font-black">
-                  Pacotes
-                </p>
-
-                <p className="mt-2 text-sm text-slate-400">
-                  {packageOffers.length}{" "}
-                  {packageOffers.length === 1
-                    ? "pacote disponível"
-                    : "pacotes disponíveis"}
-                </p>
-              </a>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1fr_330px]">
-        <div className="space-y-10">
-          {hasSessions && (
-            <section id="sessoes">
-              <div className="mb-6">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
-                  Sessões
-                </p>
-
-                <h2 className="mt-3 text-3xl font-black">
-                  Atendimentos individuais
-                </h2>
-
-                <p className="mt-3 leading-7 text-slate-400">
-                  Escolha uma sessão e
-                  solicite seu atendimento
-                  diretamente com o
-                  profissional.
-                </p>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                {sessionServices.map(
-                  (service) => (
-                    <ServiceCard
-                      key={service.id}
-                      service={service}
-                      therapistSlug={
-                        therapist.slug
-                      }
-                      buttonLabel="Agendar sessão"
-                    />
-                  ),
-                )}
-              </div>
-            </section>
-          )}
-
-          {hasServices && (
-            <section id="servicos">
-              <div className="mb-6">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-purple-300">
-                  Serviços
-                </p>
-
-                <h2 className="mt-3 text-3xl font-black">
-                  Experiências e entregas
-                </h2>
-
-                <p className="mt-3 leading-7 text-slate-400">
-                  Serviços personalizados
-                  desenvolvidos para
-                  diferentes necessidades e
-                  momentos.
-                </p>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                {otherServices.map(
-                  (service) => (
-                    <ServiceCard
-                      key={service.id}
-                      service={service}
-                      therapistSlug={
-                        therapist.slug
-                      }
-                      buttonLabel="Quero este serviço"
-                    />
-                  ),
-                )}
-              </div>
-            </section>
-          )}
-
-          {hasPackages && (
-            <section id="pacotes">
-              <div className="mb-6">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-300">
-                  Pacotes
-                </p>
-
-                <h2 className="mt-3 text-3xl font-black">
-                  Acompanhamentos especiais
-                </h2>
-
-                <p className="mt-3 leading-7 text-slate-400">
-                  Opções para quem deseja
-                  aprofundar o processo e
-                  realizar mais de um
-                  atendimento.
-                </p>
-              </div>
-
-              <div className="grid gap-5 md:grid-cols-2">
-                {packageOffers.map(
-                  (offer) => (
-                    <article
-                      key={offer.id}
-                      className="rounded-3xl border border-emerald-400/30 bg-emerald-400/5 p-6"
-                    >
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">
-                        Pacote
-                      </p>
-
-                      <h3 className="mt-3 text-2xl font-black">
-                        {offer.title}
-                      </h3>
-
-                      {offer.offer_price !==
-                        null && (
-                        <p className="mt-5 text-3xl font-black text-yellow-400">
-                          {formatCurrency(
-                            offer.offer_price,
-                          )}
-                        </p>
-                      )}
-
-                      <Link
-                        href={`/agendar/${therapist.slug}?oferta=${offer.id}`}
-                        className="mt-6 block rounded-xl bg-emerald-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-emerald-300"
-                      >
-                        Escolher pacote
-                      </Link>
-                    </article>
-                  ),
-                )}
-              </div>
-            </section>
-          )}
-
-          {otherOffers.length > 0 && (
-            <section>
-              <div className="mb-6">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
-                  Oportunidades
-                </p>
-
-                <h2 className="mt-3 text-3xl font-black">
-                  Ofertas disponíveis
-                </h2>
-              </div>
-
-              <div className="grid gap-5 md:grid-cols-2">
-                {otherOffers.map(
-                  (offer) => (
-                    <article
-                      key={offer.id}
-                      className="rounded-3xl border border-yellow-400/25 bg-yellow-400/5 p-6"
-                    >
-                      <h3 className="text-2xl font-black">
-                        {offer.title}
-                      </h3>
-
-                      {offer.offer_price !==
-                        null && (
-                        <p className="mt-4 text-3xl font-black text-yellow-400">
-                          {formatCurrency(
-                            offer.offer_price,
-                          )}
-                        </p>
-                      )}
-
-                      <Link
-                        href={`/agendar/${therapist.slug}?oferta=${offer.id}`}
-                        className="mt-6 block rounded-xl border border-yellow-400 px-6 py-4 text-center font-black text-yellow-400 transition hover:bg-yellow-400 hover:text-slate-950"
-                      >
-                        Ver opção
-                      </Link>
-                    </article>
-                  ),
-                )}
-              </div>
-            </section>
-          )}
-
-          <section className="rounded-3xl border border-slate-800 bg-[#111A33] p-6 sm:p-8">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
-              Sobre o profissional
-            </p>
-
-            <h2 className="mt-4 text-3xl font-black">
-              Conheça melhor{" "}
-              {therapist.name}
-            </h2>
-
-            <div className="mt-7 max-w-3xl space-y-6">
-              {bioParagraphs.map(
-                (paragraph, index) => (
+              <div className="mt-5 max-w-3xl space-y-3">
+                {shortBio.map((paragraph, index) => (
                   <p
                     key={index}
-                    className="text-lg leading-8 text-slate-300"
+                    className="text-base leading-7 text-slate-300 sm:text-lg sm:leading-8"
                   >
                     {paragraph}
                   </p>
-                ),
-              )}
-            </div>
-          </section>
+                ))}
+              </div>
 
-          <section className="rounded-3xl border border-slate-800 bg-[#111A33] p-6 sm:p-8">
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link
+                  href={`/agendar/${therapist.slug}`}
+                  className="rounded-xl border border-slate-600 px-6 py-4 text-center font-black text-white transition hover:border-yellow-400 hover:text-yellow-400"
+                >
+                  SOLICITAR ATENDIMENTO
+                </Link>
+
+                {therapist.instagram && (
+                  <a
+                    href={therapist.instagram}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-xl border border-slate-700 px-6 py-4 text-center font-bold text-slate-300 transition hover:border-yellow-400 hover:text-yellow-400"
+                  >
+                    INSTAGRAM
+                  </a>
+                )}
+              </div>
+
+              <div className="mt-8 rounded-[28px] border border-yellow-400/30 bg-[linear-gradient(135deg,rgba(250,204,21,0.11),rgba(168,85,247,0.08))] p-6 sm:p-7">
+                <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+                      Serviço em destaque
+                    </p>
+
+                    <h2 className="mt-3 text-2xl font-black sm:text-3xl">
+                      {featuredService?.name ||
+                        "Atendimento personalizado"}
+                    </h2>
+
+                    {featuredService?.description && (
+                      <p className="mt-3 line-clamp-3 leading-7 text-slate-300">
+                        {featuredService.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="min-w-[210px] xl:text-right">
+                    {featuredService &&
+                      featuredHasPromotion &&
+                      featuredRegularPrice !== null && (
+                        <p className="text-sm font-semibold text-slate-500 line-through">
+                          {formatCurrency(
+                            featuredRegularPrice,
+                            featuredService.currency,
+                          )}
+                        </p>
+                      )}
+
+                    {featuredService &&
+                      featuredFinalPrice !== null && (
+                        <p className="mt-1 text-3xl font-black text-yellow-400">
+                          {formatCurrency(
+                            featuredFinalPrice,
+                            featuredService.currency,
+                          )}
+                        </p>
+                      )}
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {primaryPurchaseExternal ? (
+                    <a
+                      href={primaryPurchaseHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+                    >
+                      QUERO COMPRAR
+                    </a>
+                  ) : (
+                    <Link
+                      href={primaryPurchaseHref}
+                      className="rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+                    >
+                      QUERO COMPRAR
+                    </Link>
+                  )}
+
+                  {specialOffer && (
+                    <Link
+                      href={`/agendar/${therapist.slug}?oferta=${specialOffer.id}`}
+                      className="rounded-xl border border-purple-400 bg-purple-400/10 px-6 py-4 text-center font-black text-purple-200 transition hover:bg-purple-400 hover:text-slate-950"
+                    >
+                      PROMOÇÃO ESPECIAL
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
+        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
+              Atendimentos e serviços
+            </p>
+            <h2 className="mt-3 text-3xl font-black sm:text-4xl">
+              Escolha o que faz sentido para você
+            </h2>
+          </div>
+
+          <p className="max-w-xl leading-7 text-slate-400 sm:text-right">
+            Conheça as opções disponíveis e siga diretamente para a solicitação ou compra.
+          </p>
+        </div>
+
+        {remainingServices.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {remainingServices.map((service) => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                therapistSlug={therapist.slug}
+              />
+            ))}
+          </div>
+        ) : featuredService ? (
+          <div className="rounded-3xl border border-slate-800 bg-[#10182D] p-6 text-slate-300">
+            O serviço principal está destacado acima.
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-700 bg-[#10182D] p-8 text-center">
+            <p className="text-lg font-bold text-slate-300">
+              Este profissional ainda não publicou serviços.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section className="border-y border-slate-800 bg-[#090F20]">
+        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1.25fr_0.75fr]">
+          <article className="rounded-[28px] border border-slate-800 bg-[#111A33] p-6 sm:p-8">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
+              Sobre
+            </p>
+
+            <h2 className="mt-4 text-3xl font-black">
+              Conheça {therapist.name}
+            </h2>
+
+            <div className="mt-6 space-y-5">
+              {bioParagraphs.map((paragraph, index) => (
+                <p
+                  key={index}
+                  className="text-lg leading-8 text-slate-300"
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </article>
+
+          <article className="rounded-[28px] border border-slate-800 bg-[#111A33] p-6 sm:p-8">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
               Especialidades
             </p>
 
             <h2 className="mt-4 text-3xl font-black">
-              Como este profissional pode ajudar
+              Áreas de atuação
             </h2>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {specialities.map(
-                (speciality) => (
-                  <div
-                    key={speciality}
-                    className="rounded-2xl border border-slate-700 bg-slate-950/40 p-5"
-                  >
-                    <span className="font-bold text-yellow-400">
-                      ✓
-                    </span>
-
-                    <p className="mt-3 text-lg font-black">
-                      {speciality}
-                    </p>
-                  </div>
-                ),
-              )}
+            <div className="mt-6 flex flex-wrap gap-3">
+              {specialities.map((speciality) => (
+                <span
+                  key={speciality}
+                  className="rounded-full border border-yellow-400/20 bg-yellow-400/5 px-4 py-3 font-bold text-slate-200"
+                >
+                  {speciality}
+                </span>
+              ))}
             </div>
-          </section>
+
+            <Link
+              href={`/agendar/${therapist.slug}`}
+              className="mt-8 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+            >
+              FALAR COM O PROFISSIONAL
+            </Link>
+          </article>
         </div>
+      </section>
 
-        <aside className="h-fit rounded-3xl border border-yellow-400/20 bg-yellow-400/5 p-6 lg:sticky lg:top-8">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
-            Próximo passo
-          </p>
-
-          <h2 className="mt-4 text-2xl font-black">
-            Encontre o atendimento ideal
-          </h2>
-
-          <p className="mt-4 leading-7 text-slate-300">
-            Escolha entre as opções
-            disponíveis ou solicite um
-            horário diretamente ao
-            profissional.
-          </p>
-
-          <a
-            href="#atendimentos"
-            className="mt-7 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
-          >
-            Ver atendimentos
-          </a>
+      <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+        <div className="flex flex-col items-center justify-between gap-4 rounded-[28px] border border-yellow-400/20 bg-yellow-400/5 p-6 text-center sm:flex-row sm:text-left">
+          <div>
+            <p className="text-xl font-black">
+              Este profissional fez sentido para você?
+            </p>
+            <p className="mt-2 text-slate-400">
+              Envie uma solicitação e combine os próximos passos diretamente.
+            </p>
+          </div>
 
           <Link
             href={`/agendar/${therapist.slug}`}
-            className="mt-3 block rounded-xl border border-slate-700 px-6 py-4 text-center font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400"
+            className="w-full rounded-xl bg-yellow-400 px-7 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300 sm:w-auto"
           >
-            Solicitar horário
+            SOLICITAR ATENDIMENTO
           </Link>
-
-          {isOscar && (
-            <a
-              href={OSCAR_PAYMENT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 block rounded-xl border border-yellow-400 px-6 py-4 text-center font-black text-yellow-400 transition hover:bg-yellow-400 hover:text-slate-950"
-            >
-              Mapa Numerológico
-              <span className="mt-1 block text-sm">
-                R$ 800,00
-              </span>
-            </a>
-          )}
-
-          {therapist.instagram && (
-            <a
-              href={therapist.instagram}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 block rounded-xl border border-slate-700 px-6 py-4 text-center font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400"
-            >
-              Ver Instagram
-            </a>
-          )}
-
-          {therapist.website && (
-            <a
-              href={therapist.website}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 block rounded-xl border border-slate-700 px-6 py-4 text-center font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400"
-            >
-              Visitar site
-            </a>
-          )}
-
-          <div className="mt-6 border-t border-yellow-400/15 pt-5">
-            <p className="text-sm leading-6 text-slate-400">
-              Atendimento realizado
-              diretamente com o
-              profissional cadastrado no
-              AuraMeets.
-            </p>
-          </div>
-        </aside>
+        </div>
       </section>
     </main>
   );
