@@ -40,11 +40,11 @@ async function getActiveOffersByTherapistId(
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabasePublicKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabasePublicKey) {
     return [];
   }
 
@@ -60,8 +60,7 @@ async function getActiveOffersByTherapistId(
       `${supabaseUrl}/rest/v1/offers?${query.toString()}`,
       {
         headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
+          apikey: supabasePublicKey,
         },
         cache: "no-store",
       },
@@ -97,10 +96,11 @@ async function getActiveServicesByProfileId(
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  const supabaseAnonKey =
+  const supabasePublicKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl || !supabasePublicKey) {
     return [];
   }
 
@@ -117,8 +117,7 @@ async function getActiveServicesByProfileId(
       `${supabaseUrl}/rest/v1/services?${query.toString()}`,
       {
         headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
+          apikey: supabasePublicKey,
         },
         cache: "no-store",
       },
