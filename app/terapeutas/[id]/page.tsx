@@ -38,6 +38,14 @@ type PublicProfileExtra = {
   profile_id: string | null;
   presentation_video_url: string | null;
   professional_headline: string | null;
+  phone: string | null;
+  promotion_active: boolean | null;
+  promotion_title: string | null;
+  promotion_description: string | null;
+  promotion_price: number | string | null;
+  promotion_url: string | null;
+  promotion_starts_at: string | null;
+  promotion_ends_at: string | null;
 };
 
 function getSupabasePublicConfig() {
@@ -153,6 +161,14 @@ async function getPublicProfileExtra(
     profile_id: null,
     presentation_video_url: null,
     professional_headline: null,
+    phone: null,
+    promotion_active: false,
+    promotion_title: null,
+    promotion_description: null,
+    promotion_price: null,
+    promotion_url: null,
+    promotion_starts_at: null,
+    promotion_ends_at: null,
   };
 
   if (!supabaseUrl || !supabasePublicKey) {
@@ -160,7 +176,7 @@ async function getPublicProfileExtra(
   }
 
   const query = new URLSearchParams({
-    select: "profile_id,presentation_video_url,professional_headline",
+    select: "profile_id,presentation_video_url,professional_headline,phone,promotion_active,promotion_title,promotion_description,promotion_price,promotion_url,promotion_starts_at,promotion_ends_at",
     slug: `eq.${slug}`,
     active: "eq.true",
     limit: "1",
@@ -266,10 +282,12 @@ function getServiceFinalPrice(service: Service) {
 
 function ServiceCard({
   service,
-  therapistSlug,
+  therapistName,
+  whatsappNumber,
 }: {
   service: Service;
-  therapistSlug: string;
+  therapistName: string;
+  whatsappNumber: string;
 }) {
   const regularPrice = Number(service.price);
   const finalPrice = getServiceFinalPrice(service);
@@ -341,19 +359,26 @@ function ServiceCard({
           </p>
         </div>
 
-        <Link
-          href={`/agendar/${therapistSlug}?servico=${service.id}`}
-          className="mt-6 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
-        >
-          QUERO COMPRAR
-        </Link>
+        {whatsappNumber ? (
+          <a
+            href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+              `Olá, ${therapistName}! Vi no AuraMeets o serviço ${service.name} e quero comprar ou saber mais.`,
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+          >
+            QUERO COMPRAR
+          </a>
+        ) : (
+          <div className="mt-6 rounded-xl border border-slate-700 px-6 py-4 text-center font-bold text-slate-500">
+            WhatsApp não cadastrado
+          </div>
+        )}
       </div>
     </article>
   );
 }
-
-const OSCAR_PAYMENT_URL =
-  "https://link.infinitepay.io/oscar_jose_ahumada_/Ri0x-hKKpl4Pa7W-800,00";
 
 export default async function TherapistProfilePage({
   params,
@@ -395,49 +420,33 @@ export default async function TherapistProfilePage({
   const bioParagraphs = splitParagraphs(bioText);
   const shortBio = bioParagraphs.slice(0, 2);
 
-  const normalizedName = normalizeText(therapist.name);
-  const normalizedSlug = normalizeText(therapist.slug);
-
-  const isOscar =
-    normalizedName === "oscarahumada" ||
-    normalizedSlug.startsWith("oscarahumada");
-
-  const featuredService =
-    activeServices.find((service) => {
-      const serviceName = normalizeText(service.name);
-      return isOscar && serviceName.includes("mapanumerologico");
-    }) ?? activeServices[0] ?? null;
+  const featuredService = activeServices[0] ?? null;
 
   const remainingServices = featuredService
-    ? activeServices.filter(
-        (service) => service.id !== featuredService.id,
-      )
+    ? activeServices.filter((service) => service.id !== featuredService.id)
     : activeServices;
 
-  const specialOffer = activeOffers[0] ?? null;
-
-  const featuredRegularPrice = featuredService
-    ? Number(featuredService.price)
+  const whatsappNumber = (profileExtra.phone ?? "").replace(/\D/g, "");
+  const whatsappMessage = featuredService
+    ? `Olá, ${therapist.name}! Vi seu perfil no AuraMeets e quero comprar ou saber mais sobre ${featuredService.name}.`
+    : `Olá, ${therapist.name}! Vi seu perfil no AuraMeets e quero conhecer seus atendimentos.`;
+  const whatsappHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`
     : null;
 
-  const featuredFinalPrice = featuredService
-    ? getServiceFinalPrice(featuredService)
+  const now = new Date();
+  const startsAt = profileExtra.promotion_starts_at
+    ? new Date(profileExtra.promotion_starts_at)
     : null;
-
-  const featuredHasPromotion =
-    featuredService?.promotional_price !== null &&
-    featuredService?.promotional_price !== undefined &&
-    Number.isFinite(Number(featuredService.promotional_price));
-
-  const primaryPurchaseHref =
-    isOscar && featuredService
-      ? OSCAR_PAYMENT_URL
-      : featuredService
-        ? `/agendar/${therapist.slug}?servico=${featuredService.id}`
-        : `/agendar/${therapist.slug}`;
-
-  const primaryPurchaseExternal =
-    isOscar && Boolean(featuredService);
+  const endsAt = profileExtra.promotion_ends_at
+    ? new Date(profileExtra.promotion_ends_at)
+    : null;
+  const promotionIsInPeriod =
+    (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now);
+  const hasActivePromotion =
+    Boolean(profileExtra.promotion_active) && promotionIsInPeriod;
+  const promotionHref =
+    profileExtra.promotion_url?.trim() || `/promocao/${therapist.slug}`;
 
   return (
     <main className="min-h-screen bg-[#060B1A] text-white">
@@ -450,7 +459,79 @@ export default async function TherapistProfilePage({
             ← Voltar aos profissionais
           </Link>
 
-          <div className="mt-8 grid gap-8 lg:grid-cols-[420px_minmax(0,1fr)] lg:items-stretch">
+          <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-stretch">
+            <div className="flex flex-col justify-center rounded-[32px] border border-slate-800 bg-[#0E172B]/80 p-6 shadow-2xl backdrop-blur sm:p-8 lg:p-10">
+              <div className="flex flex-wrap gap-2">
+                {therapist.plan === "Fundador" && (
+                  <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
+                    Terapeuta Fundador
+                  </span>
+                )}
+
+                {therapist.verified && (
+                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-xs font-black text-emerald-300">
+                    ✓ Perfil verificado
+                  </span>
+                )}
+
+                <span className="rounded-full border border-slate-700 bg-slate-950/40 px-4 py-2 text-xs font-bold text-slate-300">
+                  {location || "Atendimento online"}
+                </span>
+              </div>
+
+              <h1 className="mt-6 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
+                {therapist.name}
+              </h1>
+
+              <p className="mt-4 text-lg font-black text-yellow-400 sm:text-xl">
+                {profileExtra.professional_headline?.trim() ||
+                  specialities.join(" • ")}
+              </p>
+
+              <div className="mt-6 max-w-3xl space-y-3">
+                {shortBio.map((paragraph, index) => (
+                  <p
+                    key={index}
+                    className="text-base leading-7 text-slate-300 sm:text-lg sm:leading-8"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                {whatsappHref ? (
+                  <a
+                    href={whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+                  >
+                    QUERO COMPRAR
+                  </a>
+                ) : (
+                  <div className="rounded-xl border border-slate-700 px-6 py-4 text-center font-bold text-slate-500">
+                    WhatsApp não cadastrado
+                  </div>
+                )}
+
+                {hasActivePromotion && (
+                  <Link
+                    href={promotionHref}
+                    className="rounded-xl border border-purple-400 bg-purple-400/10 px-6 py-4 text-center font-black text-purple-200 transition hover:bg-purple-400 hover:text-slate-950"
+                  >
+                    PROMOÇÃO ESPECIAL
+                  </Link>
+                )}
+              </div>
+
+              {hasActivePromotion && profileExtra.promotion_title && (
+                <p className="mt-4 text-sm font-semibold text-purple-200">
+                  {profileExtra.promotion_title}
+                </p>
+              )}
+            </div>
+
             <div className="overflow-hidden rounded-[32px] border border-slate-700 bg-[#111A33] shadow-2xl">
               <div className="relative aspect-[4/5] bg-[#17213A]">
                 {profilePhotoUrl ? (
@@ -464,12 +545,6 @@ export default async function TherapistProfilePage({
                 ) : (
                   <div className="flex h-full items-center justify-center text-7xl font-black text-yellow-400">
                     {initials}
-                  </div>
-                )}
-
-                {therapist.verified && (
-                  <div className="absolute left-5 top-5 rounded-full border border-emerald-400/40 bg-[#07131D]/90 px-4 py-2 text-xs font-black text-emerald-300 backdrop-blur">
-                    ✓ Perfil verificado
                   </div>
                 )}
               </div>
@@ -492,133 +567,6 @@ export default async function TherapistProfilePage({
                   </div>
                 </details>
               )}
-            </div>
-
-            <div className="flex flex-col rounded-[32px] border border-slate-800 bg-[#0E172B]/80 p-6 shadow-2xl backdrop-blur sm:p-8 lg:p-10">
-              <div className="flex flex-wrap gap-2">
-                {therapist.plan === "Fundador" && (
-                  <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-2 text-xs font-black text-yellow-300">
-                    Terapeuta Fundador
-                  </span>
-                )}
-
-                <span className="rounded-full border border-slate-700 bg-slate-950/40 px-4 py-2 text-xs font-bold text-slate-300">
-                  {location || "Atendimento online"}
-                </span>
-              </div>
-
-              <h1 className="mt-6 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                {therapist.name}
-              </h1>
-
-              <p className="mt-4 text-lg font-black text-yellow-400 sm:text-xl">
-                {profileExtra.professional_headline?.trim() ||
-                  specialities.join(" • ")}
-              </p>
-
-              <div className="mt-5 max-w-3xl space-y-3">
-                {shortBio.map((paragraph, index) => (
-                  <p
-                    key={index}
-                    className="text-base leading-7 text-slate-300 sm:text-lg sm:leading-8"
-                  >
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
-
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link
-                  href={`/agendar/${therapist.slug}`}
-                  className="rounded-xl border border-slate-600 px-6 py-4 text-center font-black text-white transition hover:border-yellow-400 hover:text-yellow-400"
-                >
-                  SOLICITAR ATENDIMENTO
-                </Link>
-
-                {therapist.instagram && (
-                  <a
-                    href={therapist.instagram}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-xl border border-slate-700 px-6 py-4 text-center font-bold text-slate-300 transition hover:border-yellow-400 hover:text-yellow-400"
-                  >
-                    INSTAGRAM
-                  </a>
-                )}
-              </div>
-
-              <div className="mt-8 rounded-[28px] border border-yellow-400/30 bg-[linear-gradient(135deg,rgba(250,204,21,0.11),rgba(168,85,247,0.08))] p-6 sm:p-7">
-                <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-                  <div className="max-w-2xl">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
-                      Serviço em destaque
-                    </p>
-
-                    <h2 className="mt-3 text-2xl font-black sm:text-3xl">
-                      {featuredService?.name ||
-                        "Atendimento personalizado"}
-                    </h2>
-
-                    {featuredService?.description && (
-                      <p className="mt-3 line-clamp-3 leading-7 text-slate-300">
-                        {featuredService.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="min-w-[210px] xl:text-right">
-                    {featuredService &&
-                      featuredHasPromotion &&
-                      featuredRegularPrice !== null && (
-                        <p className="text-sm font-semibold text-slate-500 line-through">
-                          {formatCurrency(
-                            featuredRegularPrice,
-                            featuredService.currency,
-                          )}
-                        </p>
-                      )}
-
-                    {featuredService &&
-                      featuredFinalPrice !== null && (
-                        <p className="mt-1 text-3xl font-black text-yellow-400">
-                          {formatCurrency(
-                            featuredFinalPrice,
-                            featuredService.currency,
-                          )}
-                        </p>
-                      )}
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {primaryPurchaseExternal ? (
-                    <a
-                      href={primaryPurchaseHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
-                    >
-                      QUERO COMPRAR
-                    </a>
-                  ) : (
-                    <Link
-                      href={primaryPurchaseHref}
-                      className="rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
-                    >
-                      QUERO COMPRAR
-                    </Link>
-                  )}
-
-                  {specialOffer && (
-                    <Link
-                      href={`/agendar/${therapist.slug}?oferta=${specialOffer.id}`}
-                      className="rounded-xl border border-purple-400 bg-purple-400/10 px-6 py-4 text-center font-black text-purple-200 transition hover:bg-purple-400 hover:text-slate-950"
-                    >
-                      PROMOÇÃO ESPECIAL
-                    </Link>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -646,7 +594,8 @@ export default async function TherapistProfilePage({
               <ServiceCard
                 key={service.id}
                 service={service}
-                therapistSlug={therapist.slug}
+                therapistName={therapist.name}
+                whatsappNumber={whatsappNumber}
               />
             ))}
           </div>
@@ -706,12 +655,16 @@ export default async function TherapistProfilePage({
               ))}
             </div>
 
-            <Link
-              href={`/agendar/${therapist.slug}`}
-              className="mt-8 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
-            >
-              FALAR COM O PROFISSIONAL
-            </Link>
+            {whatsappHref && (
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+              >
+                FALAR COM O PROFISSIONAL
+              </a>
+            )}
           </article>
         </div>
       </section>
@@ -727,12 +680,16 @@ export default async function TherapistProfilePage({
             </p>
           </div>
 
-          <Link
-            href={`/agendar/${therapist.slug}`}
-            className="w-full rounded-xl bg-yellow-400 px-7 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300 sm:w-auto"
-          >
-            SOLICITAR ATENDIMENTO
-          </Link>
+          {whatsappHref && (
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full rounded-xl bg-yellow-400 px-7 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300 sm:w-auto"
+            >
+              FALAR NO WHATSAPP
+            </a>
+          )}
         </div>
       </section>
     </main>
