@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 
 export type SupabaseTherapist = {
   id: number;
+  profile_id: string | null;
   name: string;
   email: string | null;
   phone: string | null;
@@ -70,6 +71,7 @@ export async function getActiveTherapists(): Promise<
     .from("therapists")
     .select(`
       id,
+      profile_id,
       name,
       email,
       phone,
@@ -121,6 +123,7 @@ export async function getTherapistBySlug(
     .from("therapists")
     .select(`
       id,
+      profile_id,
       name,
       email,
       phone,
