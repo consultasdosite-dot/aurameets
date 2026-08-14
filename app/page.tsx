@@ -249,7 +249,7 @@ export default function HomePage() {
       </header>
 
       {/* ENTRADA PRINCIPAL */}
-      <section className="relative overflow-hidden bg-[#15101b] px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24">
+      <section className="relative overflow-hidden bg-[#15101b] px-5 py-7 sm:px-8 sm:py-12 lg:px-12 lg:py-16">
         <picture className="absolute inset-0 block">
           <source
             media="(max-width: 767px)"
@@ -262,45 +262,51 @@ export default function HomePage() {
           />
         </picture>
 
-        <div className="absolute inset-0 bg-gradient-to-r from-[#100b18]/78 via-[#100b18]/44 to-[#100b18]/12" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#100b18]/38 via-transparent to-[#100b18]/8" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#100b18]/82 via-[#100b18]/48 to-[#100b18]/16" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#100b18]/42 via-transparent to-[#100b18]/10" />
 
         <div className="relative z-20 mx-auto max-w-[1180px]">
           <div className="mx-auto max-w-[820px] text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.13em] text-white backdrop-blur-sm sm:px-4 sm:py-2 sm:text-xs">
               <span className="h-2 w-2 rounded-full bg-[#d8b8f2]" />
               Bem-vindo ao AuraMeets
             </div>
 
-            <h1 className="mt-6 text-[39px] font-black leading-[1.04] tracking-[-0.045em] text-white sm:text-[50px] lg:text-[60px]">
+            <h1 className="mt-3 text-[31px] font-black leading-[1.04] tracking-[-0.045em] text-white sm:mt-5 sm:text-[46px] lg:text-[56px]">
               Seu caminho começa com uma escolha simples.
             </h1>
 
-            <p className="mx-auto mt-6 max-w-[700px] text-[17px] font-medium leading-8 text-white/88 lg:text-[19px]">
+            <p className="mx-auto mt-3 max-w-[680px] text-[14px] font-medium leading-6 text-white/88 sm:mt-5 sm:text-[16px] sm:leading-7 lg:text-[18px]">
               Diga como você chega ao AuraMeets e nós conduzimos os próximos passos.
-              Sem menus complicados e sem precisar descobrir sozinho por onde começar.
             </p>
           </div>
 
-          <div className="mx-auto mt-10 grid max-w-[920px] gap-5 md:grid-cols-2">
+          <div className="mx-auto mt-5 grid max-w-[920px] gap-3 sm:mt-7 sm:gap-4 md:grid-cols-2">
             <Link
               href="/quero-ser-acolhido"
-              className="group rounded-[26px] border border-white/20 bg-white p-7 text-left shadow-[0_18px_45px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 sm:p-8"
+              className="group rounded-[20px] border border-white/20 bg-white p-4 text-left shadow-[0_14px_34px_rgba(0,0,0,0.20)] transition hover:-translate-y-1 sm:rounded-[24px] sm:p-6"
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#8d4dc2] to-[#62259d] text-white shadow-lg">
-                <UserIcon className="h-9 w-9" />
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8d4dc2] to-[#62259d] text-white shadow-lg sm:h-[52px] sm:w-[52px]">
+                  <UserIcon className="h-6 w-6 sm:h-7 sm:w-7" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#7541ad] sm:text-[11px]">
+                    Para quem busca cuidado
+                  </p>
+
+                  <h2 className="mt-0.5 text-[22px] font-black tracking-[-0.035em] text-[#101d3b] sm:text-[25px]">
+                    Sou Visitante
+                  </h2>
+                </div>
               </div>
-              <p className="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-[#7541ad]">
-                Para quem busca cuidado
+
+              <p className="mt-3 text-[13px] font-medium leading-5 text-[#536078] sm:text-[14px] sm:leading-6">
+                Encontre acolhimento, experiências e profissionais para o seu momento.
               </p>
-              <h2 className="mt-2 text-[29px] font-black tracking-[-0.035em] text-[#101d3b]">
-                Sou Visitante
-              </h2>
-              <p className="mt-3 text-[15px] font-medium leading-7 text-[#536078]">
-                Faça seu cadastro rápido e comece sua jornada. Depois você terá acesso às
-                Experiências Presente, Fala Sistêmica e aos terapeutas do AuraMeets.
-              </p>
-              <span className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#7e46b9] to-[#542c91] px-5 text-sm font-black uppercase tracking-[0.04em] text-white shadow-md">
+
+              <span className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7e46b9] to-[#542c91] px-4 text-[12px] font-black uppercase tracking-[0.03em] text-white shadow-md sm:min-h-[48px] sm:text-sm">
                 Começar minha jornada
                 <ArrowIcon className="h-4 w-4 transition group-hover:translate-x-1" />
               </span>
@@ -308,30 +314,37 @@ export default function HomePage() {
 
             <Link
               href="/cadastro-fundador"
-              className="group rounded-[26px] border border-[#ead9b2] bg-[#fffaf0] p-7 text-left shadow-[0_18px_45px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 sm:p-8"
+              className="group rounded-[20px] border border-[#ead9b2] bg-[#fffaf0] p-4 text-left shadow-[0_14px_34px_rgba(0,0,0,0.16)] transition hover:-translate-y-1 sm:rounded-[24px] sm:p-6"
             >
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#ffc246] to-[#eda41d] text-white shadow-lg">
-                <HandsHeartIcon className="h-10 w-10" />
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#ffc246] to-[#eda41d] text-white shadow-lg sm:h-[52px] sm:w-[52px]">
+                  <HandsHeartIcon className="h-7 w-7 sm:h-8 sm:w-8" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[#9b6107] sm:text-[11px]">
+                    Para profissionais
+                  </p>
+
+                  <h2 className="mt-0.5 text-[22px] font-black tracking-[-0.035em] text-[#101d3b] sm:text-[25px]">
+                    Sou Terapeuta
+                  </h2>
+                </div>
               </div>
-              <p className="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-[#9b6107]">
-                Para profissionais
+
+              <p className="mt-3 text-[13px] font-medium leading-5 text-[#536078] sm:text-[14px] sm:leading-6">
+                Crie seu perfil profissional e apresente seu trabalho a novos clientes.
               </p>
-              <h2 className="mt-2 text-[29px] font-black tracking-[-0.035em] text-[#101d3b]">
-                Sou Terapeuta
-              </h2>
-              <p className="mt-3 text-[15px] font-medium leading-7 text-[#536078]">
-                Cadastre-se como terapeuta fundador, apresente seu trabalho e prepare seu
-                perfil para receber novos clientes pelo AuraMeets.
-              </p>
-              <span className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-[#101d3b] px-5 text-sm font-black uppercase tracking-[0.04em] text-white shadow-md">
+
+              <span className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#101d3b] px-4 text-[12px] font-black uppercase tracking-[0.03em] text-white shadow-md sm:min-h-[48px] sm:text-sm">
                 Quero fazer parte
                 <ArrowIcon className="h-4 w-4 transition group-hover:translate-x-1" />
               </span>
             </Link>
           </div>
 
-          <p className="mt-7 text-center text-sm font-bold text-white/75">
-            Visitantes começam pelo cadastro. Terapeutas seguem diretamente para o cadastro fundador.
+          <p className="mt-5 hidden text-center text-xs font-bold text-white/70 sm:block">
+            Visitantes começam pelo cadastro. Terapeutas seguem diretamente para o cadastro profissional.
           </p>
         </div>
       </section>

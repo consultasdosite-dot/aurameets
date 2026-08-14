@@ -341,3 +341,28 @@ export async function declineAppointment(
     );
   }
 }
+
+export async function deleteAppointment(
+  appointmentId: number,
+  therapistId: number,
+): Promise<void> {
+  const { data, error } = await supabase
+    .from("appointments")
+    .delete()
+    .eq("id", appointmentId)
+    .eq("therapist_id", therapistId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Não foi possível excluir a solicitação: ${error.message}`,
+    );
+  }
+
+  if (!data) {
+    throw new Error(
+      "A solicitação não foi excluída. Ela pode não pertencer a este terapeuta ou a exclusão pode estar bloqueada pelas permissões do banco.",
+    );
+  }
+}

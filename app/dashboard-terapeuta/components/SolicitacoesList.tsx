@@ -31,6 +31,9 @@ type SolicitacoesListProps = {
   onProporNovoHorario: (
     solicitacao: SolicitacaoAtendimento,
   ) => void;
+  onExcluir: (
+    solicitacao: SolicitacaoAtendimento,
+  ) => void;
 };
 
 function formatarData(data?: string | null) {
@@ -167,6 +170,7 @@ export default function SolicitacoesList({
   processandoId = null,
   onAceitar,
   onProporNovoHorario,
+  onExcluir,
 }: SolicitacoesListProps) {
   if (carregando) {
     return (
@@ -405,35 +409,50 @@ export default function SolicitacoesList({
                   </div>
                 )}
 
-                {podeResponder && (
-                  <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                    <button
-                      type="button"
-                      disabled={estaProcessando}
-                      onClick={() =>
-                        onAceitar(solicitacao)
-                      }
-                      className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {estaProcessando
-                        ? "Processando..."
-                        : "Aceitar solicitação"}
-                    </button>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  {podeResponder && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={estaProcessando}
+                        onClick={() =>
+                          onAceitar(solicitacao)
+                        }
+                        className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {estaProcessando
+                          ? "Processando..."
+                          : "Aceitar solicitação"}
+                      </button>
 
-                    <button
-                      type="button"
-                      disabled={estaProcessando}
-                      onClick={() =>
-                        onProporNovoHorario(
-                          solicitacao,
-                        )
-                      }
-                      className="inline-flex items-center justify-center rounded-xl border border-purple-200 bg-white px-5 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Propor novo horário
-                    </button>
-                  </div>
-                )}
+                      <button
+                        type="button"
+                        disabled={estaProcessando}
+                        onClick={() =>
+                          onProporNovoHorario(
+                            solicitacao,
+                          )
+                        }
+                        className="inline-flex items-center justify-center rounded-xl border border-purple-200 bg-white px-5 py-3 text-sm font-semibold text-purple-700 transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Propor novo horário
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={estaProcessando}
+                    onClick={() =>
+                      onExcluir(solicitacao)
+                    }
+                    className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto"
+                  >
+                    {estaProcessando
+                      ? "Processando..."
+                      : "Excluir solicitação"}
+                  </button>
+                </div>
               </article>
             );
           })}

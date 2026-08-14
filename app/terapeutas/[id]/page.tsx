@@ -282,12 +282,10 @@ function getServiceFinalPrice(service: Service) {
 
 function ServiceCard({
   service,
-  therapistName,
-  whatsappNumber,
+  therapistSlug,
 }: {
   service: Service;
-  therapistName: string;
-  whatsappNumber: string;
+  therapistSlug: string;
 }) {
   const regularPrice = Number(service.price);
   const finalPrice = getServiceFinalPrice(service);
@@ -297,57 +295,61 @@ function ServiceCard({
 
   return (
     <article className="group overflow-hidden rounded-[28px] border border-slate-800 bg-[#10182D] shadow-xl transition hover:-translate-y-1 hover:border-yellow-400/40">
-      <div className="relative h-48 overflow-hidden bg-[#18223D]">
-        {service.cover_photo_url ? (
-          <img
-            src={service.cover_photo_url}
-            alt={`Imagem do serviço ${service.name}`}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-center">
-            <div>
-              <div className="text-4xl text-yellow-400">✦</div>
-              <p className="mt-3 text-sm font-bold text-slate-400">
-                Serviço AuraMeets
-              </p>
+      <div className="grid gap-0 md:grid-cols-[240px_minmax(0,1fr)_220px]">
+        <div className="relative min-h-[220px] overflow-hidden bg-[#18223D] md:min-h-full">
+          {service.cover_photo_url ? (
+            <img
+              src={service.cover_photo_url}
+              alt={`Imagem do serviço ${service.name}`}
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="flex h-full min-h-[220px] items-center justify-center text-center">
+              <div>
+                <div className="text-4xl text-yellow-400">✦</div>
+                <p className="mt-3 text-sm font-bold text-slate-400">
+                  Serviço AuraMeets
+                </p>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-
-      <div className="p-6">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
-          {service.category}
-        </p>
-
-        <h3 className="mt-3 text-2xl font-black text-white">
-          {service.name}
-        </h3>
-
-        <p className="mt-3 line-clamp-3 leading-7 text-slate-300">
-          {service.description}
-        </p>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          {service.online && (
-            <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
-              Online
-            </span>
-          )}
-          {service.in_person && (
-            <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
-              Presencial
-            </span>
-          )}
-          {service.duration_minutes > 0 && (
-            <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
-              {service.duration_minutes} min
-            </span>
           )}
         </div>
 
-        <div className="mt-6 border-t border-slate-800 pt-5">
+        <div className="flex flex-col justify-center p-6 md:p-7">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
+            {service.category}
+          </p>
+
+          <h3 className="mt-3 text-2xl font-black text-white">
+            {service.name}
+          </h3>
+
+          <p className="mt-3 line-clamp-3 leading-7 text-slate-300">
+            {service.description}
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {service.online && (
+              <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
+                Online
+              </span>
+            )}
+
+            {service.in_person && (
+              <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
+                Presencial
+              </span>
+            )}
+
+            {service.duration_minutes > 0 && (
+              <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
+                {service.duration_minutes} min
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-center border-t border-slate-800 p-6 md:border-l md:border-t-0 md:p-7">
           {hasPromotion && (
             <p className="text-sm font-semibold text-slate-500 line-through">
               {formatCurrency(regularPrice, service.currency)}
@@ -357,24 +359,14 @@ function ServiceCard({
           <p className="mt-1 text-3xl font-black text-yellow-400">
             {formatCurrency(finalPrice, service.currency)}
           </p>
-        </div>
 
-        {whatsappNumber ? (
-          <a
-            href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-              `Olá, ${therapistName}! Vi no AuraMeets o serviço ${service.name} e quero comprar ou saber mais.`,
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-6 block rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
+          <Link
+            href={`/comprar?servico=${encodeURIComponent(service.id)}`}
+            className="mt-6 block rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-6 py-4 text-center font-black text-white shadow-[0_12px_30px_rgba(147,51,234,0.28)] transition hover:-translate-y-0.5 hover:brightness-110"
           >
             QUERO COMPRAR
-          </a>
-        ) : (
-          <div className="mt-6 rounded-xl border border-slate-700 px-6 py-4 text-center font-bold text-slate-500">
-            WhatsApp não cadastrado
-          </div>
-        )}
+          </Link>
+        </div>
       </div>
     </article>
   );
@@ -418,13 +410,9 @@ export default async function TherapistProfilePage({
     "Profissional cadastrado no AuraMeets, com atendimento voltado ao cuidado, escuta e desenvolvimento humano.";
 
   const bioParagraphs = splitParagraphs(bioText);
-  const shortBio = bioParagraphs.slice(0, 2);
+  const shortBio = bioParagraphs.slice(0, 1);
 
   const featuredService = activeServices[0] ?? null;
-
-  const remainingServices = featuredService
-    ? activeServices.filter((service) => service.id !== featuredService.id)
-    : activeServices;
 
   const whatsappNumber = (profileExtra.phone ?? "").replace(/\D/g, "");
   const whatsappMessage = featuredService
@@ -433,6 +421,13 @@ export default async function TherapistProfilePage({
   const whatsappHref = whatsappNumber
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`
     : null;
+
+  const scheduleHref = `/agendar?terapeuta=${therapist.id}`;
+  const servicesHref = "#servicos";
+  const giftHref = activeOffers.length > 0 ? `/ofertas/${activeOffers[0].id}` : whatsappHref;
+  const featuredPurchaseHref = featuredService
+    ? `/comprar?servico=${encodeURIComponent(featuredService.id)}`
+    : servicesHref;
 
   const now = new Date();
   const startsAt = profileExtra.promotion_starts_at
@@ -499,30 +494,26 @@ export default async function TherapistProfilePage({
                 ))}
               </div>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
-                {whatsappHref ? (
-                  <a
-                    href={whatsappHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-xl bg-yellow-400 px-6 py-4 text-center font-black text-slate-950 transition hover:bg-yellow-300"
-                  >
-                    QUERO COMPRAR
-                  </a>
-                ) : (
-                  <div className="rounded-xl border border-slate-700 px-6 py-4 text-center font-bold text-slate-500">
-                    WhatsApp não cadastrado
-                  </div>
-                )}
-
-                {hasActivePromotion && (
-                  <Link
-                    href={promotionHref}
-                    className="rounded-xl border border-purple-400 bg-purple-400/10 px-6 py-4 text-center font-black text-purple-200 transition hover:bg-purple-400 hover:text-slate-950"
-                  >
-                    PROMOÇÃO ESPECIAL
+              <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <Link href={scheduleHref} className="rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-4 py-4 text-center text-sm font-black text-white shadow-[0_12px_30px_rgba(147,51,234,0.35)] transition hover:-translate-y-0.5 hover:brightness-110">
+                  QUERO AGENDAR
+                </Link>
+                <Link href={servicesHref} className="rounded-xl bg-gradient-to-r from-violet-500/90 to-purple-600/90 px-4 py-4 text-center text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-110">
+                  MAIS SERVIÇOS
+                </Link>
+                {giftHref ? (
+                  <Link href={giftHref} className="rounded-xl bg-gradient-to-r from-purple-500/80 to-fuchsia-500/80 px-4 py-4 text-center text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-110">
+                    QUERO PRESENTE
                   </Link>
+                ) : (
+                  <div className="rounded-xl bg-gradient-to-r from-purple-500/40 to-fuchsia-500/40 px-4 py-4 text-center text-sm font-black text-white/60">QUERO PRESENTE</div>
                 )}
+                <Link
+                  href={featuredPurchaseHref}
+                  className="rounded-xl bg-gradient-to-r from-violet-600/90 to-purple-700/90 px-4 py-4 text-center text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-110"
+                >
+                  QUERO COMPRAR
+                </Link>
               </div>
 
               {hasActivePromotion && profileExtra.promotion_title && (
@@ -572,7 +563,10 @@ export default async function TherapistProfilePage({
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
+      <section
+        id="servicos"
+        className="mx-auto max-w-7xl scroll-mt-6 px-5 py-12 sm:px-8 sm:py-16"
+      >
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
@@ -588,20 +582,15 @@ export default async function TherapistProfilePage({
           </p>
         </div>
 
-        {remainingServices.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {remainingServices.map((service) => (
+        {activeServices.length > 0 ? (
+          <div className="space-y-5">
+            {activeServices.map((service) => (
               <ServiceCard
                 key={service.id}
                 service={service}
-                therapistName={therapist.name}
-                whatsappNumber={whatsappNumber}
+                therapistSlug={therapist.slug}
               />
             ))}
-          </div>
-        ) : featuredService ? (
-          <div className="rounded-3xl border border-slate-800 bg-[#10182D] p-6 text-slate-300">
-            O serviço principal está destacado acima.
           </div>
         ) : (
           <div className="rounded-3xl border border-dashed border-slate-700 bg-[#10182D] p-8 text-center">
@@ -624,7 +613,7 @@ export default async function TherapistProfilePage({
             </h2>
 
             <div className="mt-6 space-y-5">
-              {bioParagraphs.map((paragraph, index) => (
+              {bioParagraphs.slice(0, 2).map((paragraph, index) => (
                 <p
                   key={index}
                   className="text-lg leading-8 text-slate-300"

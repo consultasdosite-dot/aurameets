@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 
 import {
   acceptAppointment,
+  deleteAppointment,
   getAppointmentsByTherapistId,
   getTherapistIdByProfileId,
   proposeNewAppointmentTime,
@@ -568,6 +569,73 @@ export default function DashboardTerapeutaPage() {
     }
   }
 
+  async function excluirSolicitacao(
+    solicitacaoRecebida: SolicitacaoAtendimento,
+  ) {
+    if (therapistId === null) {
+      setErro(
+        "Não foi possível identificar o terapeuta desta solicitação.",
+      );
+      return;
+    }
+
+    const solicitacao = solicitacoes.find(
+      (item) =>
+        idsSaoIguais(
+          item.id,
+          solicitacaoRecebida.id,
+        ),
+    );
+
+    if (!solicitacao) {
+      setErro(
+        "O agendamento selecionado não foi localizado.",
+      );
+      return;
+    }
+
+    const nomeCliente =
+      solicitacao.client_name?.trim() ||
+      "Cliente AuraMeets";
+
+    const confirmouExclusao = window.confirm(
+      `Tem certeza que deseja excluir definitivamente a solicitação de ${nomeCliente}? Esta ação não poderá ser desfeita.`,
+    );
+
+    if (!confirmouExclusao) {
+      return;
+    }
+
+    setSolicitacaoEmAtualizacao(solicitacao.id);
+    setErro(null);
+
+    try {
+      await deleteAppointment(
+        solicitacao.id,
+        therapistId,
+      );
+
+      setSolicitacoes((solicitacoesAtuais) =>
+        solicitacoesAtuais.filter(
+          (item) =>
+            !idsSaoIguais(
+              item.id,
+              solicitacao.id,
+            ),
+        ),
+      );
+    } catch (errorDesconhecido) {
+      setErro(
+        obterMensagemErro(
+          errorDesconhecido,
+          "Não foi possível excluir a solicitação.",
+        ),
+      );
+    } finally {
+      setSolicitacaoEmAtualizacao(null);
+    }
+  }
+
   function proporOutroHorario(
     solicitacaoRecebida: SolicitacaoAtendimento,
   ) {
@@ -875,6 +943,9 @@ export default function DashboardTerapeutaPage() {
                 }
                 onProporNovoHorario={
                   proporOutroHorario
+                }
+                onExcluir={
+                  excluirSolicitacao
                 }
               />
             </div>

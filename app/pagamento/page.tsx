@@ -205,7 +205,7 @@ function PagamentoContent() {
 
     try {
       const response = await fetch(
-        "/api/stripe/criar-checkout",
+        "/api/stripe/checkout",
         {
           method: "POST",
           headers: {
@@ -228,14 +228,14 @@ function PagamentoContent() {
         );
       }
 
-      if (!resultado?.url) {
+      if (!resultado?.checkoutUrl) {
         throw new Error(
           "O Stripe não retornou a página de pagamento.",
         );
       }
 
       window.location.href =
-        resultado.url;
+        resultado.checkoutUrl;
     } catch (errorDesconhecido) {
       setErro(
         obterMensagemErro(
