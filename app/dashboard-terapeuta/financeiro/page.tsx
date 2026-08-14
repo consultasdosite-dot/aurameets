@@ -2,6 +2,7 @@
 
 import {
   FormEvent,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -169,7 +170,7 @@ function stripeStatusClass(status: string) {
   return "border-amber-200 bg-amber-50 text-amber-700";
 }
 
-export default function FinanceiroTerapeutaPage() {
+function FinanceiroTerapeutaContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -1293,6 +1294,28 @@ export default function FinanceiroTerapeutaPage() {
         </div>
       )}
     </main>
+  );
+}
+
+
+function FinanceiroFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#f6f7fb] px-4">
+      <div className="text-center">
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-purple-100 border-t-purple-700" />
+        <p className="mt-4 text-sm font-semibold text-slate-500">
+          Carregando centro financeiro...
+        </p>
+      </div>
+    </main>
+  );
+}
+
+export default function FinanceiroTerapeutaPage() {
+  return (
+    <Suspense fallback={<FinanceiroFallback />}>
+      <FinanceiroTerapeutaContent />
+    </Suspense>
   );
 }
 

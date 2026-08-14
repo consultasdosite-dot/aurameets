@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 type CheckoutResponse = {
   checkoutUrl?: string;
@@ -10,7 +10,7 @@ type CheckoutResponse = {
   details?: string;
 };
 
-export default function ComprarPage() {
+function ComprarContent() {
   const searchParams = useSearchParams();
 
   const serviceId =
@@ -274,5 +274,26 @@ export default function ComprarPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function ComprarFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#F8F8FB] px-4">
+      <div className="text-center">
+        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-purple-100 border-t-purple-700" />
+        <p className="mt-4 text-sm font-semibold text-slate-500">
+          Preparando opções de pagamento...
+        </p>
+      </div>
+    </main>
+  );
+}
+
+export default function ComprarPage() {
+  return (
+    <Suspense fallback={<ComprarFallback />}>
+      <ComprarContent />
+    </Suspense>
   );
 }
