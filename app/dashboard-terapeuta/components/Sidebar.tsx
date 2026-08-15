@@ -16,7 +16,6 @@ type MenuItem = {
 
 type SidebarProps = {
   profile?: TherapistProfile | null;
-  profilePercentage?: number;
   pendingRequests?: number;
 };
 
@@ -96,13 +95,8 @@ function obterIniciais(nome: string) {
   return `${partes[0][0]}${partes[partes.length - 1][0]}`.toUpperCase();
 }
 
-function limitarPercentual(percentual: number) {
-  return Math.min(100, Math.max(0, Math.round(percentual)));
-}
-
 export default function Sidebar({
   profile,
-  profilePercentage = 0,
   pendingRequests = 0,
 }: SidebarProps) {
   const router = useRouter();
@@ -113,10 +107,7 @@ export default function Sidebar({
     profile?.name?.trim() || "Terapeuta AuraMeets";
 
   const iniciais = obterIniciais(nomeTerapeuta);
-  const percentualPerfil = limitarPercentual(profilePercentage);
   const avatarUrl = profile?.avatar_url?.trim() || null;
-
-  const perfilCompleto = percentualPerfil >= 100;
 
   function selecionarItem(href: string) {
     setMenuAberto(false);
@@ -235,11 +226,6 @@ export default function Sidebar({
                   </div>
                 )}
 
-                <span
-                  className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-slate-950 ${
-                    perfilCompleto ? "bg-emerald-400" : "bg-purple-400"
-                  }`}
-                />
               </div>
 
               <div className="min-w-0">
@@ -250,44 +236,12 @@ export default function Sidebar({
                   {nomeTerapeuta}
                 </p>
 
-                <p
-                  className={`mt-1 text-xs font-semibold ${
-                    perfilCompleto
-                      ? "text-emerald-300"
-                      : "text-purple-300"
-                  }`}
-                >
-                  {perfilCompleto
-                    ? "Perfil completo"
-                    : `${percentualPerfil}% concluído`}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">
+                <p className="mt-1 text-xs font-semibold text-purple-300">
                   Perfil profissional
-                </span>
-
-                <span className="font-semibold text-white">
-                  {percentualPerfil}%
-                </span>
-              </div>
-
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-purple-500 to-fuchsia-400 transition-[width] duration-500"
-                  style={{ width: `${percentualPerfil}%` }}
-                />
-              </div>
-
-              {!perfilCompleto && (
-                <p className="mt-2 text-[10px] leading-4 text-slate-500">
-                  Clique para continuar completando seu perfil.
                 </p>
-              )}
+              </div>
             </div>
+
           </button>
         </div>
 

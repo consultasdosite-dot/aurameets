@@ -19,10 +19,8 @@ import {
 import { supabase } from "@/lib/supabase";
 
 import ApprovalCard from "./components/ApprovalCard";
-import CommunityCard from "./components/CommunityCard";
 import DashboardHeader from "./components/DashboardHeader";
 import DashboardStats from "./components/DashboardStats";
-import ProfileProgress from "./components/ProfileProgress";
 import Sidebar from "./components/Sidebar";
 import SolicitacoesList, {
   type SolicitacaoAtendimento,
@@ -57,70 +55,6 @@ function idsSaoIguais(
 }
 
 
-type RegistroGenerico = Record<string, unknown>;
-
-function possuiTexto(valor: unknown) {
-  return (
-    typeof valor === "string" &&
-    valor.trim().length > 0
-  );
-}
-
-function possuiAlgumTexto(
-  registro: RegistroGenerico | null,
-  campos: string[],
-) {
-  if (!registro) {
-    return false;
-  }
-
-  return campos.some((campo) =>
-    possuiTexto(registro[campo]),
-  );
-}
-
-function possuiAlgumValor(
-  registro: RegistroGenerico | null,
-  campos: string[],
-) {
-  if (!registro) {
-    return false;
-  }
-
-  return campos.some((campo) => {
-    const valor = registro[campo];
-
-    if (Array.isArray(valor)) {
-      return valor.length > 0;
-    }
-
-    if (
-      typeof valor === "number" &&
-      Number.isFinite(valor)
-    ) {
-      return valor > 0;
-    }
-
-    if (typeof valor === "boolean") {
-      return valor;
-    }
-
-    return possuiTexto(valor);
-  });
-}
-
-function consultaTemRegistros(
-  resultado: {
-    count: number | null;
-    error: { message?: string } | null;
-  },
-) {
-  return (
-    !resultado.error &&
-    (resultado.count ?? 0) > 0
-  );
-}
-
 export default function DashboardTerapeutaPage() {
   const router = useRouter();
 
@@ -129,9 +63,6 @@ export default function DashboardTerapeutaPage() {
 
   const [therapistId, setTherapistId] =
     useState<number | null>(null);
-
-  const [profilePercentage, setProfilePercentage] =
-    useState(0);
 
   const [carregandoPerfil, setCarregandoPerfil] =
     useState(true);
@@ -155,226 +86,6 @@ export default function DashboardTerapeutaPage() {
 
   const [novaData, setNovaData] = useState("");
   const [novoHorario, setNovoHorario] = useState("");
-
-  const calcularPercentualPerfil =
-    useCallback(
-      async (
-        idDoTerapeuta: number,
-        perfilAtual: TherapistProfile,
-      ) => {
-        const [
-          terapeutaResultado,
-          ofertasResultado,
-          experienciasResultado,
-          servicosResultado,
-          disponibilidadeResultado,
-          agendaResultado,
-        ] = await Promise.all([
-          supabase
-            .from("therapists")
-            .select("*")
-            .eq("id", idDoTerapeuta)
-            .maybeSingle(),
-
-          supabase
-            .from("offers")
-            .select("*", {
-              count: "exact",
-              head: true,
-            })
-            .eq("therapist_id", idDoTerapeuta),
-
-          supabase
-            .from("experiences")
-            .select("*", {
-              count: "exact",
-              head: true,
-            })
-            .eq("therapist_id", idDoTerapeuta),
-
-          supabase
-            .from("services")
-            .select("*", {
-              count: "exact",
-              head: true,
-            })
-            .eq("therapist_id", idDoTerapeuta),
-
-          supabase
-            .from("therapist_availability")
-            .select("*", {
-              count: "exact",
-              head: true,
-            })
-            .eq("therapist_id", idDoTerapeuta),
-
-          supabase
-            .from("availability")
-            .select("*", {
-              count: "exact",
-              head: true,
-            })
-            .eq("therapist_id", idDoTerapeuta),
-        ]);
-
-        const terapeuta =
-          (terapeutaResultado.data ??
-            null) as RegistroGenerico | null;
-
-        const perfil =
-          perfilAtual as unknown as RegistroGenerico;
-
-        let percentual = 0;
-
-        const nomePreenchido =
-          possuiAlgumTexto(perfil, ["name"]) ||
-          possuiAlgumTexto(terapeuta, [
-            "name",
-            "full_name",
-          ]);
-
-        const emailPreenchido =
-          possuiAlgumTexto(perfil, ["email"]) ||
-          possuiAlgumTexto(terapeuta, ["email"]);
-
-        const fotoPreenchida =
-          possuiAlgumTexto(perfil, [
-            "avatar_url",
-          ]) ||
-          possuiAlgumTexto(terapeuta, [
-            "photo_url",
-            "avatar_url",
-            "profile_photo_url",
-          ]);
-
-        const telefonePreenchido =
-          possuiAlgumTexto(terapeuta, [
-            "phone",
-            "whatsapp",
-            "phone_number",
-          ]);
-
-        const localizacaoPreenchida =
-          possuiAlgumTexto(terapeuta, [
-            "city",
-            "cidade",
-          ]) &&
-          possuiAlgumTexto(terapeuta, [
-            "state",
-            "estado",
-          ]);
-
-        const especialidadePreenchida =
-          possuiAlgumTexto(terapeuta, [
-            "speciality",
-            "specialty",
-            "main_specialty",
-          ]) ||
-          possuiAlgumValor(terapeuta, [
-            "specialties",
-            "speciality_ids",
-            "specialty_ids",
-          ]);
-
-        const apresentacaoPreenchida =
-          possuiAlgumTexto(terapeuta, [
-            "bio",
-            "biography",
-            "about",
-            "description",
-            "presentation",
-            "professional_bio",
-            "professional_presentation",
-            "professional_description",
-          ]);
-
-        const possuiServicos =
-          consultaTemRegistros(
-            servicosResultado,
-          ) ||
-          possuiAlgumValor(terapeuta, [
-            "services",
-            "service_ids",
-          ]);
-
-        const possuiExperiencias =
-          consultaTemRegistros(
-            experienciasResultado,
-          );
-
-        const possuiOfertas =
-          consultaTemRegistros(
-            ofertasResultado,
-          );
-
-        const possuiAgenda =
-          consultaTemRegistros(
-            disponibilidadeResultado,
-          ) ||
-          consultaTemRegistros(
-            agendaResultado,
-          ) ||
-          possuiAlgumValor(terapeuta, [
-            "availability",
-            "available_days",
-            "schedule",
-            "agenda",
-            "working_hours",
-          ]);
-
-        if (nomePreenchido) {
-          percentual += 5;
-        }
-
-        if (emailPreenchido) {
-          percentual += 5;
-        }
-
-        if (fotoPreenchida) {
-          percentual += 10;
-        }
-
-        if (telefonePreenchido) {
-          percentual += 5;
-        }
-
-        if (localizacaoPreenchida) {
-          percentual += 5;
-        }
-
-        if (especialidadePreenchida) {
-          percentual += 10;
-        }
-
-        if (apresentacaoPreenchida) {
-          percentual += 15;
-        }
-
-        if (possuiServicos) {
-          percentual += 15;
-        }
-
-        if (possuiExperiencias) {
-          percentual += 10;
-        }
-
-        if (possuiOfertas) {
-          percentual += 5;
-        }
-
-        if (possuiAgenda) {
-          percentual += 15;
-        }
-
-        setProfilePercentage(
-          Math.min(
-            100,
-            Math.max(0, percentual),
-          ),
-        );
-      },
-      [],
-    );
 
   const carregarPerfil = useCallback(async () => {
     setCarregandoPerfil(true);
@@ -452,10 +163,6 @@ export default function DashboardTerapeutaPage() {
       setProfile(perfilAtual);
       setTherapistId(idDoTerapeuta);
 
-      await calcularPercentualPerfil(
-        idDoTerapeuta,
-        perfilAtual,
-      );
     } catch (errorDesconhecido) {
       setErro(
         obterMensagemErro(
@@ -468,7 +175,7 @@ export default function DashboardTerapeutaPage() {
     } finally {
       setCarregandoPerfil(false);
     }
-  }, [calcularPercentualPerfil, router]);
+  }, [router]);
 
 
   const carregarSolicitacoes =
@@ -858,7 +565,6 @@ export default function DashboardTerapeutaPage() {
       <div className="min-h-screen lg:flex">
         <Sidebar
           profile={profile}
-          profilePercentage={profilePercentage}
           pendingRequests={totalPendentes}
         />
 
@@ -875,14 +581,8 @@ export default function DashboardTerapeutaPage() {
                 totalAceitas={totalAceitas}
               />
 
-              <ProfileProgress
-                percentage={profilePercentage}
-              />
-
-              <div className="grid gap-6 2xl:grid-cols-2">
+              <div className="grid gap-6">
                 <ApprovalCard status="em_analise" />
-
-                <CommunityCard joined={false} />
               </div>
 
               <section className="rounded-3xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur sm:p-6">

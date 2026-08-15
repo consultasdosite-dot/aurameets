@@ -31,12 +31,13 @@ const specialties = [
   "Outra especialidade",
 ];
 
-const founderBenefits = [
-  "Participação gratuita durante a fase de validação",
-  "Acesso antecipado aos primeiros recursos",
-  "Prioridade na apresentação dos perfis",
-  "Participação nas decisões e melhorias",
-  "Reconhecimento como Terapeuta Cofundador",
+const professionalBenefits = [
+  "Perfil profissional próprio dentro do AuraMeets",
+  "Cadastro de serviços e ofertas especiais",
+  "Divulgação do seu trabalho dentro da plataforma",
+  "Recebimentos integrados com Stripe",
+  "Mensalidade de R$ 35,00, sem fidelidade",
+  "Taxa de 3% somente nas vendas processadas pelo AuraMeets",
 ];
 
 const WHATSAPP_GROUP_URL =
@@ -73,7 +74,8 @@ export default function CadastroFundadorPage() {
 
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState(false);
+  const [tutorialAberto, setTutorialAberto] = useState(false);
+  const [usuarioPendenteId, setUsuarioPendenteId] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -142,6 +144,42 @@ export default function CadastroFundadorPage() {
 
     setAbriuGrupoWhatsApp(true);
     setErro("");
+  }
+
+
+  async function iniciarAssinatura(
+    userId: string,
+    emailTerapeuta: string,
+  ) {
+    const resposta = await fetch(
+      "/api/stripe/assinatura-terapeuta",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          email: emailTerapeuta,
+        }),
+      },
+    );
+
+    const resultado = (await resposta.json()) as {
+      checkoutUrl?: string;
+      error?: string;
+      details?: string;
+    };
+
+    if (!resposta.ok || !resultado.checkoutUrl) {
+      throw new Error(
+        resultado.details ||
+          resultado.error ||
+          "Seu cadastro foi criado, mas não foi possível abrir o pagamento.",
+      );
+    }
+
+    window.location.assign(resultado.checkoutUrl);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -263,64 +301,30 @@ export default function CadastroFundadorPage() {
         return;
       }
 
-      setSucesso(true);
+      if (!resultado.userId) {
+        setErro(
+          "O cadastro foi criado, mas o identificador da conta não foi retornado.",
+        );
+        return;
+      }
+
+      setUsuarioPendenteId(resultado.userId);
+
+      await iniciarAssinatura(
+        resultado.userId,
+        email.trim().toLowerCase(),
+      );
     } catch (error) {
-      console.error("Erro ao enviar cadastro:", error);
+      console.error("Erro no cadastro/pagamento:", error);
 
       setErro(
-        "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.",
+        error instanceof Error
+          ? error.message
+          : "Não foi possível concluir esta etapa. Tente novamente.",
       );
     } finally {
       setCarregando(false);
     }
-  }
-
-  if (sucesso) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#050816] px-4 py-10 text-white sm:px-6 lg:px-8">
-        <section className="w-full max-w-2xl rounded-3xl border border-yellow-400/40 bg-[#111A33] p-6 text-center shadow-2xl sm:p-8 md:p-12">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl font-black text-black sm:h-20 sm:w-20 sm:text-4xl">
-            ✓
-          </div>
-
-          <p className="mt-8 text-xs font-bold uppercase tracking-[0.25em] text-yellow-400 sm:text-sm sm:tracking-[0.35em]">
-            Solicitação recebida
-          </p>
-
-          <h1 className="mt-5 text-3xl font-black leading-tight sm:text-4xl md:text-5xl">
-            Bem-vindo ao início do AuraMeets.
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-            Sua solicitação para participar como Terapeuta Cofundador foi
-            registrada. Agora você poderá acessar sua conta e completar seu
-            perfil profissional.
-          </p>
-
-          <div className="mt-8 rounded-2xl border border-slate-700 bg-[#080D22] p-5 text-left sm:p-6">
-            <p className="font-bold text-yellow-400">
-              Participação no pré-lançamento
-            </p>
-
-            <p className="mt-2 text-2xl font-black">
-              Terapeuta Cofundador
-            </p>
-
-            <p className="mt-2 leading-7 text-slate-300">
-              Nesta fase de validação não haverá cobrança automática nem
-              obrigação de permanência.
-            </p>
-          </div>
-
-          <Link
-            href="/login"
-            className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-yellow-400 px-8 py-4 font-black text-black transition hover:bg-yellow-300 sm:w-auto"
-          >
-            Ir para o login
-          </Link>
-        </section>
-      </main>
-    );
   }
 
   return (
@@ -335,40 +339,64 @@ export default function CadastroFundadorPage() {
           </Link>
 
           <p className="mt-8 text-xs font-bold uppercase tracking-[0.25em] text-yellow-400 sm:mt-10 sm:text-sm sm:tracking-[0.35em] lg:mt-12">
-            Solicitação de participação
+            Perfil Profissional AuraMeets
           </p>
 
           <h1 className="mt-5 max-w-2xl text-4xl font-black leading-[1.05] sm:text-5xl lg:text-5xl xl:text-6xl">
-            Faça parte dos 100 Terapeutas Cofundadores.
+            Transforme seu trabalho em um perfil profissional que vende por você.
           </h1>
 
           <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-            Entre na fase inicial do AuraMeets, conheça a plataforma antes do
-            lançamento oficial e ajude a construir uma nova forma de conectar
-            pessoas e terapeutas.
+            Tenha presença profissional dentro do AuraMeets, publique seus serviços,
+            crie ofertas especiais e receba novos clientes em uma plataforma feita
+            para profissionais do cuidado e do desenvolvimento humano.
           </p>
+
+          <button
+            type="button"
+            onClick={() => setTutorialAberto((valor) => !valor)}
+            className="mt-5 inline-flex items-center justify-center rounded-xl border border-yellow-400/50 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 transition hover:bg-yellow-400/20"
+          >
+            {tutorialAberto ? "FECHAR TUTORIAL" : "VER TUTORIAL DA PLATAFORMA"}
+          </button>
+
+          {tutorialAberto && (
+            <div className="mt-5 rounded-2xl border border-slate-700 bg-[#0B1125] p-5">
+              <p className="font-black text-yellow-400">
+                Como funciona o AuraMeets
+              </p>
+
+              <div className="mt-4 space-y-3 text-sm leading-6 text-slate-300">
+                <p><strong className="text-white">1.</strong> Crie seu perfil profissional e conclua a assinatura.</p>
+                <p><strong className="text-white">2.</strong> Complete sua apresentação, especialidades, agenda e serviços.</p>
+                <p><strong className="text-white">3.</strong> Publique serviços e ofertas especiais no seu perfil.</p>
+                <p><strong className="text-white">4.</strong> Conecte sua conta Stripe para receber pagamentos de clientes.</p>
+                <p><strong className="text-white">5.</strong> Acompanhe vendas e recebimentos no Centro Financeiro.</p>
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 rounded-3xl border border-yellow-300/50 bg-yellow-400 p-6 text-black shadow-[0_20px_80px_rgba(250,204,21,0.12)] sm:p-8 lg:mt-10">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs font-black uppercase tracking-[0.2em] sm:text-sm sm:tracking-[0.25em]">
-                Pré-lançamento exclusivo
+                Plano profissional
               </p>
 
               <span className="rounded-full bg-black px-3 py-1 text-xs font-black uppercase tracking-wide text-yellow-400">
-                Vagas limitadas
+                Sem fidelidade
               </span>
             </div>
 
             <p className="mt-7 text-4xl font-black leading-tight sm:text-5xl">
-              Participação gratuita
+              R$ 35,00/mês
             </p>
 
             <p className="mt-4 text-base font-bold leading-7 sm:text-lg">
-              Nenhuma cobrança será realizada durante esta fase de validação.
+              Cancele quando quiser. Nas vendas processadas pelo AuraMeets, a taxa da plataforma é de 3%.
             </p>
 
             <ul className="mt-8 space-y-4 text-sm font-semibold sm:text-base">
-              {founderBenefits.map((benefit) => (
+              {professionalBenefits.map((benefit) => (
                 <li key={benefit} className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-sm text-yellow-400">
                     ✓
@@ -385,23 +413,23 @@ export default function CadastroFundadorPage() {
               <p className="text-2xl font-black text-yellow-400">30</p>
 
               <p className="mt-1 text-sm text-slate-300">
-                Conselho inicial
+                terapeutas já iniciaram
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
-              <p className="text-2xl font-black text-yellow-400">100</p>
+              <p className="text-2xl font-black text-yellow-400">3%</p>
 
               <p className="mt-1 text-sm text-slate-300">
-                vagas de Cofundador
+                sobre vendas na plataforma
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
-              <p className="text-2xl font-black text-yellow-400">R$ 0,00</p>
+              <p className="text-2xl font-black text-yellow-400">R$ 35,00</p>
 
               <p className="mt-1 text-sm text-slate-300">
-                durante a validação
+                por mês · sem fidelidade
               </p>
             </div>
           </div>
@@ -409,16 +437,15 @@ export default function CadastroFundadorPage() {
 
         <section className="min-w-0 rounded-3xl border border-slate-800 bg-[#111A33] p-5 shadow-2xl sm:p-8 lg:p-9 xl:p-12">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-yellow-400 sm:text-sm sm:tracking-[0.3em]">
-            Seus dados profissionais
+            Seu Perfil Profissional
           </p>
 
           <h2 className="mt-4 text-3xl font-black leading-tight sm:text-4xl">
-            Solicite sua participação
+            Crie seu perfil e ative sua assinatura
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-            Preencha as informações abaixo. Depois do acesso, você poderá
-            completar e atualizar seu perfil profissional.
+            Preencha seus dados profissionais. Ao concluir, você seguirá para o pagamento seguro da mensalidade de R$ 35,00 pela Stripe.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6 sm:mt-10">
@@ -430,7 +457,7 @@ export default function CadastroFundadorPage() {
                   </p>
 
                   <p className="mt-2 text-sm text-slate-300">
-                    Complete os passos para criar sua conta de Terapeuta Cofundador.
+                    Complete os passos para criar sua conta profissional AuraMeets.
                   </p>
                 </div>
 
@@ -876,11 +903,46 @@ export default function CadastroFundadorPage() {
               />
 
               <span className="text-sm leading-6 text-slate-300">
-                Confirmo que as informações fornecidas são verdadeiras e
-                aceito os termos de uso e a política de privacidade do
-                AuraMeets.
+                Confirmo que as informações fornecidas são verdadeiras, aceito os termos de uso
+                e a política de privacidade do AuraMeets e estou ciente da mensalidade
+                de R$ 35,00, sem fidelidade, além da taxa de 3% nas vendas processadas
+                pela plataforma.
               </span>
             </label>
+
+            {usuarioPendenteId && erro && (
+              <div className="rounded-2xl border border-yellow-400/40 bg-yellow-400/10 p-5">
+                <p className="font-black text-yellow-300">
+                  Seu cadastro foi criado e está aguardando pagamento.
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Você pode tentar abrir novamente o pagamento de R$ 35,00 sem refazer o cadastro.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCarregando(true);
+                    setErro("");
+                    void iniciarAssinatura(
+                      usuarioPendenteId,
+                      email.trim().toLowerCase(),
+                    )
+                      .catch((error) => {
+                        setErro(
+                          error instanceof Error
+                            ? error.message
+                            : "Não foi possível abrir o pagamento.",
+                        );
+                      })
+                      .finally(() => setCarregando(false));
+                  }}
+                  disabled={carregando}
+                  className="mt-4 rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black disabled:opacity-60"
+                >
+                  TENTAR PAGAMENTO NOVAMENTE
+                </button>
+              </div>
+            )}
 
             {erro && (
               <div
@@ -898,10 +960,8 @@ export default function CadastroFundadorPage() {
               className="w-full rounded-xl bg-yellow-400 px-5 py-4 text-base font-black text-black shadow-[0_15px_45px_rgba(250,204,21,0.15)] transition hover:-translate-y-0.5 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:px-6 sm:py-5 sm:text-lg"
             >
               {carregando
-                ? foto
-                  ? "Enviando cadastro e foto..."
-                  : "Enviando solicitação..."
-                : "Criar minha conta de Terapeuta Cofundador"}
+                ? "Preparando seu cadastro e pagamento..."
+                : "CRIAR PERFIL E IR PARA PAGAMENTO — R$ 35,00"}
             </button>
 
             <p className="text-center text-sm leading-6 text-slate-400">
