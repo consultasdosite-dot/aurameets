@@ -12,6 +12,8 @@ import Link from "next/link";
 const specialties = [
   "Psicologia",
   "Psicanálise",
+  "Psicologia e Psicanálise",
+  "Terapia Holística",
   "Constelação Familiar",
   "Reiki",
   "Hipnoterapia",
@@ -447,6 +449,23 @@ export default function CadastroFundadorPage() {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
             Preencha seus dados profissionais. Ao concluir, você seguirá para o pagamento seguro da mensalidade de R$ 35,00 pela Stripe.
           </p>
+
+          <section className="mt-6 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 p-5 sm:p-6">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-300">
+              Tem dúvidas antes de se cadastrar?
+            </p>
+
+            <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
+              Consulte informações sobre mensalidade, Experiências, Stripe, taxa de 3% e cancelamento.
+            </p>
+
+            <Link
+              href="/faq-terapeutas"
+              className="mt-4 inline-flex items-center justify-center rounded-xl border border-yellow-400/50 bg-yellow-400 px-5 py-3 text-sm font-black text-black transition hover:bg-yellow-300"
+            >
+              VER DÚVIDAS FREQUENTES
+            </Link>
+          </section>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6 sm:mt-10">
             <section className="rounded-2xl border border-slate-700 bg-[#080D22] p-5 sm:p-6">
