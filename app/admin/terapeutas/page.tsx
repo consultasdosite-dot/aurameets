@@ -147,7 +147,7 @@ export default function AdminTerapeutasPage() {
             education_year
           `
         )
-        .order("created_at", { ascending: false });
+        .order("name", { ascending: true });
 
       if (error) {
         throw error;
