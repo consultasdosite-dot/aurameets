@@ -422,9 +422,15 @@ export default async function TherapistProfilePage({
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`
     : null;
 
-  const scheduleHref = `/agendar?terapeuta=${therapist.id}`;
+  const scheduleMessage = `Olá, ${therapist.name}! Vi seu perfil no AuraMeets e gostaria de agendar um atendimento.`;
+  const scheduleHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(scheduleMessage)}`
+    : null;
+
   const servicesHref = "#servicos";
-  const giftHref = activeOffers.length > 0 ? `/ofertas/${activeOffers[0].id}` : whatsappHref;
+  const giftHref = activeOffers.length > 0
+    ? `/ofertas/${activeOffers[0].id}`
+    : whatsappHref;
   const featuredPurchaseHref = featuredService
     ? `/comprar?servico=${encodeURIComponent(featuredService.id)}`
     : servicesHref;
@@ -494,23 +500,56 @@ export default async function TherapistProfilePage({
                 ))}
               </div>
 
-              <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <Link href={scheduleHref} className="rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-4 py-4 text-center text-sm font-black text-white shadow-[0_12px_30px_rgba(147,51,234,0.35)] transition hover:-translate-y-0.5 hover:brightness-110">
-                  QUERO AGENDAR
-                </Link>
-                <Link href={servicesHref} className="rounded-xl bg-gradient-to-r from-violet-500/90 to-purple-600/90 px-4 py-4 text-center text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-110">
+              <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {scheduleHref ? (
+                  <a
+                    href={scheduleHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex min-h-[72px] items-center justify-center rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-4 py-4 text-center text-sm font-black text-white shadow-[0_12px_30px_rgba(147,51,234,0.35)] transition hover:-translate-y-0.5 hover:brightness-110"
+                  >
+                    QUERO AGENDAR
+                  </a>
+                ) : (
+                  <div className="flex min-h-[72px] items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/70 px-4 py-4 text-center text-sm font-black text-slate-500">
+                    QUERO AGENDAR
+                  </div>
+                )}
+
+                <Link
+                  href={servicesHref}
+                  className="flex min-h-[72px] items-center justify-center rounded-2xl bg-gradient-to-r from-violet-500/90 to-purple-600/90 px-4 py-4 text-center text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-110"
+                >
                   MAIS SERVIÇOS
                 </Link>
+
                 {giftHref ? (
-                  <Link href={giftHref} className="rounded-xl bg-gradient-to-r from-purple-500/80 to-fuchsia-500/80 px-4 py-4 text-center text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-110">
-                    QUERO PRESENTE
-                  </Link>
+                  giftHref.startsWith("http") ? (
+                    <a
+                      href={giftHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-h-[72px] items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 py-4 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(34,197,94,0.22)] transition hover:-translate-y-0.5 hover:brightness-110"
+                    >
+                      QUERO PRESENTE
+                    </a>
+                  ) : (
+                    <Link
+                      href={giftHref}
+                      className="flex min-h-[72px] items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 py-4 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(34,197,94,0.22)] transition hover:-translate-y-0.5 hover:brightness-110"
+                    >
+                      QUERO PRESENTE
+                    </Link>
+                  )
                 ) : (
-                  <div className="rounded-xl bg-gradient-to-r from-purple-500/40 to-fuchsia-500/40 px-4 py-4 text-center text-sm font-black text-white/60">QUERO PRESENTE</div>
+                  <div className="flex min-h-[72px] items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500/35 to-green-600/35 px-4 py-4 text-center text-sm font-black text-white/60">
+                    QUERO PRESENTE
+                  </div>
                 )}
+
                 <Link
                   href={featuredPurchaseHref}
-                  className="rounded-xl bg-gradient-to-r from-violet-600/90 to-purple-700/90 px-4 py-4 text-center text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:brightness-110"
+                  className="flex min-h-[72px] items-center justify-center rounded-2xl bg-gradient-to-r from-teal-500 to-cyan-600 px-4 py-4 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(6,182,212,0.20)] transition hover:-translate-y-0.5 hover:brightness-110"
                 >
                   QUERO COMPRAR
                 </Link>

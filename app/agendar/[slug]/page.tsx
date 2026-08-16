@@ -85,6 +85,14 @@ type FormData = {
   message: string;
 };
 
+type VisitorSessionData = {
+  nome?: string;
+  email?: string;
+  whatsapp?: string;
+};
+
+const VISITOR_DATA_KEY = "aurameets_visitor_data";
+
 const initialForm: FormData = {
   name: "",
   email: "",
@@ -217,6 +225,28 @@ export default function PublicAppointmentPage() {
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [success, setSuccess] = useState(false);
+  const [visitorDataLoaded, setVisitorDataLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedVisitor = window.sessionStorage.getItem(VISITOR_DATA_KEY);
+
+      if (storedVisitor) {
+        const visitor = JSON.parse(storedVisitor) as VisitorSessionData;
+
+        setForm((current) => ({
+          ...current,
+          name: visitor.nome?.trim() ?? "",
+          email: visitor.email?.trim() ?? "",
+          phone: visitor.whatsapp?.trim() ?? "",
+        }));
+      }
+    } catch (error) {
+      console.error("Erro ao recuperar dados do visitante:", error);
+    } finally {
+      setVisitorDataLoaded(true);
+    }
+  }, []);
 
   useEffect(() => {
     let activeComponent = true;
@@ -401,6 +431,11 @@ export default function PublicAppointmentPage() {
   const selectedServicePrice = getServicePrice(selectedService);
   const deliveryService = isDeliveryService(selectedService);
 
+  const visitorIdentified =
+    Boolean(form.name.trim()) &&
+    Boolean(form.email.trim()) &&
+    Boolean(form.phone.trim());
+
   function updateForm(field: keyof FormData, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
     setErrorMessage("");
@@ -437,6 +472,24 @@ export default function PublicAppointmentPage() {
     return serviceAnswers[field.field_key] ?? "";
   }
 
+  function isVisitorContactField(field: ServiceFormField) {
+    const normalizedKey = normalizeText(field.field_key);
+
+    return [
+      "nome_completo",
+      "nome",
+      "name",
+      "email",
+      "whatsapp",
+      "telefone",
+      "phone",
+    ].includes(normalizedKey);
+  }
+
+  const visibleServiceFields = serviceFields.filter(
+    (field) => !isVisitorContactField(field),
+  );
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage("");
@@ -446,25 +499,17 @@ export default function PublicAppointmentPage() {
       return;
     }
 
-    for (const field of serviceFields) {
+    for (const field of visibleServiceFields) {
       if (field.required && !getAnswer(field).trim()) {
         setErrorMessage(`Preencha o campo obrigatório: ${field.label}.`);
         return;
       }
     }
 
-    if (!form.name.trim()) {
-      setErrorMessage("Informe seu nome.");
-      return;
-    }
-
-    if (!form.email.trim()) {
-      setErrorMessage("Informe seu e-mail.");
-      return;
-    }
-
-    if (!form.phone.trim()) {
-      setErrorMessage("Informe seu telefone ou WhatsApp.");
+    if (!visitorIdentified) {
+      setErrorMessage(
+        "Seus dados de visitante não foram encontrados nesta sessão. Volte à lista de terapeutas e ingresse novamente.",
+      );
       return;
     }
 
@@ -472,8 +517,8 @@ export default function PublicAppointmentPage() {
 
     const normalizedEmail = form.email.trim().toLowerCase();
 
-    const customAnswersText = serviceFields.length
-      ? serviceFields
+    const customAnswersText = visibleServiceFields.length
+      ? visibleServiceFields
           .map((field) => {
             const answer = getAnswer(field).trim();
             return `${field.label}: ${answer || "Não informado"}`;
@@ -524,7 +569,7 @@ export default function PublicAppointmentPage() {
     setSuccess(true);
   }
 
-  if (loading) {
+  if (loading || !visitorDataLoaded) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#050816] px-5 text-white">
         <div className="text-center">
@@ -575,8 +620,8 @@ export default function PublicAppointmentPage() {
 
   const defaultWhatsappMessage = `Olá, ${
     therapist.name || "terapeuta"
-  }! Encontrei seu perfil no AuraMeets e gostaria de solicitar a experiência presente: ${
-    experience?.title || "Experiência Presente"
+  }! Encontrei seu perfil no AuraMeets e gostaria de solicitar a experiência especial: ${
+    experience?.title || "Experiência especial"
   }.`;
 
   const experienceWhatsappMessage =
@@ -588,22 +633,6 @@ export default function PublicAppointmentPage() {
           experienceWhatsappMessage,
         )}`
       : null;
-
-  const hasNameField = serviceFields.some((field) =>
-    ["nome_completo", "nome", "name"].includes(
-      normalizeText(field.field_key),
-    ),
-  );
-
-  const hasEmailField = serviceFields.some(
-    (field) => normalizeText(field.field_key) === "email",
-  );
-
-  const hasPhoneField = serviceFields.some((field) =>
-    ["whatsapp", "telefone", "phone"].includes(
-      normalizeText(field.field_key),
-    ),
-  );
 
   return (
     <main className="min-h-screen bg-[#050816] text-white">
@@ -704,7 +733,7 @@ export default function PublicAppointmentPage() {
                 {!selectedService && experience && (
                   <div className="mt-6 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-5">
                     <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-400">
-                      Experiência Presente
+                      Experiência especial
                     </p>
 
                     <h2 className="mt-3 text-xl font-black text-white">
@@ -724,7 +753,7 @@ export default function PublicAppointmentPage() {
                         rel="noopener noreferrer"
                         className="mt-5 flex w-full items-center justify-center rounded-xl bg-green-600 px-5 py-4 text-center font-black text-white transition hover:bg-green-500"
                       >
-                        {experience.button_text?.trim() || "QUERO MEU PRESENTE"}
+                        {experience.button_text?.trim() || "QUERO CONHECER"}
                       </a>
                     )}
                   </div>
@@ -804,17 +833,17 @@ export default function PublicAppointmentPage() {
               <>
                 <div>
                   <p className="text-sm font-black uppercase tracking-[0.25em] text-yellow-400">
-                    Solicitação de atendimento
+                    Agendamento
                   </p>
 
                   <h1 className="mt-4 text-3xl font-black sm:text-4xl">
-                    Fale com este profissional
+                    Agende com este profissional
                   </h1>
 
                   <p className="mt-4 leading-7 text-slate-300">
-                    Envie seus dados de contato. O profissional receberá sua
-                    solicitação e vocês poderão combinar os detalhes do
-                    atendimento diretamente.
+                    Seus dados de contato já estão registrados. Confira o serviço,
+                    acrescente apenas as informações necessárias e envie sua
+                    solicitação ao profissional.
                   </p>
                 </div>
 
@@ -822,7 +851,7 @@ export default function PublicAppointmentPage() {
                   onSubmit={handleSubmit}
                   className="mt-9 border-t border-slate-800 pt-8"
                 >
-                  {serviceFields.length > 0 && (
+                  {visibleServiceFields.length > 0 && (
                     <section className="mb-8 rounded-2xl border border-purple-400/25 bg-purple-400/5 p-5 sm:p-6">
                       <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-300">
                         Dados necessários para o serviço
@@ -833,7 +862,7 @@ export default function PublicAppointmentPage() {
                       </h2>
 
                       <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                        {serviceFields.map((field) => {
+                        {visibleServiceFields.map((field) => {
                           const answer = getAnswer(field);
                           const options = getSelectOptions(field.options);
                           const fullWidth =
@@ -948,83 +977,57 @@ export default function PublicAppointmentPage() {
                     </section>
                   )}
 
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    {!hasNameField && (
-                      <div className="sm:col-span-2">
-                        <label htmlFor="name" className="mb-2 block font-bold">
-                          Nome completo
-                        </label>
-                        <input
-                          id="name"
-                          type="text"
-                          value={form.name}
-                          onChange={(event) =>
-                            updateForm("name", event.target.value)
-                          }
-                          placeholder="Seu nome"
-                          required
-                          className={inputClassName}
-                        />
-                      </div>
-                    )}
+                  {visitorIdentified ? (
+                    <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
+                        Seus dados já estão registrados
+                      </p>
 
-                    {!hasEmailField && (
-                      <div>
-                        <label htmlFor="email" className="mb-2 block font-bold">
-                          E-mail
-                        </label>
-                        <input
-                          id="email"
-                          type="email"
-                          value={form.email}
-                          onChange={(event) =>
-                            updateForm("email", event.target.value)
-                          }
-                          placeholder="seuemail@exemplo.com"
-                          required
-                          className={inputClassName}
-                        />
-                      </div>
-                    )}
-
-                    {!hasPhoneField && (
-                      <div>
-                        <label htmlFor="phone" className="mb-2 block font-bold">
-                          WhatsApp
-                        </label>
-                        <input
-                          id="phone"
-                          type="tel"
-                          value={form.phone}
-                          onChange={(event) =>
-                            updateForm("phone", event.target.value)
-                          }
-                          placeholder="(31) 99999-9999"
-                          required
-                          className={inputClassName}
-                        />
-                      </div>
-                    )}
-
-                    <div className="sm:col-span-2">
-                      <label htmlFor="message" className="mb-2 block font-bold">
-                        Mensagem ao profissional
-                        <span className="ml-2 text-sm font-normal text-slate-500">
-                          opcional
-                        </span>
-                      </label>
-
-                      <textarea
-                        id="message"
-                        value={form.message}
-                        onChange={(event) =>
-                          updateForm("message", event.target.value)
-                        }
-                        placeholder="Se desejar, escreva uma breve mensagem."
-                        rows={4}
-                        className={`${inputClassName} resize-y`}
-                      />
+                      <p className="mt-3 text-sm leading-6 text-slate-300">
+                        {form.name}
+                        {form.email ? ` • ${form.email}` : ""}
+                        {form.phone ? ` • ${form.phone}` : ""}
+                      </p>
                     </div>
+                  ) : (
+                    <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">
+                        Identificação necessária
+                      </p>
+
+                      <p className="mt-3 text-sm leading-6 text-slate-300">
+                        Seus dados de visitante não foram encontrados nesta sessão.
+                        Volte à lista de terapeutas e ingresse novamente antes de solicitar
+                        o agendamento.
+                      </p>
+
+                      <Link
+                        href="/terapeutas"
+                        className="mt-4 inline-flex items-center justify-center rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm font-black text-amber-200 transition hover:bg-amber-300/20"
+                      >
+                        VOLTAR E ME IDENTIFICAR
+                      </Link>
+                    </div>
+                  )}
+
+                  <div className="mt-6">
+                    <label htmlFor="message" className="mb-2 block font-bold">
+                      Mensagem ao profissional
+                      <span className="ml-2 text-sm font-normal text-slate-500">
+                        opcional
+                      </span>
+                    </label>
+
+                    <textarea
+                      id="message"
+                      value={form.message}
+                      onChange={(event) =>
+                        updateForm("message", event.target.value)
+                      }
+                      placeholder="Se desejar, escreva uma breve mensagem."
+                      rows={4}
+                      className={`${inputClassName} resize-y`}
+                    />
                   </div>
 
                   {errorMessage && (
@@ -1038,10 +1041,10 @@ export default function PublicAppointmentPage() {
 
                   <button
                     type="submit"
-                    disabled={saving}
+                    disabled={saving || !visitorIdentified}
                     className="mt-7 w-full rounded-xl bg-yellow-400 px-7 py-4 text-lg font-black text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {saving ? "Enviando solicitação..." : "Enviar solicitação"}
+                    {saving ? "ENVIANDO SOLICITAÇÃO..." : "SOLICITAR AGENDAMENTO"}
                   </button>
 
                   <p className="mt-4 text-center text-sm leading-6 text-slate-500">

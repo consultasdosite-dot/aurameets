@@ -562,7 +562,22 @@ function TerapeutaTableRow({ terapeuta }: { terapeuta: Terapeuta }) {
     <tr className="transition hover:bg-white/[0.025]">
       <td className="px-6 py-5">
         <div className="flex min-w-[260px] items-center gap-4">
-          <TerapeutaAvatar terapeuta={terapeuta} />
+          <div className="flex shrink-0 items-center gap-2">
+            <TerapeutaAvatar terapeuta={terapeuta} />
+
+            {terapeuta.slug && (
+              <Link
+                href={`/terapeutas/${terapeuta.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-400/10 text-violet-300 transition hover:border-violet-300/60 hover:bg-violet-400/20 hover:text-white"
+                aria-label={`Abrir perfil público de ${terapeuta.name}`}
+                title="Ver perfil público"
+              >
+                <ExternalLinkIcon className="h-4 w-4" />
+              </Link>
+            )}
+          </div>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -647,18 +662,6 @@ function TerapeutaTableRow({ terapeuta }: { terapeuta: Terapeuta }) {
 
       <td className="px-6 py-5 text-right">
         <div className="flex justify-end gap-2">
-          {terapeuta.slug && (
-            <Link
-              href={`/terapeutas/${terapeuta.slug}`}
-              target="_blank"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-slate-400 transition hover:border-sky-400/30 hover:bg-sky-400/10 hover:text-sky-300"
-              aria-label={`Abrir perfil público de ${terapeuta.name}`}
-              title="Abrir perfil público"
-            >
-              <ExternalLinkIcon className="h-4 w-4" />
-            </Link>
-          )}
-
           <button
             type="button"
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-slate-400 transition hover:border-amber-300/30 hover:bg-amber-300/10 hover:text-amber-300"
@@ -681,7 +684,22 @@ function TerapeutaMobileCard({
   return (
     <article className="p-5 sm:p-6">
       <div className="flex items-start gap-4">
-        <TerapeutaAvatar terapeuta={terapeuta} />
+        <div className="flex shrink-0 items-center gap-2">
+          <TerapeutaAvatar terapeuta={terapeuta} />
+
+          {terapeuta.slug && (
+            <Link
+              href={`/terapeutas/${terapeuta.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-400/30 bg-violet-400/10 text-violet-300 transition hover:border-violet-300/60 hover:bg-violet-400/20 hover:text-white"
+              aria-label={`Abrir perfil público de ${terapeuta.name}`}
+              title="Ver perfil público"
+            >
+              <ExternalLinkIcon className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -733,17 +751,6 @@ function TerapeutaMobileCard({
       </div>
 
       <div className="mt-5 flex gap-3">
-        {terapeuta.slug && (
-          <Link
-            href={`/terapeutas/${terapeuta.slug}`}
-            target="_blank"
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
-          >
-            <ExternalLinkIcon className="h-4 w-4" />
-            Perfil público
-          </Link>
-        )}
-
         <button
           type="button"
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-300 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-200"

@@ -20,6 +20,9 @@ type FormVisitante = {
 const SESSION_KEY =
   "aurameets_visitor_gate_passed";
 
+const VISITOR_DATA_KEY =
+  "aurameets_visitor_data";
+
 export default function VisitorLeadGate({
   children,
 }: VisitorLeadGateProps) {
@@ -129,6 +132,15 @@ export default function VisitorLeadGate({
       window.sessionStorage.setItem(
         SESSION_KEY,
         "1",
+      );
+
+      window.sessionStorage.setItem(
+        VISITOR_DATA_KEY,
+        JSON.stringify({
+          nome: form.nome.trim(),
+          whatsapp: form.whatsapp.trim(),
+          email: form.email.trim(),
+        }),
       );
 
       setMostrarProfissionais(true);
