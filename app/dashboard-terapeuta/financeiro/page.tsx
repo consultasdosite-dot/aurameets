@@ -59,6 +59,37 @@ type StripeFinanceResponse = {
   details?: string;
 };
 
+type PixSettings = {
+  pixEnabled: boolean;
+  pixKeyType: string;
+  pixKey: string;
+  pixHolderName: string;
+  pixBankName: string;
+};
+
+type PixResponse = {
+  success?: boolean;
+  message?: string;
+  pix?: PixSettings;
+  error?: string;
+};
+
+const INITIAL_PIX: PixSettings = {
+  pixEnabled: true,
+  pixKeyType: "",
+  pixKey: "",
+  pixHolderName: "",
+  pixBankName: "",
+};
+
+const PIX_TYPES = [
+  { value: "cpf", label: "CPF" },
+  { value: "cnpj", label: "CNPJ" },
+  { value: "email", label: "E-mail" },
+  { value: "telefone", label: "Telefone" },
+  { value: "aleatoria", label: "Chave aleatória" },
+];
+
 type FinancialRecord = {
   id: string;
   appointment_id?: number | null;
@@ -199,6 +230,10 @@ function FinanceiroTerapeutaContent() {
     useState(true);
   const [paymentsError, setPaymentsError] =
     useState("");
+  const [
+    deletingStripePaymentId,
+    setDeletingStripePaymentId,
+  ] = useState<number | null>(null);
 
   const [externalRecords, setExternalRecords] =
     useState<FinancialRecord[]>([]);
@@ -208,12 +243,25 @@ function FinanceiroTerapeutaContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [savingExternal, setSavingExternal] =
     useState(false);
+  const [deletingRecordId, setDeletingRecordId] =
+    useState<string | null>(null);
   const [form, setForm] =
     useState<NewRecordForm>(INITIAL_FORM);
 
   const [successMessage, setSuccessMessage] =
     useState("");
   const [errorMessage, setErrorMessage] =
+    useState("");
+
+  const [pix, setPix] =
+    useState<PixSettings>(INITIAL_PIX);
+  const [loadingPix, setLoadingPix] =
+    useState(true);
+  const [savingPix, setSavingPix] =
+    useState(false);
+  const [pixMessage, setPixMessage] =
+    useState("");
+  const [pixError, setPixError] =
     useState("");
 
   const getAccessToken = useCallback(async () => {
@@ -343,6 +391,128 @@ function FinanceiroTerapeutaContent() {
       }
     }, [getAccessToken]);
 
+  const carregarPix =
+    useCallback(async () => {
+      try {
+        setLoadingPix(true);
+        setPixError("");
+        setPixMessage("");
+
+        const accessToken =
+          await getAccessToken();
+
+        const response = await fetch(
+          "/api/financeiro/pix",
+          {
+            method: "GET",
+            headers: {
+              Authorization:
+                `Bearer ${accessToken}`,
+            },
+          },
+        );
+
+        const data =
+          (await response.json()) as PixResponse;
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              "Não foi possível carregar sua chave PIX.",
+          );
+        }
+
+        setPix(data.pix ?? INITIAL_PIX);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Erro ao carregar PIX.";
+
+        setPixError(message);
+      } finally {
+        setLoadingPix(false);
+      }
+    }, [getAccessToken]);
+
+  async function salvarPix(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+
+    setPixError("");
+    setPixMessage("");
+
+    if (!pix.pixKeyType) {
+      setPixError(
+        "Escolha o tipo da sua chave PIX.",
+      );
+      return;
+    }
+
+    if (!pix.pixKey.trim()) {
+      setPixError(
+        "Digite a chave PIX que receberá os pagamentos.",
+      );
+      return;
+    }
+
+    if (!pix.pixHolderName.trim()) {
+      setPixError(
+        "Digite o nome do titular da chave PIX.",
+      );
+      return;
+    }
+
+    try {
+      setSavingPix(true);
+
+      const accessToken =
+        await getAccessToken();
+
+      const response = await fetch(
+        "/api/financeiro/pix",
+        {
+          method: "PUT",
+          headers: {
+            Authorization:
+              `Bearer ${accessToken}`,
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(pix),
+        },
+      );
+
+      const data =
+        (await response.json()) as PixResponse;
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Não foi possível salvar sua chave PIX.",
+        );
+      }
+
+      if (data.pix) {
+        setPix(data.pix);
+      }
+
+      setPixMessage(
+        "Sua chave PIX foi salva. Os clientes poderão usar estes dados quando escolherem pagar por PIX.",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erro ao salvar PIX.";
+
+      setPixError(message);
+    } finally {
+      setSavingPix(false);
+    }
+  }
+
   const carregarRecebimentosExternos =
     useCallback(async () => {
       try {
@@ -402,10 +572,12 @@ function FinanceiroTerapeutaContent() {
     }, [router]);
 
   useEffect(() => {
+    void carregarPix();
     void consultarStatusStripe();
     void carregarPagamentos();
     void carregarRecebimentosExternos();
   }, [
+    carregarPix,
     consultarStatusStripe,
     carregarPagamentos,
     carregarRecebimentosExternos,
@@ -564,6 +736,154 @@ function FinanceiroTerapeutaContent() {
       )}.`,
     );
     setSavingExternal(false);
+  }
+
+  async function excluirPagamentoStripeTeste(
+    payment: StripePayment,
+  ) {
+    const confirmado = window.confirm(
+      `Excluir este pagamento de TESTE?\n\nServiço: ${payment.serviceName}\nValor: ${formatCurrency(
+        payment.amount,
+      )}\n\nPagamentos reais são protegidos e não podem ser excluídos por esta função.`,
+    );
+
+    if (!confirmado) {
+      return;
+    }
+
+    try {
+      setDeletingStripePaymentId(payment.id);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      const accessToken =
+        await getAccessToken();
+
+      const response = await fetch(
+        "/api/stripe/financeiro/testes",
+        {
+          method: "DELETE",
+          headers: {
+            Authorization:
+              `Bearer ${accessToken}`,
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            paymentId: payment.id,
+          }),
+        },
+      );
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        deletedId?: number;
+        message?: string;
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Não foi possível excluir o pagamento de teste.",
+        );
+      }
+
+      setPayments((current) =>
+        current.filter(
+          (item) => item.id !== payment.id,
+        ),
+      );
+
+      setSuccessMessage(
+        data.message ||
+          "Pagamento de teste excluído com sucesso.",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erro ao excluir pagamento de teste.";
+
+      setErrorMessage(message);
+    } finally {
+      setDeletingStripePaymentId(null);
+    }
+  }
+
+  async function excluirRecebimentoExterno(
+    record: FinancialRecord,
+  ) {
+    const confirmado = window.confirm(
+      `Tem certeza que deseja excluir este recebimento?\n\nCliente: ${
+        record.client_name || "Não informado"
+      }\nServiço: ${
+        record.service_name || "Não informado"
+      }\nValor: ${formatCurrency(record.gross_amount)}\n\nEsta ação removerá este registro do seu financeiro.`,
+    );
+
+    if (!confirmado) {
+      return;
+    }
+
+    try {
+      setDeletingRecordId(record.id);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      const accessToken =
+        await getAccessToken();
+
+      const response = await fetch(
+        "/api/financeiro/recebimentos",
+        {
+          method: "DELETE",
+          headers: {
+            Authorization:
+              `Bearer ${accessToken}`,
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            recordId: record.id,
+          }),
+        },
+      );
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        deletedId?: string;
+        message?: string;
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Não foi possível excluir este recebimento.",
+        );
+      }
+
+      setExternalRecords((current) =>
+        current.filter(
+          (item) => item.id !== record.id,
+        ),
+      );
+
+      setSuccessMessage(
+        data.message ||
+          "Recebimento excluído com sucesso.",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erro ao excluir recebimento.";
+
+      setErrorMessage(message);
+    } finally {
+      setDeletingRecordId(null);
+    }
   }
 
   const paidPayments = useMemo(
@@ -740,7 +1060,7 @@ function FinanceiroTerapeutaContent() {
             </h1>
 
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-              Acompanhe suas vendas pela Stripe e registre separadamente pagamentos recebidos fora do AuraMeets.
+              Cadastre seu PIX para receber diretamente dos clientes e acompanhe aqui os pagamentos e comissões do AuraMeets.
             </p>
           </div>
 
@@ -755,6 +1075,173 @@ function FinanceiroTerapeutaContent() {
           >
             Registrar recebimento externo
           </button>
+        </section>
+
+        <section className="mt-7 overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
+          <div className="border-b border-emerald-100 bg-emerald-50 px-5 py-5 sm:px-6">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
+              Recebimento direto
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-slate-950">
+              Receba dos seus clientes pelo seu PIX
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+              Quando o cliente escolher PIX, o dinheiro será enviado diretamente para a chave cadastrada abaixo. Confira seus dados com atenção.
+            </p>
+          </div>
+
+          <form
+            onSubmit={salvarPix}
+            className="p-5 sm:p-6"
+          >
+            {loadingPix ? (
+              <LoadingState text="Carregando sua chave PIX..." />
+            ) : (
+              <>
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                  <p className="font-black text-emerald-800">
+                    Como funciona
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-emerald-900/80">
+                    1. O cliente escolhe pagar por PIX. 2. Ele recebe os seus dados abaixo. 3. O pagamento vai diretamente para você. 4. O AuraMeets registra a venda e calcula a comissão de 3%.
+                  </p>
+                </div>
+
+                <div className="mt-6 grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-bold text-slate-700">
+                      Tipo da chave PIX *
+                    </label>
+                    <select
+                      value={pix.pixKeyType}
+                      onChange={(event) =>
+                        setPix((current) => ({
+                          ...current,
+                          pixKeyType:
+                            event.target.value,
+                        }))
+                      }
+                      disabled={savingPix}
+                      className="mt-2 h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700"
+                    >
+                      <option value="">
+                        Escolha o tipo da chave
+                      </option>
+                      {PIX_TYPES.map((item) => (
+                        <option
+                          key={item.value}
+                          value={item.value}
+                        >
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-bold text-slate-700">
+                      Sua chave PIX *
+                    </label>
+                    <input
+                      type="text"
+                      value={pix.pixKey}
+                      onChange={(event) =>
+                        setPix((current) => ({
+                          ...current,
+                          pixKey:
+                            event.target.value,
+                        }))
+                      }
+                      disabled={savingPix}
+                      placeholder="Digite a chave que receberá o pagamento"
+                      className="mt-2 h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-bold text-slate-700">
+                      Nome do titular *
+                    </label>
+                    <input
+                      type="text"
+                      value={pix.pixHolderName}
+                      onChange={(event) =>
+                        setPix((current) => ({
+                          ...current,
+                          pixHolderName:
+                            event.target.value,
+                        }))
+                      }
+                      disabled={savingPix}
+                      placeholder="Nome que aparece no PIX"
+                      className="mt-2 h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-bold text-slate-700">
+                      Banco ou instituição
+                    </label>
+                    <input
+                      type="text"
+                      value={pix.pixBankName}
+                      onChange={(event) =>
+                        setPix((current) => ({
+                          ...current,
+                          pixBankName:
+                            event.target.value,
+                        }))
+                      }
+                      disabled={savingPix}
+                      placeholder="Ex.: Nubank, Itaú, Mercado Pago"
+                      className="mt-2 h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700"
+                    />
+                  </div>
+                </div>
+
+                <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <input
+                    type="checkbox"
+                    checked={pix.pixEnabled}
+                    onChange={(event) =>
+                      setPix((current) => ({
+                        ...current,
+                        pixEnabled:
+                          event.target.checked,
+                      }))
+                    }
+                    disabled={savingPix}
+                    className="mt-1 h-5 w-5 accent-emerald-600"
+                  />
+                  <span className="text-sm leading-6 text-slate-600">
+                    Meu PIX está ativo e pode ser apresentado aos clientes como forma de pagamento.
+                  </span>
+                </label>
+
+                {pixMessage && (
+                  <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                    {pixMessage}
+                  </div>
+                )}
+
+                {pixError && (
+                  <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                    {pixError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={savingPix}
+                  className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-emerald-600 px-6 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {savingPix
+                    ? "SALVANDO MEU PIX..."
+                    : "SALVAR MEU PIX"}
+                </button>
+              </>
+            )}
+          </form>
         </section>
 
         <section className="mt-7 overflow-hidden rounded-3xl border border-purple-200 bg-gradient-to-br from-[#28123f] via-[#4f2476] to-[#6f3aa0] p-6 text-white shadow-xl sm:p-8">
@@ -830,7 +1317,7 @@ function FinanceiroTerapeutaContent() {
               </button>
 
               <p className="mt-4 max-w-2xl text-xs leading-5 text-purple-100/80">
-                Seus dados bancários e documentos são informados diretamente à Stripe. O AuraMeets utiliza a conexão apenas para processar pagamentos e repasses.
+                A Stripe é uma opção adicional para pagamentos com cartão. Para PIX, utilize a área acima com a sua própria chave.
               </p>
             </div>
 
@@ -894,7 +1381,7 @@ function FinanceiroTerapeutaContent() {
             value={formatCurrency(
               totals.commission,
             )}
-            description="3% retidos automaticamente"
+            description="3% de comissão AuraMeets"
           />
 
           <SummaryCard
@@ -1052,7 +1539,48 @@ function FinanceiroTerapeutaContent() {
                           Stripe vinculada
                         </span>
                       )}
+
+                      {(payment.stripeSessionId?.startsWith(
+                        "cs_test_",
+                      ) ||
+                        (!payment.stripeSessionId &&
+                          payment.status === "failed")) && (
+                        <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800">
+                          TESTE STRIPE
+                        </span>
+                      )}
                     </div>
+
+                    {(payment.stripeSessionId?.startsWith(
+                      "cs_test_",
+                    ) ||
+                      (!payment.stripeSessionId &&
+                        payment.status === "failed")) && (
+                      <div className="mt-4 border-t border-red-100 pt-4">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void excluirPagamentoStripeTeste(
+                              payment,
+                            )
+                          }
+                          disabled={
+                            deletingStripePaymentId ===
+                            payment.id
+                          }
+                          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-200 bg-white px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {deletingStripePaymentId ===
+                          payment.id
+                            ? "Excluindo teste..."
+                            : "Excluir teste"}
+                        </button>
+
+                        <p className="mt-2 text-xs leading-5 text-slate-400">
+                          Disponível somente para sessões Stripe de teste ou registros antigos com falha e sem sessão Stripe.
+                        </p>
+                      </div>
+                    )}
                   </article>
                 ),
               )}
@@ -1121,6 +1649,31 @@ function FinanceiroTerapeutaContent() {
                           record.payment_method,
                         )}
                       />
+                    </div>
+
+                    <div className="mt-4 border-t border-slate-200 pt-4">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void excluirRecebimentoExterno(
+                            record,
+                          )
+                        }
+                        disabled={
+                          deletingRecordId ===
+                          record.id
+                        }
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-200 bg-white px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {deletingRecordId ===
+                        record.id
+                          ? "Excluindo..."
+                          : "Excluir registro"}
+                      </button>
+
+                      <p className="mt-2 text-xs leading-5 text-slate-400">
+                        Use esta opção apenas para registros de teste, duplicados ou lançamentos feitos por engano.
+                      </p>
                     </div>
                   </article>
                 ),

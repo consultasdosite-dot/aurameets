@@ -6,6 +6,12 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
+/*
+ * =========================================================
+ * HELPERS
+ * =========================================================
+ */
+
 function obterNumeroMetadata(
   value: string | undefined,
 ): number | null {
@@ -22,8 +28,292 @@ function obterTextoMetadata(
   value: string | undefined,
 ): string | null {
   const normalized = value?.trim();
+
   return normalized || null;
 }
+
+function ehAssinaturaTerapeuta(
+  metadata: Stripe.Metadata | null | undefined,
+) {
+  return metadata?.tipo === "assinatura_terapeuta";
+}
+
+/*
+ * Algumas versões da API Stripe apresentam o ID da
+ * assinatura diretamente em invoice.subscription.
+ *
+ * Outras podem disponibilizá-lo dentro de
+ * parent.subscription_details.subscription.
+ *
+ * Este helper suporta os dois formatos.
+ */
+function obterSubscriptionIdDaInvoice(
+  invoice: Stripe.Invoice,
+): string | null {
+  const invoiceCompat = invoice as unknown as {
+    subscription?:
+      | string
+      | Stripe.Subscription
+      | null;
+
+    parent?: {
+      subscription_details?: {
+        subscription?:
+          | string
+          | Stripe.Subscription
+          | null;
+      } | null;
+    } | null;
+  };
+
+  const subscription =
+    invoiceCompat.subscription ??
+    invoiceCompat.parent?.subscription_details
+      ?.subscription ??
+    null;
+
+  if (!subscription) {
+    return null;
+  }
+
+  if (typeof subscription === "string") {
+    return subscription;
+  }
+
+  return subscription.id;
+}
+
+/*
+ * =========================================================
+ * ASSINATURA DO TERAPEUTA — R$ 35,00
+ * =========================================================
+ */
+
+async function ativarAssinaturaTerapeutaPorMetadata(
+  metadata: Stripe.Metadata | null | undefined,
+) {
+  if (!ehAssinaturaTerapeuta(metadata)) {
+    return false;
+  }
+
+  const therapistId =
+    obterNumeroMetadata(metadata?.therapistId);
+
+  if (!therapistId) {
+    throw new Error(
+      "Assinatura AuraMeets sem therapistId válido.",
+    );
+  }
+
+  const { error } = await supabaseAdmin
+    .from("therapists")
+    .update({
+      plan: "Profissional",
+      plan_status: "active",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", therapistId);
+
+  if (error) {
+    throw new Error(
+      `Não foi possível ativar a assinatura do terapeuta ${therapistId}: ${error.message}`,
+    );
+  }
+
+  console.log(
+    `Assinatura AuraMeets ativada para terapeuta ${therapistId}.`,
+  );
+
+  return true;
+}
+
+async function marcarAssinaturaTerapeuta(
+  metadata: Stripe.Metadata | null | undefined,
+  status: string,
+) {
+  if (!ehAssinaturaTerapeuta(metadata)) {
+    return false;
+  }
+
+  const therapistId =
+    obterNumeroMetadata(metadata?.therapistId);
+
+  if (!therapistId) {
+    throw new Error(
+      "Assinatura AuraMeets sem therapistId válido.",
+    );
+  }
+
+  const { error } = await supabaseAdmin
+    .from("therapists")
+    .update({
+      plan: "Profissional",
+      plan_status: status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", therapistId);
+
+  if (error) {
+    throw new Error(
+      `Não foi possível atualizar a assinatura do terapeuta ${therapistId}: ${error.message}`,
+    );
+  }
+
+  console.log(
+    `Assinatura AuraMeets do terapeuta ${therapistId}: ${status}.`,
+  );
+
+  return true;
+}
+
+async function confirmarCheckoutAssinatura(
+  session: Stripe.Checkout.Session,
+) {
+  if (!ehAssinaturaTerapeuta(session.metadata)) {
+    return false;
+  }
+
+  /*
+   * Para assinatura com cartão, normalmente o Checkout
+   * estará pago ao concluir.
+   *
+   * Também aceitamos no_payment_required para manter
+   * compatibilidade caso futuramente exista trial/cupom.
+   */
+  if (
+    session.payment_status !== "paid" &&
+    session.payment_status !== "no_payment_required"
+  ) {
+    console.log(
+      `Checkout de assinatura ${session.id} concluído com payment_status=${session.payment_status}. Aguardando confirmação financeira.`,
+    );
+
+    return true;
+  }
+
+  await ativarAssinaturaTerapeutaPorMetadata(
+    session.metadata,
+  );
+
+  return true;
+}
+
+async function obterMetadataDaAssinaturaPorInvoice(
+  invoice: Stripe.Invoice,
+): Promise<Stripe.Metadata | null> {
+  const subscriptionId =
+    obterSubscriptionIdDaInvoice(invoice);
+
+  if (!subscriptionId) {
+    return null;
+  }
+
+  const subscription =
+    await stripe.subscriptions.retrieve(
+      subscriptionId,
+    );
+
+  return subscription.metadata;
+}
+
+async function confirmarInvoiceAssinatura(
+  invoice: Stripe.Invoice,
+) {
+  const metadata =
+    await obterMetadataDaAssinaturaPorInvoice(
+      invoice,
+    );
+
+  if (!ehAssinaturaTerapeuta(metadata)) {
+    return false;
+  }
+
+  await ativarAssinaturaTerapeutaPorMetadata(
+    metadata,
+  );
+
+  return true;
+}
+
+async function falharInvoiceAssinatura(
+  invoice: Stripe.Invoice,
+) {
+  const metadata =
+    await obterMetadataDaAssinaturaPorInvoice(
+      invoice,
+    );
+
+  if (!ehAssinaturaTerapeuta(metadata)) {
+    return false;
+  }
+
+  await marcarAssinaturaTerapeuta(
+    metadata,
+    "past_due",
+  );
+
+  return true;
+}
+
+async function atualizarStatusDaAssinatura(
+  subscription: Stripe.Subscription,
+) {
+  if (
+    !ehAssinaturaTerapeuta(
+      subscription.metadata,
+    )
+  ) {
+    return false;
+  }
+
+  /*
+   * Mapeamento simplificado Stripe → AuraMeets.
+   */
+
+  let planStatus = "pending_payment";
+
+  switch (subscription.status) {
+    case "active":
+    case "trialing":
+      planStatus = "active";
+      break;
+
+    case "past_due":
+    case "unpaid":
+      planStatus = "past_due";
+      break;
+
+    case "canceled":
+      planStatus = "canceled";
+      break;
+
+    case "paused":
+      planStatus = "paused";
+      break;
+
+    case "incomplete":
+    case "incomplete_expired":
+      planStatus = "pending_payment";
+      break;
+
+    default:
+      planStatus = subscription.status;
+      break;
+  }
+
+  await marcarAssinaturaTerapeuta(
+    subscription.metadata,
+    planStatus,
+  );
+
+  return true;
+}
+
+/*
+ * =========================================================
+ * PAGAMENTO DE AGENDAMENTO
+ * =========================================================
+ */
 
 async function confirmarPagamentoAgendamento(
   session: Stripe.Checkout.Session,
@@ -41,6 +331,7 @@ async function confirmarPagamentoAgendamento(
       "Webhook Stripe de agendamento sem metadata válida:",
       session.metadata,
     );
+
     return;
   }
 
@@ -48,10 +339,12 @@ async function confirmarPagamentoAgendamento(
     console.log(
       `Checkout ${session.id} concluído, mas pagamento ainda está como ${session.payment_status}.`,
     );
+
     return;
   }
 
-  const atualizadoEm = new Date().toISOString();
+  const atualizadoEm =
+    new Date().toISOString();
 
   const { error: paymentError } =
     await supabaseAdmin
@@ -88,6 +381,12 @@ async function confirmarPagamentoAgendamento(
   );
 }
 
+/*
+ * =========================================================
+ * PAGAMENTO DIRETO DE SERVIÇO
+ * =========================================================
+ */
+
 async function confirmarPagamentoServico(
   session: Stripe.Checkout.Session,
 ) {
@@ -104,6 +403,7 @@ async function confirmarPagamentoServico(
       "Webhook Stripe de serviço sem metadata válida:",
       session.metadata,
     );
+
     return;
   }
 
@@ -111,6 +411,7 @@ async function confirmarPagamentoServico(
     console.log(
       `Checkout ${session.id} de serviço concluído, mas pagamento ainda está como ${session.payment_status}.`,
     );
+
     return;
   }
 
@@ -144,7 +445,8 @@ async function confirmarPagamentoServico(
 
   if (
     payment.service_id &&
-    String(payment.service_id) !== serviceId
+    String(payment.service_id) !==
+      serviceId
   ) {
     throw new Error(
       `O serviço do pagamento ${paymentId} não corresponde à metadata recebida.`,
@@ -171,6 +473,12 @@ async function confirmarPagamentoServico(
     `Compra direta confirmada. Pagamento ${paymentId}, serviço ${serviceId}.`,
   );
 }
+
+/*
+ * =========================================================
+ * FALHAS — AGENDAMENTO
+ * =========================================================
+ */
 
 async function marcarPagamentoAgendamentoComoFalho(
   session: Stripe.Checkout.Session,
@@ -218,6 +526,12 @@ async function marcarPagamentoAgendamentoComoFalho(
   }
 }
 
+/*
+ * =========================================================
+ * FALHAS — SERVIÇO
+ * =========================================================
+ */
+
 async function marcarPagamentoServicoComoFalho(
   session: Stripe.Checkout.Session,
 ) {
@@ -230,6 +544,7 @@ async function marcarPagamentoServicoComoFalho(
       "Webhook de falha de serviço sem paymentId válido:",
       session.metadata,
     );
+
     return;
   }
 
@@ -249,28 +564,79 @@ async function marcarPagamentoServicoComoFalho(
   }
 }
 
+/*
+ * =========================================================
+ * ROTEADORES DOS CHECKOUTS ANTIGOS
+ * =========================================================
+ */
+
 async function confirmarPagamento(
   session: Stripe.Checkout.Session,
 ) {
+  /*
+   * PRIMEIRO:
+   * identifica assinatura AuraMeets.
+   */
+
+  const assinaturaTratada =
+    await confirmarCheckoutAssinatura(
+      session,
+    );
+
+  if (assinaturaTratada) {
+    return;
+  }
+
+  /*
+   * DEPOIS:
+   * pagamentos de clientes.
+   */
+
   const purchaseType =
     session.metadata?.purchaseType?.trim();
 
   if (purchaseType === "service") {
-    await confirmarPagamentoServico(session);
+    await confirmarPagamentoServico(
+      session,
+    );
+
     return;
   }
 
-  await confirmarPagamentoAgendamento(session);
+  await confirmarPagamentoAgendamento(
+    session,
+  );
 }
 
 async function marcarPagamentoComoFalho(
   session: Stripe.Checkout.Session,
 ) {
+  /*
+   * Se for assinatura, deixamos o plano aguardando
+   * pagamento.
+   */
+
+  if (
+    ehAssinaturaTerapeuta(
+      session.metadata,
+    )
+  ) {
+    await marcarAssinaturaTerapeuta(
+      session.metadata,
+      "pending_payment",
+    );
+
+    return;
+  }
+
   const purchaseType =
     session.metadata?.purchaseType?.trim();
 
   if (purchaseType === "service") {
-    await marcarPagamentoServicoComoFalho(session);
+    await marcarPagamentoServicoComoFalho(
+      session,
+    );
+
     return;
   }
 
@@ -279,7 +645,15 @@ async function marcarPagamentoComoFalho(
   );
 }
 
-export async function POST(request: NextRequest) {
+/*
+ * =========================================================
+ * WEBHOOK
+ * =========================================================
+ */
+
+export async function POST(
+  request: NextRequest,
+) {
   const webhookSecret =
     process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -300,7 +674,9 @@ export async function POST(request: NextRequest) {
   }
 
   const signature =
-    request.headers.get("stripe-signature");
+    request.headers.get(
+      "stripe-signature",
+    );
 
   if (!signature) {
     return NextResponse.json(
@@ -314,16 +690,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await request.text();
+  const body =
+    await request.text();
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      webhookSecret,
-    );
+    event =
+      stripe.webhooks.constructEvent(
+        body,
+        signature,
+        webhookSecret,
+      );
   } catch (error) {
     console.error(
       "Assinatura do webhook Stripe inválida:",
@@ -343,35 +721,140 @@ export async function POST(request: NextRequest) {
 
   try {
     switch (event.type) {
+      /*
+       * CHECKOUT
+       */
+
       case "checkout.session.completed": {
         const session =
-          event.data.object as Stripe.Checkout.Session;
+          event.data
+            .object as Stripe.Checkout.Session;
 
-        await confirmarPagamento(session);
+        await confirmarPagamento(
+          session,
+        );
+
         break;
       }
 
       case "checkout.session.async_payment_succeeded": {
         const session =
-          event.data.object as Stripe.Checkout.Session;
+          event.data
+            .object as Stripe.Checkout.Session;
 
-        await confirmarPagamento(session);
+        await confirmarPagamento(
+          session,
+        );
+
         break;
       }
 
       case "checkout.session.async_payment_failed": {
         const session =
-          event.data.object as Stripe.Checkout.Session;
+          event.data
+            .object as Stripe.Checkout.Session;
 
-        await marcarPagamentoComoFalho(session);
+        await marcarPagamentoComoFalho(
+          session,
+        );
+
         break;
       }
 
       case "checkout.session.expired": {
         const session =
-          event.data.object as Stripe.Checkout.Session;
+          event.data
+            .object as Stripe.Checkout.Session;
 
-        await marcarPagamentoComoFalho(session);
+        await marcarPagamentoComoFalho(
+          session,
+        );
+
+        break;
+      }
+
+      /*
+       * RENOVAÇÃO DA ASSINATURA
+       */
+
+      case "invoice.paid": {
+        const invoice =
+          event.data
+            .object as Stripe.Invoice;
+
+        const assinaturaTratada =
+          await confirmarInvoiceAssinatura(
+            invoice,
+          );
+
+        if (!assinaturaTratada) {
+          console.log(
+            `Invoice ${invoice.id} não pertence à assinatura AuraMeets.`,
+          );
+        }
+
+        break;
+      }
+
+      /*
+       * FALHA DE RENOVAÇÃO
+       */
+
+      case "invoice.payment_failed": {
+        const invoice =
+          event.data
+            .object as Stripe.Invoice;
+
+        const assinaturaTratada =
+          await falharInvoiceAssinatura(
+            invoice,
+          );
+
+        if (!assinaturaTratada) {
+          console.log(
+            `Invoice ${invoice.id} não pertence à assinatura AuraMeets.`,
+          );
+        }
+
+        break;
+      }
+
+      /*
+       * ALTERAÇÃO DA ASSINATURA
+       */
+
+      case "customer.subscription.updated": {
+        const subscription =
+          event.data
+            .object as Stripe.Subscription;
+
+        await atualizarStatusDaAssinatura(
+          subscription,
+        );
+
+        break;
+      }
+
+      /*
+       * CANCELAMENTO
+       */
+
+      case "customer.subscription.deleted": {
+        const subscription =
+          event.data
+            .object as Stripe.Subscription;
+
+        if (
+          ehAssinaturaTerapeuta(
+            subscription.metadata,
+          )
+        ) {
+          await marcarAssinaturaTerapeuta(
+            subscription.metadata,
+            "canceled",
+          );
+        }
+
         break;
       }
 

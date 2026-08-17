@@ -42,7 +42,7 @@ const founderBenefits = [
   "A partir de 01/09/2026, mensalidade de R$ 17,00",
 ];
 
-const DEADLINE = new Date("2026-08-17T10:00:00-03:00");
+const DEADLINE = new Date("2026-08-18T10:00:00-03:00");
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 
