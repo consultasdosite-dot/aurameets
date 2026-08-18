@@ -248,41 +248,43 @@ export default function HomePage() {
         )}
       </header>
 
-      {/* ENTRADA PRINCIPAL */}
+       {/* ENTRADA PRINCIPAL */}
       <section className="relative min-h-[640px] overflow-hidden bg-[#24122f] sm:min-h-[720px] lg:min-h-[760px]">
-        <img src="/hero-aura-maos.png"
+        <img
+          src="/hero-aura-maos-limpa.png"
           alt="AuraMeets — duas mãos se aproximando"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1c1027]/70 via-transparent to-[#2b1736]/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1c1027]/60 via-transparent to-[#2b1736]/5" />
 
         <div className="relative z-20 mx-auto flex min-h-[640px] max-w-[1560px] items-end justify-center px-5 pb-10 pt-8 sm:min-h-[720px] sm:px-8 sm:pb-14 lg:min-h-[760px] lg:px-12 lg:pb-16">
           <div className="grid w-full max-w-[920px] gap-3 sm:gap-4 md:grid-cols-3">
+
             <Link
               href="/quero-ser-acolhido"
-              className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/80 bg-[#d89b27]/95 px-5 text-center text-[14px] font-black uppercase tracking-[0.04em] text-white shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-[#c98c1f] sm:min-h-[64px] sm:text-[15px]"
+              className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/70 bg-gradient-to-r from-[#a855b5] via-[#8244a9] to-[#5a287d] px-5 text-center text-[14px] font-black uppercase tracking-[0.04em] text-white shadow-[0_12px_30px_rgba(63,25,82,0.32)] transition hover:-translate-y-0.5 hover:brightness-110 sm:min-h-[64px] sm:text-[15px]"
             >
               Sou Visitante
             </Link>
 
             <Link
               href="/login"
-              className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/80 bg-[#8244a9]/95 px-5 text-center text-[14px] font-black uppercase tracking-[0.04em] text-white shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-[#713795] sm:min-h-[64px] sm:text-[15px]"
+              className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/70 bg-gradient-to-r from-[#a855b5] via-[#8244a9] to-[#5a287d] px-5 text-center text-[14px] font-black uppercase tracking-[0.04em] text-white shadow-[0_12px_30px_rgba(63,25,82,0.32)] transition hover:-translate-y-0.5 hover:brightness-110 sm:min-h-[64px] sm:text-[15px]"
             >
-              Sou Usuário
+              Sou Cadastrado
             </Link>
 
             <Link
               href="/login"
-              className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/80 bg-[#273d8f]/95 px-5 text-center text-[14px] font-black uppercase tracking-[0.04em] text-white shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-[#1f327a] sm:min-h-[64px] sm:text-[15px]"
+              className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/70 bg-gradient-to-r from-[#a855b5] via-[#8244a9] to-[#5a287d] px-5 text-center text-[14px] font-black uppercase tracking-[0.04em] text-white shadow-[0_12px_30px_rgba(63,25,82,0.32)] transition hover:-translate-y-0.5 hover:brightness-110 sm:min-h-[64px] sm:text-[15px]"
             >
               Sou Terapeuta
             </Link>
+
           </div>
         </div>
       </section>
-
 
       {/* EXPERIÊNCIAS PRESENTE */}
       <section
