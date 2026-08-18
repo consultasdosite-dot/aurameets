@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } = await supabaseAdmin.auth.getUser(accessToken);
+    } = await supabaseAdmin.auth.getUser(
+      accessToken,
+    );
 
     if (authError || !user) {
       return NextResponse.json(
@@ -91,9 +93,57 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const account = await stripe.accounts.retrieve(
-      therapist.stripe_account_id,
-    );
+    let account;
+
+    try {
+      account = await stripe.accounts.retrieve(
+        therapist.stripe_account_id,
+      );
+    } catch (error) {
+      console.warn(
+        `Conta Stripe ${therapist.stripe_account_id} não encontrada no ambiente atual.`,
+        error,
+      );
+
+      const { error: resetError } =
+        await supabaseAdmin
+          .from("therapists")
+          .update({
+            stripe_account_id: null,
+            stripe_account_status: "not_connected",
+            stripe_charges_enabled: false,
+            stripe_payouts_enabled: false,
+            stripe_details_submitted: false,
+            stripe_connected_at: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", therapist.id);
+
+      if (resetError) {
+        console.error(
+          "Erro ao limpar conta Stripe antiga:",
+          resetError,
+        );
+
+        return NextResponse.json(
+          {
+            error:
+              "A conta Stripe antiga não existe mais, mas não foi possível atualizar o perfil.",
+          },
+          {
+            status: 500,
+          },
+        );
+      }
+
+      return NextResponse.json({
+        connected: false,
+        status: "not_connected",
+        chargesEnabled: false,
+        payoutsEnabled: false,
+        detailsSubmitted: false,
+      });
+    }
 
     const chargesEnabled =
       account.charges_enabled === true;
@@ -104,7 +154,8 @@ export async function POST(request: NextRequest) {
     const detailsSubmitted =
       account.details_submitted === true;
 
-    let stripeAccountStatus = "onboarding_pending";
+    let stripeAccountStatus =
+      "onboarding_pending";
 
     if (
       detailsSubmitted &&
@@ -116,22 +167,26 @@ export async function POST(request: NextRequest) {
       stripeAccountStatus = "under_review";
     }
 
-    const {
-      error: updateError,
-    } = await supabaseAdmin
-      .from("therapists")
-      .update({
-        stripe_account_status: stripeAccountStatus,
-        stripe_charges_enabled: chargesEnabled,
-        stripe_payouts_enabled: payoutsEnabled,
-        stripe_details_submitted: detailsSubmitted,
-        stripe_connected_at:
-          stripeAccountStatus === "connected"
-            ? new Date().toISOString()
-            : null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", therapist.id);
+    const { error: updateError } =
+      await supabaseAdmin
+        .from("therapists")
+        .update({
+          stripe_account_status:
+            stripeAccountStatus,
+          stripe_charges_enabled:
+            chargesEnabled,
+          stripe_payouts_enabled:
+            payoutsEnabled,
+          stripe_details_submitted:
+            detailsSubmitted,
+          stripe_connected_at:
+            stripeAccountStatus === "connected"
+              ? new Date().toISOString()
+              : null,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("id", therapist.id);
 
     if (updateError) {
       console.error(
