@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+
+const STRIPE_API_VERSION = "2026-07-29.dahlia";
+
+type StripeV2Account = {
+  id: string;
+};
+
+type StripeV2AccountLink = {
+  url: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,12 +19,8 @@ export async function POST(request: NextRequest) {
 
     if (!authorization?.startsWith("Bearer ")) {
       return NextResponse.json(
-        {
-          error: "Usuário não autenticado.",
-        },
-        {
-          status: 401,
-        },
+        { error: "Usuário não autenticado." },
+        { status: 401 },
       );
     }
 
@@ -26,20 +31,12 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
       error: authError,
-    } =
-      await supabaseAdmin.auth.getUser(
-        accessToken,
-      );
+    } = await supabaseAdmin.auth.getUser(accessToken);
 
     if (authError || !user) {
       return NextResponse.json(
-        {
-          error:
-            "Sessão inválida ou expirada.",
-        },
-        {
-          status: 401,
-        },
+        { error: "Sessão inválida ou expirada." },
+        { status: 401 },
       );
     }
 
@@ -71,78 +68,138 @@ export async function POST(request: NextRequest) {
           error:
             "Não foi possível localizar o perfil do terapeuta.",
         },
-        {
-          status: 500,
-        },
+        { status: 500 },
       );
     }
 
     if (!therapist) {
       return NextResponse.json(
-        {
-          error:
-            "Perfil de terapeuta não encontrado.",
-        },
-        {
-          status: 404,
-        },
+        { error: "Perfil de terapeuta não encontrado." },
+        { status: 404 },
       );
     }
 
-    let stripeAccountId:
-      | string
-      | null =
+    const stripeSecretKey =
+      process.env.STRIPE_SECRET_KEY?.trim();
+
+    if (!stripeSecretKey) {
+      return NextResponse.json(
+        {
+          error:
+            "A chave secreta da Stripe não está configurada.",
+        },
+        { status: 500 },
+      );
+    }
+
+    let stripeAccountId =
       therapist.stripe_account_id;
 
     /*
-     * Se já existe um acct_ salvo no Supabase,
-     * confirmamos se ele realmente existe
-     * na Stripe do ambiente atual.
-     *
-     * Isso resolve IDs antigos criados
-     * anteriormente em modo de teste.
-     */
-    if (stripeAccountId) {
-      try {
-        await stripe.accounts.retrieve(
-          stripeAccountId,
-        );
-      } catch (error) {
-        console.warn(
-          `Conta Stripe ${stripeAccountId} não encontrada no ambiente atual. Uma nova conta será criada.`,
-          error,
-        );
-
-        stripeAccountId = null;
-      }
-    }
-
-    /*
-     * Se não existe uma conta válida
-     * no ambiente Stripe atual,
-     * cria uma nova conta Express.
+     * Cria uma nova conta v2 quando
+     * não existe uma conta válida salva.
      */
     if (!stripeAccountId) {
-      const account =
-        await stripe.accounts.create({
-          type: "express",
-          country:
-            therapist.country_code ||
-            "BR",
-          email:
-            therapist.email ||
-            user.email ||
-            undefined,
-          business_type:
-            "individual",
-          metadata: {
-            therapist_id: String(
-              therapist.id,
-            ),
-            profile_id: user.id,
-            platform: "AuraMeets",
+      const accountResponse = await fetch(
+        "https://api.stripe.com/v2/core/accounts",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${stripeSecretKey}`,
+            "Content-Type": "application/json",
+            "Stripe-Version": STRIPE_API_VERSION,
           },
-        });
+          body: JSON.stringify({
+            contact_email:
+              therapist.email ||
+              user.email ||
+              undefined,
+
+            display_name:
+              therapist.name ||
+              "Terapeuta AuraMeets",
+
+            dashboard: "express",
+
+            identity: {
+              country:
+                (
+                  therapist.country_code ||
+                  "BR"
+                ).toUpperCase(),
+
+              entity_type: "individual",
+            },
+
+            configuration: {
+              merchant: {
+                capabilities: {
+                  card_payments: {
+                    requested: true,
+                  },
+                },
+              },
+            },
+
+            defaults: {
+              currency: "brl",
+
+              responsibilities: {
+                fees_collector:
+                  "application",
+
+                losses_collector:
+                  "application",
+              },
+
+              locales: ["pt-BR"],
+            },
+
+            metadata: {
+              therapist_id: String(
+                therapist.id,
+              ),
+              profile_id: user.id,
+              platform: "AuraMeets",
+            },
+
+            include: [
+              "configuration.merchant",
+              "identity",
+              "requirements",
+            ],
+          }),
+        },
+      );
+
+      const accountData =
+        await accountResponse.json();
+
+      if (!accountResponse.ok) {
+        console.error(
+          "Erro Stripe Accounts v2:",
+          accountData,
+        );
+
+        return NextResponse.json(
+          {
+            error:
+              "Não foi possível criar sua conta Stripe.",
+            details:
+              process.env.NODE_ENV ===
+              "development"
+                ? accountData
+                : undefined,
+          },
+          {
+            status:
+              accountResponse.status,
+          },
+        );
+      }
+
+      const account =
+        accountData as StripeV2Account;
 
       stripeAccountId = account.id;
 
@@ -153,15 +210,21 @@ export async function POST(request: NextRequest) {
         .update({
           stripe_account_id:
             stripeAccountId,
+
           stripe_account_status:
             "onboarding_pending",
+
           stripe_charges_enabled:
             false,
+
           stripe_payouts_enabled:
             false,
+
           stripe_details_submitted:
             false,
+
           stripe_connected_at: null,
+
           updated_at:
             new Date().toISOString(),
         })
@@ -169,46 +232,106 @@ export async function POST(request: NextRequest) {
 
       if (updateError) {
         console.error(
-          "Erro ao salvar nova conta Stripe no terapeuta:",
+          "Erro ao salvar conta Stripe:",
           updateError,
         );
 
         return NextResponse.json(
           {
             error:
-              "A conta Stripe foi criada, mas não foi possível salvá-la no perfil.",
+              "A conta Stripe foi criada, mas não foi possível salvar o vínculo.",
           },
-          {
-            status: 500,
-          },
+          { status: 500 },
         );
       }
     }
 
     const origin =
       request.headers.get("origin") ||
-      process.env
-        .NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
       "http://localhost:3000";
 
+    /*
+     * Cria o Account Link v2
+     * para onboarding hospedado.
+     */
+    const accountLinkResponse =
+      await fetch(
+        "https://api.stripe.com/v2/core/account_links",
+        {
+          method: "POST",
+          headers: {
+            Authorization:
+              `Bearer ${stripeSecretKey}`,
+
+            "Content-Type":
+              "application/json",
+
+            "Stripe-Version":
+              STRIPE_API_VERSION,
+          },
+          body: JSON.stringify({
+            account:
+              stripeAccountId,
+
+            use_case: {
+              type:
+                "account_onboarding",
+
+              account_onboarding: {
+                configurations: [
+                  "merchant",
+                ],
+
+                return_url:
+                  `${origin}/dashboard-terapeuta/financeiro?success=1`,
+
+                refresh_url:
+                  `${origin}/dashboard-terapeuta/financeiro?refresh=1`,
+              },
+            },
+          }),
+        },
+      );
+
+    const accountLinkData =
+      await accountLinkResponse.json();
+
+    if (!accountLinkResponse.ok) {
+      console.error(
+        "Erro Stripe Account Link v2:",
+        accountLinkData,
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Não foi possível iniciar o cadastro Stripe.",
+          details:
+            process.env.NODE_ENV ===
+            "development"
+              ? accountLinkData
+              : undefined,
+        },
+        {
+          status:
+            accountLinkResponse.status,
+        },
+      );
+    }
+
     const accountLink =
-      await stripe.accountLinks.create({
-        account: stripeAccountId,
-        refresh_url:
-          `${origin}/dashboard-terapeuta/stripe?refresh=1`,
-        return_url:
-          `${origin}/dashboard-terapeuta/stripe?success=1`,
-        type: "account_onboarding",
-      });
+      accountLinkData as StripeV2AccountLink;
 
     return NextResponse.json({
       onboardingUrl:
         accountLink.url,
+
       stripeAccountId,
     });
   } catch (error) {
     console.error(
-      "Erro ao iniciar Stripe Connect:",
+      "Erro ao iniciar Stripe Connect v2:",
       error,
     );
 
