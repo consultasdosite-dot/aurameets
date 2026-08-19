@@ -251,6 +251,11 @@ export default function ServicosPage() {
       return;
     }
 
+    if (formEdicao.description.length > 1500) {
+      setErro("A descrição pode ter no máximo 1.500 caracteres.");
+      return;
+    }
+
     if (
       !Number.isFinite(duracao) ||
       duracao <= 0
@@ -678,7 +683,7 @@ export default function ServicosPage() {
                 </p>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-6">
                 {servicos.map((servico) => {
                   const status =
                     obterStatus(
@@ -691,9 +696,9 @@ export default function ServicosPage() {
                   return (
                     <article
                       key={servico.id}
-                      className="overflow-hidden rounded-3xl border border-slate-700 bg-[#111A33] shadow-xl"
+                      className="overflow-hidden rounded-3xl border border-slate-700 bg-[#111A33] shadow-xl md:flex md:min-h-[360px]"
                     >
-                      <div className="flex h-52 items-center justify-center overflow-hidden bg-[#1B2444]">
+                      <div className="flex aspect-[3/2] items-center justify-center overflow-hidden bg-[#1B2444] md:aspect-auto md:w-[42%] md:flex-none">
                         {servico.cover_photo_url ? (
                           <img
                             src={
@@ -715,7 +720,7 @@ export default function ServicosPage() {
                         )}
                       </div>
 
-                      <div className="p-6">
+                      <div className="flex-1 p-6 sm:p-7">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
                             {servico.category}
@@ -732,7 +737,7 @@ export default function ServicosPage() {
                           {servico.name}
                         </h3>
 
-                        <p className="mt-3 line-clamp-3 leading-7 text-slate-300">
+                        <p className="mt-3 whitespace-pre-line leading-7 text-slate-300">
                           {servico.description}
                         </p>
 
@@ -939,20 +944,27 @@ export default function ServicosPage() {
                   </span>
 
                   <textarea
-                    value={
-                      formEdicao.description
-                    }
+                    value={formEdicao.description}
                     onChange={(event) =>
                       setFormEdicao({
                         ...formEdicao,
-                        description:
-                          event.target
-                            .value,
+                        description: event.target.value,
                       })
                     }
-                    rows={5}
+                    rows={10}
+                    maxLength={1500}
+                    placeholder="Descreva o serviço com clareza, benefícios, formato do atendimento e para quem ele é indicado."
                     className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
                   />
+
+                  <div className="mt-2 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
+                    <span className="text-slate-400">
+                      Descrição completa do serviço. Limite máximo de 1.500 caracteres.
+                    </span>
+                    <span className="font-bold text-yellow-400">
+                      {formEdicao.description.length} / 1500
+                    </span>
+                  </div>
                 </label>
 
                 <label>
@@ -961,19 +973,35 @@ export default function ServicosPage() {
                   </span>
 
                   <input
-                    value={
-                      formEdicao.cover_photo_url
-                    }
+                    value={formEdicao.cover_photo_url}
                     onChange={(event) =>
                       setFormEdicao({
                         ...formEdicao,
-                        cover_photo_url:
-                          event.target
-                            .value,
+                        cover_photo_url: event.target.value,
                       })
                     }
+                    placeholder="https://..."
                     className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
                   />
+
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    Tamanho recomendado: 1200 × 800 px, proporção 3:2. Use uma imagem horizontal, nítida e sem textos próximos das bordas.
+                  </p>
+
+                  {formEdicao.cover_photo_url.trim() && (
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700 bg-[#1B2444]">
+                      <div className="aspect-[3/2] w-full">
+                        <img
+                          src={formEdicao.cover_photo_url}
+                          alt="Prévia da foto do serviço"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <p className="px-4 py-3 text-xs text-slate-400">
+                        Prévia no formato recomendado 3:2. A imagem é recortada proporcionalmente, sem ser esticada.
+                      </p>
+                    </div>
+                  )}
                 </label>
 
                 <div className="grid gap-6 sm:grid-cols-2">
