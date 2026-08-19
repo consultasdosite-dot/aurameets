@@ -85,6 +85,57 @@ export default function ServicosPage() {
   const [salvando, setSalvando] = useState(false);
   const [acaoId, setAcaoId] = useState<string | null>(null);
 
+  const [auraAberta, setAuraAberta] = useState(false);
+  const [auraTopico, setAuraTopico] = useState<string | null>(null);
+
+  const auraAjuda: Record<string, { titulo: string; passos: string[] }> = {
+    novo: {
+      titulo: "Cadastrar um serviço",
+      passos: [
+        "Clique no botão + Novo Serviço.",
+        "Escreva o nome do atendimento que você oferece.",
+        "Preencha as informações pedidas, uma de cada vez.",
+        "No final, confira e salve.",
+      ],
+    },
+    foto: {
+      titulo: "Colocar uma foto",
+      passos: [
+        "Escolha uma foto horizontal e bem nítida.",
+        "Use de preferência o tamanho 1200 × 800.",
+        "Coloque o endereço da imagem no campo URL da foto.",
+        "Veja a prévia antes de salvar.",
+      ],
+    },
+    descricao: {
+      titulo: "Escrever a descrição",
+      passos: [
+        "Explique primeiro o que é o seu atendimento.",
+        "Depois diga para quem ele é indicado.",
+        "Conte de forma simples como a pessoa será atendida.",
+        "Evite textos muito longos. Clareza ajuda a vender.",
+      ],
+    },
+    preco: {
+      titulo: "Colocar o preço",
+      passos: [
+        "No campo Preço, coloque o valor normal do atendimento.",
+        "Se houver desconto, use também Preço promocional.",
+        "Confira a moeda: Real, Dólar ou Euro.",
+        "Salve as alterações.",
+      ],
+    },
+    publicar: {
+      titulo: "Publicar ou ocultar",
+      passos: [
+        "Encontre o serviço na lista abaixo.",
+        "Se aparecer Publicar, clique para mostrar no seu perfil.",
+        "Se aparecer Ocultar, o serviço já está publicado.",
+        "Você pode ocultar e publicar novamente quando quiser.",
+      ],
+    },
+  };
+
   async function carregarServicos() {
     setCarregando(true);
     setErro("");
@@ -580,6 +631,33 @@ export default function ServicosPage() {
           </div>
         </div>
 
+        <section className="mt-8 rounded-3xl border border-yellow-400/30 bg-yellow-400/10 p-5 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+                Precisa de ajuda?
+              </p>
+              <h2 className="mt-2 text-2xl font-black text-white">
+                Sou AURA, sua assistente virtual
+              </h2>
+              <p className="mt-2 max-w-2xl text-base leading-7 text-slate-300">
+                Eu explico devagar, uma coisa por vez.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAuraAberta(true);
+                setAuraTopico(null);
+              }}
+              className="min-h-14 rounded-2xl bg-yellow-400 px-7 py-4 text-lg font-black text-black transition hover:bg-yellow-300"
+            >
+              PEÇA AJUDA
+            </button>
+          </div>
+        </section>
+
         {mensagem && (
           <div className="mt-8 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-emerald-300">
             {mensagem}
@@ -868,6 +946,93 @@ export default function ServicosPage() {
             </section>
           )}
       </div>
+
+      {auraAberta && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4">
+          <section className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-yellow-400/30 bg-[#111A33] p-6 shadow-2xl sm:p-8">
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
+                  AURA
+                </p>
+                <h2 className="mt-2 text-3xl font-black text-white">
+                  {auraTopico ? auraAjuda[auraTopico].titulo : "Olá! O que você quer fazer?"}
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAuraAberta(false);
+                  setAuraTopico(null);
+                }}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-600 text-2xl font-bold text-white"
+                aria-label="Fechar ajuda"
+              >
+                ×
+              </button>
+            </div>
+
+            {!auraTopico ? (
+              <div className="mt-7 grid gap-3">
+                {[
+                  ["novo", "Quero cadastrar um serviço"],
+                  ["foto", "Como coloco uma foto?"],
+                  ["descricao", "Como escrevo a descrição?"],
+                  ["preco", "Como coloco o preço?"],
+                  ["publicar", "Como publico meu serviço?"],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setAuraTopico(id)}
+                    className="min-h-16 rounded-2xl border border-slate-600 bg-slate-950/50 px-5 py-4 text-left text-lg font-bold text-white transition hover:border-yellow-400 hover:text-yellow-300"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-7">
+                <div className="space-y-4">
+                  {auraAjuda[auraTopico].passos.map((passo, index) => (
+                    <div
+                      key={passo}
+                      className="flex gap-4 rounded-2xl border border-slate-700 bg-slate-950/50 p-5"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-lg font-black text-black">
+                        {index + 1}
+                      </div>
+                      <p className="pt-1 text-lg leading-7 text-white">{passo}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setAuraTopico(null)}
+                    className="min-h-14 rounded-2xl border border-slate-600 px-5 py-3 font-bold text-white"
+                  >
+                    VOLTAR
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAuraTopico(null)}
+                    className="min-h-14 rounded-2xl bg-yellow-400 px-5 py-3 font-black text-black"
+                  >
+                    NÃO ENTENDI
+                  </button>
+                </div>
+
+                <p className="mt-4 text-center text-sm leading-6 text-slate-400">
+                  Se não ficou claro, toque em NÃO ENTENDI e escolha novamente o que precisa.
+                </p>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
 
       {servicoEditando &&
         formEdicao && (
