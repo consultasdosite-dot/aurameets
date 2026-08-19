@@ -428,9 +428,6 @@ export default async function TherapistProfilePage({
     : null;
 
   const servicesHref = "#servicos";
-  const giftHref = activeOffers.length > 0
-    ? `/ofertas/${activeOffers[0].id}`
-    : whatsappHref;
   const featuredPurchaseHref = featuredService
     ? `/comprar?servico=${encodeURIComponent(featuredService.id)}`
     : servicesHref;
@@ -500,7 +497,7 @@ export default async function TherapistProfilePage({
                 ))}
               </div>
 
-              <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {scheduleHref ? (
                   <a
                     href={scheduleHref}
@@ -522,30 +519,6 @@ export default async function TherapistProfilePage({
                 >
                   MAIS SERVIÇOS
                 </Link>
-
-                {giftHref ? (
-                  giftHref.startsWith("http") ? (
-                    <a
-                      href={giftHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex min-h-[72px] items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 py-4 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(34,197,94,0.22)] transition hover:-translate-y-0.5 hover:brightness-110"
-                    >
-                      QUERO PRESENTE
-                    </a>
-                  ) : (
-                    <Link
-                      href={giftHref}
-                      className="flex min-h-[72px] items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 py-4 text-center text-sm font-black text-white shadow-[0_12px_28px_rgba(34,197,94,0.22)] transition hover:-translate-y-0.5 hover:brightness-110"
-                    >
-                      QUERO PRESENTE
-                    </Link>
-                  )
-                ) : (
-                  <div className="flex min-h-[72px] items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500/35 to-green-600/35 px-4 py-4 text-center text-sm font-black text-white/60">
-                    QUERO PRESENTE
-                  </div>
-                )}
 
                 <Link
                   href={featuredPurchaseHref}

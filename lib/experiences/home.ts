@@ -58,8 +58,6 @@ type SupabaseExperienceRow = Omit<
     | null;
 };
 
-const HOME_EXPERIENCES_LIMIT = 8;
-
 const EXPERIENCE_SELECT = `
   id,
   therapist_id,
@@ -312,72 +310,7 @@ function shuffleExperiences<T>(items: T[]): T[] {
 function selectHomeExperiences(
   experiences: FeaturedExperience[],
 ): FeaturedExperience[] {
-  const shuffledExperiences =
-    shuffleExperiences(experiences);
-
-  const selectedExperiences: FeaturedExperience[] =
-    [];
-
-  const selectedExperienceIds = new Set<number>();
-  const selectedTherapistIds = new Set<number>();
-
-  /*
-   * Primeira seleção:
-   * mostra inicialmente uma experiência por terapeuta
-   * para ampliar a diversidade da vitrine.
-   */
-  for (const experience of shuffledExperiences) {
-    if (
-      selectedExperiences.length >=
-      HOME_EXPERIENCES_LIMIT
-    ) {
-      break;
-    }
-
-    if (
-      selectedTherapistIds.has(
-        experience.therapist_id,
-      )
-    ) {
-      continue;
-    }
-
-    selectedExperiences.push(experience);
-    selectedExperienceIds.add(experience.id);
-    selectedTherapistIds.add(
-      experience.therapist_id,
-    );
-  }
-
-  /*
-   * Segunda seleção:
-   * completa as oito posições caso existam
-   * várias experiências do mesmo terapeuta.
-   */
-  if (
-    selectedExperiences.length <
-    HOME_EXPERIENCES_LIMIT
-  ) {
-    for (const experience of shuffledExperiences) {
-      if (
-        selectedExperiences.length >=
-        HOME_EXPERIENCES_LIMIT
-      ) {
-        break;
-      }
-
-      if (
-        selectedExperienceIds.has(experience.id)
-      ) {
-        continue;
-      }
-
-      selectedExperiences.push(experience);
-      selectedExperienceIds.add(experience.id);
-    }
-  }
-
-  return selectedExperiences;
+  return shuffleExperiences(experiences);
 }
 
 export function getTherapistInitials(
