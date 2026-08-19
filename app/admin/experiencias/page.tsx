@@ -81,7 +81,7 @@ function statusClassName(status: ApprovalStatus) {
 export default function AdminExperiencesPage() {
   const [experiences, setExperiences] = useState<AdminExperience[]>([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>("pending");
+  const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
   const [selected, setSelected] = useState<AdminExperience | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<number | null>(null);
@@ -294,6 +294,118 @@ export default function AdminExperiencesPage() {
     await loadExperiences();
   }
 
+  async function suspendExperience(experience: AdminExperience) {
+    const confirmed = window.confirm(
+      `Suspender a experiência "${experience.title}"? Ela será retirada imediatamente da Home, mas continuará cadastrada.`,
+    );
+
+    if (!confirmed) return;
+
+    setActionId(experience.id);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const { error } = await supabase
+      .from("experiences")
+      .update({
+        active: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", experience.id);
+
+    setActionId(null);
+
+    if (error) {
+      console.error("Erro ao suspender experiência:", error);
+      setErrorMessage(
+        "Não foi possível suspender a experiência. Verifique as permissões administrativas no Supabase.",
+      );
+      return;
+    }
+
+    setSelected(null);
+    setSuccessMessage(
+      `A experiência "${experience.title}" foi suspensa e retirada da Home.`,
+    );
+    await loadExperiences();
+  }
+
+  async function reactivateExperience(experience: AdminExperience) {
+    const confirmed = window.confirm(
+      `Reativar a experiência "${experience.title}"?`,
+    );
+
+    if (!confirmed) return;
+
+    setActionId(experience.id);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const { error } = await supabase
+      .from("experiences")
+      .update({
+        active: true,
+        approval_status: "approved",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", experience.id);
+
+    setActionId(null);
+
+    if (error) {
+      console.error("Erro ao reativar experiência:", error);
+      setErrorMessage(
+        "Não foi possível reativar a experiência. Verifique as permissões administrativas no Supabase.",
+      );
+      return;
+    }
+
+    setSelected(null);
+    setSuccessMessage(
+      `A experiência "${experience.title}" foi reativada e poderá voltar à Home.`,
+    );
+    await loadExperiences();
+  }
+
+  async function deleteExperience(experience: AdminExperience) {
+    const confirmed = window.confirm(
+      `EXCLUIR DEFINITIVAMENTE a experiência "${experience.title}"?\n\nEsta ação não poderá ser desfeita.`,
+    );
+
+    if (!confirmed) return;
+
+    const finalConfirmation = window.confirm(
+      `Confirma a exclusão definitiva de "${experience.title}"?`,
+    );
+
+    if (!finalConfirmation) return;
+
+    setActionId(experience.id);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const { error } = await supabase
+      .from("experiences")
+      .delete()
+      .eq("id", experience.id);
+
+    setActionId(null);
+
+    if (error) {
+      console.error("Erro ao excluir experiência:", error);
+      setErrorMessage(
+        "Não foi possível excluir a experiência. Verifique as permissões administrativas no Supabase.",
+      );
+      return;
+    }
+
+    setSelected(null);
+    setSuccessMessage(
+      `A experiência "${experience.title}" foi excluída definitivamente.`,
+    );
+    await loadExperiences();
+  }
+
   return (
     <>
       <section className="overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/40 p-7 shadow-2xl sm:p-9">
@@ -482,13 +594,25 @@ export default function AdminExperiencesPage() {
                       </div>
                     </div>
 
-                    <span
-                      className={`inline-flex rounded-full border px-3 py-1 text-xs font-black ${statusClassName(
-                        experience.approval_status,
-                      )}`}
-                    >
-                      {statusLabel(experience.approval_status)}
-                    </span>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-black ${statusClassName(
+                          experience.approval_status,
+                        )}`}
+                      >
+                        {statusLabel(experience.approval_status)}
+                      </span>
+
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-black ${
+                          experience.active
+                            ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-300"
+                            : "border-slate-600 bg-slate-800 text-slate-400"
+                        }`}
+                      >
+                        {experience.active ? "Ativa" : "Suspensa"}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="mt-6 border-t border-white/10 pt-6">
@@ -567,6 +691,36 @@ export default function AdminExperiencesPage() {
                         Rejeitar
                       </button>
                     )}
+
+                    {experience.approval_status === "approved" &&
+                      (experience.active ? (
+                        <button
+                          type="button"
+                          onClick={() => suspendExperience(experience)}
+                          disabled={actionId === experience.id}
+                          className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-sm font-bold text-amber-300 transition hover:bg-amber-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Suspender
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => reactivateExperience(experience)}
+                          disabled={actionId === experience.id}
+                          className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2.5 text-sm font-bold text-cyan-300 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Reativar
+                        </button>
+                      ))}
+
+                    <button
+                      type="button"
+                      onClick={() => deleteExperience(experience)}
+                      disabled={actionId === experience.id}
+                      className="rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-2.5 text-sm font-black text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Excluir
+                    </button>
                   </div>
                 </article>
               );
@@ -680,6 +834,36 @@ export default function AdminExperiencesPage() {
                   Rejeitar
                 </button>
               )}
+
+              {selected.approval_status === "approved" &&
+                (selected.active ? (
+                  <button
+                    type="button"
+                    onClick={() => suspendExperience(selected)}
+                    disabled={actionId === selected.id}
+                    className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-5 py-3 font-bold text-amber-300 transition hover:bg-amber-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Suspender
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => reactivateExperience(selected)}
+                    disabled={actionId === selected.id}
+                    className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-5 py-3 font-bold text-cyan-300 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Reativar
+                  </button>
+                ))}
+
+              <button
+                type="button"
+                onClick={() => deleteExperience(selected)}
+                disabled={actionId === selected.id}
+                className="rounded-xl border border-red-500/40 bg-red-950/40 px-5 py-3 font-black text-red-300 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Excluir definitivamente
+              </button>
 
               {selected.approval_status !== "approved" && (
                 <button
