@@ -88,6 +88,13 @@ export default function ServicosPage() {
   const [auraAberta, setAuraAberta] = useState(false);
   const [auraTopico, setAuraTopico] = useState<string | null>(null);
 
+  const [auraServicoId, setAuraServicoId] = useState("");
+  const [auraPedidoFoto, setAuraPedidoFoto] = useState("");
+  const [auraGerandoFoto, setAuraGerandoFoto] = useState(false);
+  const [auraSalvandoFoto, setAuraSalvandoFoto] = useState(false);
+  const [auraImagemUrl, setAuraImagemUrl] = useState("");
+  const [auraErroFoto, setAuraErroFoto] = useState("");
+
   const auraAjuda: Record<string, { titulo: string; passos: string[] }> = {
     novo: {
       titulo: "Cadastrar um serviço",
@@ -99,12 +106,12 @@ export default function ServicosPage() {
       ],
     },
     foto: {
-      titulo: "Colocar uma foto",
+      titulo: "Ajude-me com a foto",
       passos: [
-        "Escolha uma foto horizontal e bem nítida.",
-        "Use de preferência o tamanho 1200 × 800.",
-        "Coloque o endereço da imagem no campo URL da foto.",
-        "Veja a prévia antes de salvar.",
+        "Escolha abaixo qual serviço precisa de uma foto.",
+        "Se quiser, conte em poucas palavras como imagina a imagem.",
+        "A AURA cria a foto para você.",
+        "Confira a imagem e toque em USAR ESTA FOTO.",
       ],
     },
     descricao: {
@@ -135,6 +142,155 @@ export default function ServicosPage() {
       ],
     },
   };
+
+  function fecharAura() {
+    if (auraGerandoFoto || auraSalvandoFoto) {
+      return;
+    }
+
+    setAuraAberta(false);
+    setAuraTopico(null);
+    setAuraServicoId("");
+    setAuraPedidoFoto("");
+    setAuraImagemUrl("");
+    setAuraErroFoto("");
+  }
+
+  async function gerarFotoComAura() {
+    const servico = servicos.find(
+      (item) => item.id === auraServicoId,
+    );
+
+    if (!servico) {
+      setAuraErroFoto(
+        "Escolha primeiro o serviço que precisa de uma foto.",
+      );
+      return;
+    }
+
+    setAuraGerandoFoto(true);
+    setAuraErroFoto("");
+    setAuraImagemUrl("");
+
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.access_token) {
+        setAuraErroFoto(
+          "Sua sessão expirou. Entre novamente no AuraMeets.",
+        );
+        return;
+      }
+
+      const response = await fetch(
+        "/api/aura/imagem",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            serviceId: servico.id,
+            serviceName: servico.name,
+            category: servico.category,
+            description: servico.description,
+            request: auraPedidoFoto.trim(),
+          }),
+        },
+      );
+
+      const result = (await response.json()) as {
+        imageUrl?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !result.imageUrl) {
+        throw new Error(
+          result.error ||
+            "A AURA não conseguiu criar a imagem agora.",
+        );
+      }
+
+      setAuraImagemUrl(result.imageUrl);
+    } catch (error) {
+      setAuraErroFoto(
+        error instanceof Error
+          ? error.message
+          : "A AURA não conseguiu criar a imagem agora.",
+      );
+    } finally {
+      setAuraGerandoFoto(false);
+    }
+  }
+
+  async function usarFotoDaAura() {
+    if (!auraServicoId || !auraImagemUrl) {
+      setAuraErroFoto(
+        "Crie uma imagem antes de usar esta opção.",
+      );
+      return;
+    }
+
+    setAuraSalvandoFoto(true);
+    setAuraErroFoto("");
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        setAuraErroFoto(
+          "Sua sessão expirou. Entre novamente no AuraMeets.",
+        );
+        return;
+      }
+
+      const { error } = await supabase
+        .from("services")
+        .update({
+          cover_photo_url: auraImagemUrl,
+        })
+        .eq("id", auraServicoId)
+        .eq("therapist_id", user.id);
+
+      if (error) {
+        throw new Error(
+          `Não foi possível salvar a foto: ${error.message}`,
+        );
+      }
+
+      setServicos((atuais) =>
+        atuais.map((servico) =>
+          servico.id === auraServicoId
+            ? {
+                ...servico,
+                cover_photo_url: auraImagemUrl,
+              }
+            : servico,
+        ),
+      );
+
+      setMensagem(
+        "A foto criada pela AURA foi aplicada ao seu serviço.",
+      );
+
+      fecharAura();
+    } catch (error) {
+      setAuraErroFoto(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível aplicar a foto ao serviço.",
+      );
+    } finally {
+      setAuraSalvandoFoto(false);
+    }
+  }
 
   async function carregarServicos() {
     setCarregando(true);
@@ -631,16 +787,16 @@ export default function ServicosPage() {
           </div>
         </div>
 
-        <section className="mt-8 rounded-3xl border border-yellow-400/30 bg-yellow-400/10 p-5 sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className="mt-8 rounded-3xl border border-yellow-300 bg-yellow-400 p-5 text-black sm:p-7">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-black">
                 Precisa de ajuda?
               </p>
-              <h2 className="mt-2 text-2xl font-black text-white">
+              <h2 className="mt-2 text-2xl font-black text-black sm:text-3xl">
                 Sou AURA, sua assistente virtual
               </h2>
-              <p className="mt-2 max-w-2xl text-base leading-7 text-slate-300">
+              <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-black/80">
                 Eu explico devagar, uma coisa por vez.
               </p>
             </div>
@@ -650,8 +806,9 @@ export default function ServicosPage() {
               onClick={() => {
                 setAuraAberta(true);
                 setAuraTopico(null);
+                setAuraErroFoto("");
               }}
-              className="min-h-14 rounded-2xl bg-yellow-400 px-7 py-4 text-lg font-black text-black transition hover:bg-yellow-300"
+              className="min-h-16 rounded-2xl bg-[#050816] px-8 py-4 text-lg font-black text-yellow-400 transition hover:bg-black"
             >
               PEÇA AJUDA
             </button>
@@ -962,10 +1119,7 @@ export default function ServicosPage() {
 
               <button
                 type="button"
-                onClick={() => {
-                  setAuraAberta(false);
-                  setAuraTopico(null);
-                }}
+                onClick={fecharAura}
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-600 text-2xl font-bold text-white"
                 aria-label="Fechar ajuda"
               >
@@ -977,7 +1131,7 @@ export default function ServicosPage() {
               <div className="mt-7 grid gap-3">
                 {[
                   ["novo", "Quero cadastrar um serviço"],
-                  ["foto", "Como coloco uma foto?"],
+                  ["foto", "AJUDE-ME COM A FOTO"],
                   ["descricao", "Como escrevo a descrição?"],
                   ["preco", "Como coloco o preço?"],
                   ["publicar", "Como publico meu serviço?"],
@@ -992,6 +1146,147 @@ export default function ServicosPage() {
                   </button>
                 ))}
               </div>
+            ) : auraTopico === "foto" ? (
+              <div className="mt-7">
+                {servicos.length === 0 ? (
+                  <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-5">
+                    <p className="text-lg font-bold text-white">
+                      Primeiro cadastre um serviço.
+                    </p>
+                    <p className="mt-2 leading-7 text-slate-300">
+                      Depois volte aqui e a AURA poderá criar a foto para ele.
+                    </p>
+                    <Link
+                      href="/dashboard-terapeuta/servicos/novo"
+                      className="mt-5 inline-flex min-h-14 items-center justify-center rounded-xl bg-yellow-400 px-6 py-3 font-black text-black"
+                    >
+                      CADASTRAR SERVIÇO
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    <label className="block">
+                      <span className="mb-2 block text-lg font-black text-white">
+                        1. Qual serviço precisa da foto?
+                      </span>
+                      <select
+                        value={auraServicoId}
+                        onChange={(event) => {
+                          setAuraServicoId(event.target.value);
+                          setAuraImagemUrl("");
+                          setAuraErroFoto("");
+                        }}
+                        className="w-full rounded-2xl border border-slate-600 bg-slate-950 px-4 py-4 text-lg text-white outline-none focus:border-yellow-400"
+                      >
+                        <option value="">Escolha um serviço</option>
+                        {servicos.map((servico) => (
+                          <option key={servico.id} value={servico.id}>
+                            {servico.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="mt-6 block">
+                      <span className="mb-2 block text-lg font-black text-white">
+                        2. Quer pedir algo especial?
+                      </span>
+                      <textarea
+                        value={auraPedidoFoto}
+                        onChange={(event) =>
+                          setAuraPedidoFoto(event.target.value)
+                        }
+                        maxLength={500}
+                        rows={4}
+                        placeholder="Exemplo: quero uma imagem acolhedora, elegante e com sensação de tranquilidade."
+                        className="w-full rounded-2xl border border-slate-600 bg-slate-950 px-4 py-4 text-lg leading-7 text-white outline-none placeholder:text-slate-500 focus:border-yellow-400"
+                      />
+                      <p className="mt-2 text-sm text-slate-400">
+                        Se preferir, deixe em branco. A AURA cria por você.
+                      </p>
+                    </label>
+
+                    {auraErroFoto && (
+                      <div className="mt-5 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-red-300">
+                        {auraErroFoto}
+                      </div>
+                    )}
+
+                    {!auraImagemUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => void gerarFotoComAura()}
+                        disabled={auraGerandoFoto || !auraServicoId}
+                        className="mt-6 min-h-16 w-full rounded-2xl bg-yellow-400 px-6 py-4 text-lg font-black text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {auraGerandoFoto
+                          ? "AURA ESTÁ CRIANDO SUA FOTO..."
+                          : "CRIAR MINHA FOTO"}
+                      </button>
+                    ) : (
+                      <div className="mt-6">
+                        <p className="text-lg font-black text-white">
+                          3. Veja como ficou
+                        </p>
+
+                        <div className="mt-3 overflow-hidden rounded-2xl border border-yellow-400/30 bg-slate-950">
+                          <div className="aspect-[3/2] w-full">
+                            <img
+                              src={auraImagemUrl}
+                              alt="Foto criada pela AURA para o serviço"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        </div>
+
+                        <p className="mt-3 text-base leading-7 text-slate-300">
+                          Gostou? Toque em USAR ESTA FOTO. Se não gostou, peça outra.
+                        </p>
+
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAuraImagemUrl("");
+                              void gerarFotoComAura();
+                            }}
+                            disabled={auraGerandoFoto || auraSalvandoFoto}
+                            className="min-h-14 rounded-2xl border border-yellow-400/50 px-5 py-3 font-black text-yellow-300 disabled:opacity-50"
+                          >
+                            CRIAR OUTRA
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => void usarFotoDaAura()}
+                            disabled={auraSalvandoFoto || auraGerandoFoto}
+                            className="min-h-14 rounded-2xl bg-yellow-400 px-5 py-3 font-black text-black disabled:opacity-50"
+                          >
+                            {auraSalvandoFoto
+                              ? "SALVANDO..."
+                              : "USAR ESTA FOTO"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuraTopico(null);
+                    setAuraServicoId("");
+                    setAuraPedidoFoto("");
+                    setAuraImagemUrl("");
+                    setAuraErroFoto("");
+                  }}
+                  disabled={auraGerandoFoto || auraSalvandoFoto}
+                  className="mt-6 min-h-14 w-full rounded-2xl border border-slate-600 px-5 py-3 font-bold text-white disabled:opacity-50"
+                >
+                  VOLTAR
+                </button>
+              </div>
             ) : (
               <div className="mt-7">
                 <div className="space-y-4">
@@ -1003,7 +1298,9 @@ export default function ServicosPage() {
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-lg font-black text-black">
                         {index + 1}
                       </div>
-                      <p className="pt-1 text-lg leading-7 text-white">{passo}</p>
+                      <p className="pt-1 text-lg leading-7 text-white">
+                        {passo}
+                      </p>
                     </div>
                   ))}
                 </div>

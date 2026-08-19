@@ -264,6 +264,152 @@ function FinanceiroTerapeutaContent() {
   const [pixError, setPixError] =
     useState("");
 
+  const [auraAberta, setAuraAberta] =
+    useState(false);
+  const [auraTopico, setAuraTopico] =
+    useState<string | null>(null);
+
+  const contaConectada =
+    stripeStatus === "connected";
+
+  const cadastroEmAnalise =
+    stripeStatus === "under_review";
+
+  const cadastroPendente =
+    stripeStatus ===
+    "onboarding_pending";
+
+  const auraFinanceiro: Record<
+    string,
+    {
+      titulo: string;
+      passos: string[];
+      acao?: "stripe" | "pix" | "pagamentos";
+    }
+  > = {
+    stripe: {
+      titulo: contaAjudaStripeTitulo(),
+      passos: contaAjudaStripePassos(),
+      acao: "stripe",
+    },
+    analise: {
+      titulo: "Minha Stripe está em análise",
+      passos: [
+        "Isso significa que seus dados já chegaram à Stripe.",
+        "Agora a Stripe está conferindo as informações da sua conta.",
+        "Você não precisa fazer um novo cadastro.",
+        "Toque em ATUALIZAR STATUS para verificar se a conta já foi liberada.",
+      ],
+      acao: "stripe",
+    },
+    problemaStripe: {
+      titulo: "Minha Stripe não conectou",
+      passos: [
+        "Primeiro, toque em TENTAR NOVAMENTE.",
+        "A página segura da Stripe será aberta.",
+        "Confira se todos os dados pedidos pela Stripe foram preenchidos.",
+        "Quando terminar, volte ao AuraMeets e consulte novamente o status.",
+      ],
+      acao: "stripe",
+    },
+    pix: {
+      titulo: "Como cadastro meu PIX?",
+      passos: [
+        "Escolha o tipo da sua chave PIX.",
+        "Digite a chave exatamente como está cadastrada no seu banco.",
+        "Digite o nome do titular da chave.",
+        "Toque em SALVAR MEU PIX.",
+      ],
+      acao: "pix",
+    },
+    pagamentos: {
+      titulo: "Como vejo meus pagamentos?",
+      passos: [
+        "As vendas feitas pela Stripe aparecem em Vendas processadas pela Stripe.",
+        "Pagamentos recebidos por PIX, dinheiro ou fora da Stripe aparecem em Recebimentos externos.",
+        "Na parte superior você também vê os totais do mês.",
+        "Se acabou de receber um pagamento Stripe e ele ainda não apareceu, toque em ATUALIZAR PAGAMENTOS.",
+      ],
+      acao: "pagamentos",
+    },
+  };
+
+  function contaAjudaStripeTitulo() {
+    if (contaConectada) {
+      return "Minha Stripe já está conectada";
+    }
+
+    if (cadastroEmAnalise) {
+      return "Minha Stripe está em análise";
+    }
+
+    if (cadastroPendente) {
+      return "Quero terminar meu cadastro Stripe";
+    }
+
+    return "Quero conectar a Stripe";
+  }
+
+  function contaAjudaStripePassos() {
+    if (contaConectada) {
+      return [
+        "Sua conta Stripe está conectada.",
+        "Você já pode receber pagamentos processados pela plataforma.",
+        "Se quiser conferir novamente, toque em ATUALIZAR STATUS.",
+      ];
+    }
+
+    if (cadastroEmAnalise) {
+      return [
+        "Seus dados já foram enviados para a Stripe.",
+        "Agora a Stripe está conferindo as informações.",
+        "Você não precisa começar outro cadastro.",
+        "Toque em ATUALIZAR STATUS para verificar se já foi liberada.",
+      ];
+    }
+
+    if (cadastroPendente) {
+      return [
+        "Você já começou o cadastro na Stripe.",
+        "Toque em CONTINUAR NA STRIPE.",
+        "Preencha somente os dados que ainda estiverem faltando.",
+        "Quando terminar, volte ao AuraMeets.",
+      ];
+    }
+
+    return [
+      "Toque em CONECTAR MINHA STRIPE.",
+      "A página segura da Stripe será aberta.",
+      "Preencha os dados que a Stripe pedir.",
+      "Quando terminar, volte ao AuraMeets. Nós mostraremos a situação da sua conta aqui.",
+    ];
+  }
+
+  function fecharAura() {
+    setAuraAberta(false);
+    setAuraTopico(null);
+  }
+
+  function irParaPix() {
+    fecharAura();
+    document
+      .getElementById("aura-pix")
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+  }
+
+  function irParaPagamentos() {
+    fecharAura();
+    document
+      .getElementById("aura-pagamentos")
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+  }
+
   const getAccessToken = useCallback(async () => {
     const {
       data: { session },
@@ -957,16 +1103,6 @@ function FinanceiroTerapeutaContent() {
   const onboardingExpirado =
     searchParams.get("refresh") === "1";
 
-  const contaConectada =
-    stripeStatus === "connected";
-
-  const cadastroEmAnalise =
-    stripeStatus === "under_review";
-
-  const cadastroPendente =
-    stripeStatus ===
-    "onboarding_pending";
-
   function obterTituloStripe() {
     if (loadingStripeStatus) {
       return "Consultando sua conta Stripe...";
@@ -1077,7 +1213,34 @@ function FinanceiroTerapeutaContent() {
           </button>
         </section>
 
-        <section className="mt-7 overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
+        <section className="mt-7 rounded-3xl border border-yellow-300 bg-yellow-400 p-5 text-black shadow-sm sm:p-7">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-black">
+                Precisa de ajuda?
+              </p>
+              <h2 className="mt-2 text-2xl font-black text-black sm:text-3xl">
+                Sou AURA, sua assistente virtual
+              </h2>
+              <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-black/80">
+                Eu ajudo você com Stripe, PIX e pagamentos. Uma coisa por vez.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAuraAberta(true);
+                setAuraTopico(null);
+              }}
+              className="min-h-16 rounded-2xl bg-[#050816] px-8 py-4 text-lg font-black text-yellow-400 transition hover:bg-black"
+            >
+              PEÇA AJUDA
+            </button>
+          </div>
+        </section>
+
+        <section id="aura-pix" className="mt-7 scroll-mt-6 overflow-hidden rounded-3xl border border-emerald-200 bg-white shadow-sm">
           <div className="border-b border-emerald-100 bg-emerald-50 px-5 py-5 sm:px-6">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
               Recebimento direto
@@ -1418,7 +1581,7 @@ function FinanceiroTerapeutaContent() {
           </section>
         )}
 
-        <section className="mt-7 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <section id="aura-pagamentos" className="mt-7 scroll-mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div>
               <h2 className="text-lg font-black text-slate-950">
@@ -1682,6 +1845,140 @@ function FinanceiroTerapeutaContent() {
           )}
         </section>
       </div>
+
+      {auraAberta && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/75 px-4 py-6 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Ajuda da AURA no Financeiro"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) {
+              fecharAura();
+            }
+          }}
+        >
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-yellow-400/30 bg-[#0b1020] p-5 text-white shadow-2xl sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+                  AURA
+                </p>
+                <h2 className="mt-2 text-2xl font-black sm:text-3xl">
+                  {auraTopico
+                    ? auraFinanceiro[auraTopico].titulo
+                    : "Em que posso ajudar?"}
+                </h2>
+                {!auraTopico && (
+                  <p className="mt-2 text-base leading-7 text-slate-300">
+                    Toque somente no assunto em que você precisa de ajuda.
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={fecharAura}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-600 text-2xl text-white"
+                aria-label="Fechar ajuda"
+              >
+                ×
+              </button>
+            </div>
+
+            {!auraTopico ? (
+              <div className="mt-7 grid gap-3">
+                {[
+                  ["stripe", contaAjudaStripeTitulo()],
+                  ["analise", "MINHA STRIPE ESTÁ EM ANÁLISE"],
+                  ["problemaStripe", "MINHA STRIPE NÃO CONECTOU"],
+                  ["pix", "COMO CADASTRO MEU PIX?"],
+                  ["pagamentos", "COMO VEJO MEUS PAGAMENTOS?"],
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setAuraTopico(key)}
+                    className="min-h-16 rounded-2xl border border-slate-700 bg-slate-950/60 px-5 py-4 text-left text-lg font-black text-white transition hover:border-yellow-400"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-7">
+                <div className="space-y-4">
+                  {auraFinanceiro[auraTopico].passos.map(
+                    (passo, index) => (
+                      <div
+                        key={`${auraTopico}-${index}`}
+                        className="flex gap-4 rounded-2xl border border-slate-700 bg-slate-950/50 p-5"
+                      >
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-lg font-black text-black">
+                          {index + 1}
+                        </div>
+                        <p className="pt-1 text-lg leading-7 text-white">
+                          {passo}
+                        </p>
+                      </div>
+                    ),
+                  )}
+                </div>
+
+                {auraFinanceiro[auraTopico].acao === "stripe" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fecharAura();
+                      executarAcaoStripe();
+                    }}
+                    disabled={
+                      loadingStripeStatus ||
+                      loadingStripeConnect
+                    }
+                    className="mt-6 min-h-16 w-full rounded-2xl bg-yellow-400 px-6 py-4 text-lg font-black text-black disabled:opacity-50"
+                  >
+                    {contaConectada || cadastroEmAnalise
+                      ? "ATUALIZAR STATUS"
+                      : cadastroPendente
+                        ? "CONTINUAR NA STRIPE"
+                        : "CONECTAR MINHA STRIPE"}
+                  </button>
+                )}
+
+                {auraFinanceiro[auraTopico].acao === "pix" && (
+                  <button
+                    type="button"
+                    onClick={irParaPix}
+                    className="mt-6 min-h-16 w-full rounded-2xl bg-yellow-400 px-6 py-4 text-lg font-black text-black"
+                  >
+                    IR PARA MEU PIX
+                  </button>
+                )}
+
+                {auraFinanceiro[auraTopico].acao ===
+                  "pagamentos" && (
+                  <button
+                    type="button"
+                    onClick={irParaPagamentos}
+                    className="mt-6 min-h-16 w-full rounded-2xl bg-yellow-400 px-6 py-4 text-lg font-black text-black"
+                  >
+                    VER MEUS PAGAMENTOS
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setAuraTopico(null)}
+                  className="mt-3 min-h-14 w-full rounded-2xl border border-slate-600 px-5 py-3 font-bold text-white"
+                >
+                  VOLTAR
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {modalOpen && (
         <div

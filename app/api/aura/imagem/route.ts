@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 export const runtime = "nodejs";
 
 type AuraImageBody = {
+  serviceId?: string;
   serviceName?: string;
   category?: string;
   description?: string;
@@ -27,9 +28,7 @@ async function obterUsuario(request: NextRequest) {
     return null;
   }
 
-  const accessToken = authorization
-    .replace("Bearer ", "")
-    .trim();
+  const accessToken = authorization.replace("Bearer ", "").trim();
 
   if (!accessToken) {
     return null;
@@ -55,6 +54,8 @@ function limparTexto(
 }
 
 export async function POST(request: NextRequest) {
+  let uploadedPath: string | null = null;
+
   try {
     const user = await obterUsuario(request);
 
@@ -88,21 +89,19 @@ export async function POST(request: NextRequest) {
     const body =
       (await request.json()) as AuraImageBody;
 
+    const serviceId = limparTexto(body.serviceId, 150);
     const serviceName = limparTexto(
       body.serviceName,
       120,
     );
-
     const category = limparTexto(
       body.category,
       100,
     );
-
     const description = limparTexto(
       body.description,
       900,
     );
-
     const userRequest = limparTexto(
       body.request,
       500,
@@ -118,6 +117,31 @@ export async function POST(request: NextRequest) {
           status: 400,
         },
       );
+    }
+
+    if (serviceId) {
+      const { data: service, error: serviceError } =
+        await supabaseAdmin
+          .from("services")
+          .select("id,therapist_id")
+          .eq("id", serviceId)
+          .maybeSingle();
+
+      if (
+        serviceError ||
+        !service ||
+        service.therapist_id !== user.id
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Não foi possível confirmar este serviço na sua conta.",
+          },
+          {
+            status: 403,
+          },
+        );
+      }
     }
 
     const prompt = `
@@ -189,7 +213,7 @@ Regras visuais obrigatórias:
       return NextResponse.json(
         {
           error:
-            "A imagem foi processada, mas não foi possível exibir o resultado.",
+            "A imagem foi criada, mas não foi possível preparar a prévia.",
         },
         {
           status: 502,
@@ -197,15 +221,61 @@ Regras visuais obrigatórias:
       );
     }
 
+    const imageBuffer = Buffer.from(
+      imageBase64,
+      "base64",
+    );
+
+    uploadedPath =
+      `${user.id}/aura/${crypto.randomUUID()}.png`;
+
+    const { error: uploadError } =
+      await supabaseAdmin.storage
+        .from("service-photos")
+        .upload(uploadedPath, imageBuffer, {
+          contentType: "image/png",
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+    if (uploadError) {
+      console.error(
+        "Erro ao salvar imagem da AURA no Storage:",
+        uploadError,
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "A AURA criou a imagem, mas não conseguiu salvá-la no AuraMeets.",
+        },
+        {
+          status: 500,
+        },
+      );
+    }
+
+    const { data: publicUrlData } =
+      supabaseAdmin.storage
+        .from("service-photos")
+        .getPublicUrl(uploadedPath);
+
     return NextResponse.json({
       success: true,
-      imageDataUrl: `data:image/png;base64,${imageBase64}`,
+      imageUrl: `${publicUrlData.publicUrl}?v=${Date.now()}`,
+      storagePath: uploadedPath,
     });
   } catch (error) {
     console.error(
       "Erro inesperado na geração de imagem da AURA:",
       error,
     );
+
+    if (uploadedPath) {
+      await supabaseAdmin.storage
+        .from("service-photos")
+        .remove([uploadedPath]);
+    }
 
     return NextResponse.json(
       {
