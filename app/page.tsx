@@ -343,7 +343,7 @@ export default function HomePage() {
                   badge={oferta.display_badge}
                   initials={getTherapistInitials(oferta.therapist_name)}
                   imageUrl={oferta.therapist_photo_url}
-                  href="/experiencias"
+                  href={oferta.whatsapp_href || oferta.public_href}
                 />
               ))}
             </div>

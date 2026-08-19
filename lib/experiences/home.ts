@@ -11,6 +11,7 @@ export type HomeExperienceTherapist = {
   state: string | null;
   service_type: string | null;
   verified: boolean | null;
+  phone: string | null;
 };
 
 export type SupabaseHomeExperience = {
@@ -44,6 +45,7 @@ export type FeaturedExperience = SupabaseHomeExperience & {
   display_badge: string;
   display_button_text: string;
   public_href: string;
+  whatsapp_href: string | null;
 };
 
 type SupabaseExperienceRow = Omit<
@@ -84,7 +86,8 @@ const EXPERIENCE_SELECT = `
     city,
     state,
     service_type,
-    verified
+    verified,
+    phone
   )
 `;
 
@@ -189,6 +192,37 @@ function createPublicHref(
   )}`;
 }
 
+
+function createWhatsAppHref(
+  experience: SupabaseExperienceRow,
+  therapist: HomeExperienceTherapist | null,
+): string | null {
+  const rawPhone = normalizeText(therapist?.phone ?? null);
+
+  if (!rawPhone) {
+    return null;
+  }
+
+  const digitsOnly = rawPhone.replace(/\D/g, "");
+
+  if (!digitsOnly) {
+    return null;
+  }
+
+  const phoneWithCountryCode =
+    digitsOnly.length === 10 || digitsOnly.length === 11
+      ? `55${digitsOnly}`
+      : digitsOnly;
+
+  const customMessage = normalizeText(experience.whatsapp_message);
+
+  const message =
+    customMessage ||
+    `Olá! Vi no AuraMeets a experiência presente "${experience.title}" e gostaria de receber meu presente.`;
+
+  return `https://wa.me/${phoneWithCountryCode}?text=${encodeURIComponent(message)}`;
+}
+
 function normalizeExperience(
   experience: SupabaseExperienceRow,
 ): FeaturedExperience {
@@ -241,6 +275,10 @@ function normalizeExperience(
     display_badge: getExperienceBadge(experience),
     display_button_text: buttonText,
     public_href: createPublicHref(
+      experience,
+      therapist,
+    ),
+    whatsapp_href: createWhatsAppHref(
       experience,
       therapist,
     ),
