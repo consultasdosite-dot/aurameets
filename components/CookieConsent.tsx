@@ -12,10 +12,7 @@ type CookiePreferences = {
 const STORAGE_KEY = "aurameets_cookie_preferences";
 
 function savePreferences(preferences: CookiePreferences) {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(preferences),
-  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
 
   window.dispatchEvent(
     new CustomEvent("aurameets-cookie-consent", {
@@ -39,9 +36,7 @@ export default function CookieConsent() {
         return;
       }
 
-      const preferences = JSON.parse(
-        saved,
-      ) as CookiePreferences;
+      const preferences = JSON.parse(saved) as CookiePreferences;
 
       setAnalytics(preferences.analytics === true);
       setMarketing(preferences.marketing === true);
@@ -91,140 +86,127 @@ export default function CookieConsent() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-[200] px-3 pb-3 sm:px-5 sm:pb-5"
+      className="fixed inset-x-0 bottom-0 z-[200] px-2 pb-2 sm:px-4 sm:pb-4"
       role="dialog"
       aria-modal="true"
       aria-label="Preferências de cookies"
     >
-      <div className="mx-auto max-w-5xl rounded-3xl border border-yellow-300 bg-[#0b1020] p-5 text-white shadow-2xl sm:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
-              Privacidade no AuraMeets
+      <div className="mx-auto max-w-6xl rounded-2xl border border-white/10 bg-[#0b1020]/95 px-4 py-3 text-white shadow-xl backdrop-blur sm:px-5 sm:py-3.5">
+        {!customizing ? (
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <p className="text-xs leading-5 text-slate-300 sm:text-sm">
+              <span className="font-bold text-white">
+                Sua privacidade importa.
+              </span>{" "}
+              Usamos cookies essenciais e, com sua permissão, cookies de análise
+              e marketing.
             </p>
 
-            <h2 className="mt-2 text-xl font-black sm:text-2xl">
-              Você escolhe como usamos cookies
-            </h2>
-
-            <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
-              Usamos cookies essenciais para o site funcionar.
-              Cookies de análise e marketing só serão usados
-              com a sua autorização.
-            </p>
-          </div>
-
-          {!customizing && (
-            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[500px]">
+            <div className="flex flex-wrap gap-2 md:shrink-0">
               <button
                 type="button"
                 onClick={rejectNonEssential}
-                className="min-h-12 rounded-2xl border border-slate-600 px-4 py-3 font-bold text-white transition hover:border-yellow-400"
+                className="rounded-xl border border-slate-600 px-3 py-2 text-xs font-bold text-white transition hover:border-slate-400"
               >
-                RECUSAR
+                Recusar
               </button>
 
               <button
                 type="button"
                 onClick={() => setCustomizing(true)}
-                className="min-h-12 rounded-2xl border border-yellow-400 px-4 py-3 font-bold text-yellow-300 transition hover:bg-yellow-400/10"
+                className="rounded-xl border border-yellow-400/60 px-3 py-2 text-xs font-bold text-yellow-300 transition hover:bg-yellow-400/10"
               >
-                PERSONALIZAR
+                Personalizar
               </button>
 
               <button
                 type="button"
                 onClick={acceptAll}
-                className="min-h-12 rounded-2xl bg-yellow-400 px-4 py-3 font-black text-black transition hover:bg-yellow-300"
+                className="rounded-xl bg-yellow-400 px-3.5 py-2 text-xs font-black text-black transition hover:bg-yellow-300"
               >
-                ACEITAR TODOS
+                Aceitar
               </button>
             </div>
-          )}
-        </div>
-
-        {customizing && (
-          <div className="mt-6 border-t border-slate-700 pt-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl border border-slate-700 bg-slate-950/50 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-black">Essenciais</p>
-                    <p className="mt-1 text-sm leading-5 text-slate-400">
-                      Login, segurança e funcionamento do site.
-                    </p>
-                  </div>
-
-                  <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-black text-emerald-300">
-                    SEMPRE ATIVOS
-                  </span>
-                </div>
+          </div>
+        ) : (
+          <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-black text-white">
+                  Preferências de cookies
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  Essenciais ficam sempre ativos. Escolha os opcionais.
+                </p>
               </div>
 
-              <label className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-950/50 p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-black">Análise</p>
-                    <p className="mt-1 text-sm leading-5 text-slate-400">
-                      Ajuda a entender como o site é usado.
-                    </p>
-                  </div>
-
-                  <input
-                    type="checkbox"
-                    checked={analytics}
-                    onChange={(event) =>
-                      setAnalytics(event.target.checked)
-                    }
-                    className="mt-1 h-5 w-5 accent-yellow-400"
-                  />
-                </div>
-              </label>
-
-              <label className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-950/50 p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-black">Marketing</p>
-                    <p className="mt-1 text-sm leading-5 text-slate-400">
-                      Usado para campanhas e anúncios personalizados.
-                    </p>
-                  </div>
-
-                  <input
-                    type="checkbox"
-                    checked={marketing}
-                    onChange={(event) =>
-                      setMarketing(event.target.checked)
-                    }
-                    className="mt-1 h-5 w-5 accent-yellow-400"
-                  />
-                </div>
-              </label>
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
               <button
                 type="button"
                 onClick={() => setCustomizing(false)}
-                className="min-h-12 rounded-2xl border border-slate-600 px-4 py-3 font-bold text-white"
+                className="self-start text-xs font-bold text-slate-400 hover:text-white"
               >
-                VOLTAR
+                Fechar
               </button>
+            </div>
 
+            <div className="mt-3 grid gap-2 md:grid-cols-3">
+              <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2.5">
+                <div>
+                  <p className="text-sm font-bold">Essenciais</p>
+                  <p className="text-[11px] text-slate-400">Login e segurança</p>
+                </div>
+
+                <span className="text-[10px] font-black text-emerald-300">
+                  ATIVOS
+                </span>
+              </div>
+
+              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2.5">
+                <div>
+                  <p className="text-sm font-bold">Análise</p>
+                  <p className="text-[11px] text-slate-400">Uso do site</p>
+                </div>
+
+                <input
+                  type="checkbox"
+                  checked={analytics}
+                  onChange={(event) => setAnalytics(event.target.checked)}
+                  className="h-4 w-4 accent-yellow-400"
+                />
+              </label>
+
+              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2.5">
+                <div>
+                  <p className="text-sm font-bold">Marketing</p>
+                  <p className="text-[11px] text-slate-400">
+                    Campanhas e anúncios
+                  </p>
+                </div>
+
+                <input
+                  type="checkbox"
+                  checked={marketing}
+                  onChange={(event) => setMarketing(event.target.checked)}
+                  className="h-4 w-4 accent-yellow-400"
+                />
+              </label>
+            </div>
+
+            <div className="mt-3 flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 onClick={rejectNonEssential}
-                className="min-h-12 rounded-2xl border border-slate-600 px-4 py-3 font-bold text-white"
+                className="rounded-xl border border-slate-600 px-3 py-2 text-xs font-bold text-white"
               >
-                RECUSAR NÃO ESSENCIAIS
+                Recusar opcionais
               </button>
 
               <button
                 type="button"
                 onClick={saveCustomPreferences}
-                className="min-h-12 rounded-2xl bg-yellow-400 px-4 py-3 font-black text-black"
+                className="rounded-xl bg-yellow-400 px-3.5 py-2 text-xs font-black text-black"
               >
-                SALVAR PREFERÊNCIAS
+                Salvar
               </button>
             </div>
           </div>
