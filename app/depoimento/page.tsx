@@ -1,10 +1,10 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function DepoimentoPosBrindePage() {
+function DepoimentoPosBrindeConteudo() {
   const searchParams = useSearchParams();
 
   const terapeuta = useMemo(
@@ -218,5 +218,24 @@ export default function DepoimentoPosBrindePage() {
         </section>
       </div>
     </main>
+  );
+}
+
+
+export default function DepoimentoPosBrindePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#fffdfb] px-5 py-10 text-[#101d3b] sm:px-8">
+          <div className="mx-auto max-w-3xl">
+            <div className="rounded-[30px] border border-[#e5d8ef] bg-white p-8 text-center shadow-[0_18px_60px_rgba(68,42,103,0.10)]">
+              <p className="font-black text-[#6e35a5]">Carregando sua experiência...</p>
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <DepoimentoPosBrindeConteudo />
+    </Suspense>
   );
 }
