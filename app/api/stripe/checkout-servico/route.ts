@@ -227,15 +227,74 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let stripeAccount;
+
+    try {
+      stripeAccount = await stripe.accounts.retrieve(
+        therapist.stripe_account_id,
+      );
+    } catch (stripeAccountError) {
+      console.error(
+        "Erro ao consultar conta Stripe do terapeuta:",
+        stripeAccountError,
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Não foi possível validar a conta Stripe deste terapeuta.",
+        },
+        {
+          status: 502,
+        },
+      );
+    }
+
+    const stripeChargesEnabled =
+      stripeAccount.charges_enabled === true;
+    const stripePayoutsEnabled =
+      stripeAccount.payouts_enabled === true;
+    const stripeDetailsSubmitted =
+      stripeAccount.details_submitted === true;
+
+    const stripeStatusChanged =
+      therapist.stripe_charges_enabled !== stripeChargesEnabled ||
+      therapist.stripe_payouts_enabled !== stripePayoutsEnabled ||
+      therapist.stripe_details_submitted !== stripeDetailsSubmitted;
+
+    if (stripeStatusChanged) {
+      const { error: stripeStatusUpdateError } =
+        await supabaseAdmin
+          .from("therapists")
+          .update({
+            stripe_charges_enabled: stripeChargesEnabled,
+            stripe_payouts_enabled: stripePayoutsEnabled,
+            stripe_details_submitted: stripeDetailsSubmitted,
+          })
+          .eq("id", therapist.id);
+
+      if (stripeStatusUpdateError) {
+        console.error(
+          "Conta Stripe validada, mas o status não pôde ser sincronizado no Supabase:",
+          stripeStatusUpdateError,
+        );
+      }
+    }
+
     if (
-      therapist.stripe_charges_enabled !== true ||
-      therapist.stripe_payouts_enabled !== true ||
-      therapist.stripe_details_submitted !== true
+      !stripeChargesEnabled ||
+      !stripePayoutsEnabled ||
+      !stripeDetailsSubmitted
     ) {
       return NextResponse.json(
         {
           error:
             "A conta Stripe do terapeuta ainda não está pronta para receber pagamentos.",
+          stripeStatus: {
+            chargesEnabled: stripeChargesEnabled,
+            payoutsEnabled: stripePayoutsEnabled,
+            detailsSubmitted: stripeDetailsSubmitted,
+          },
         },
         {
           status: 409,

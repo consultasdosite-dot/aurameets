@@ -294,14 +294,14 @@ function ServiceCard({
     Number.isFinite(Number(service.promotional_price));
 
   return (
-    <article className="group overflow-hidden rounded-[28px] border border-slate-800 bg-[#10182D] shadow-xl transition hover:-translate-y-1 hover:border-yellow-400/40">
-      <div className="grid gap-0 md:grid-cols-[240px_minmax(0,1fr)_220px]">
-        <div className="relative min-h-[220px] overflow-hidden bg-[#18223D] md:min-h-full">
+    <article className="group overflow-hidden rounded-[28px] border border-slate-800 bg-[#10182D] shadow-xl transition duration-500 hover:-translate-y-1 hover:border-yellow-400/40">
+      <div className="grid gap-0 md:grid-cols-[280px_minmax(0,1fr)_230px] lg:grid-cols-[320px_minmax(0,1fr)_240px]">
+        <div className="relative aspect-[5/4] overflow-hidden bg-[#18223D] md:aspect-auto md:min-h-full">
           {service.cover_photo_url ? (
             <img
               src={service.cover_photo_url}
               alt={`Imagem do serviço ${service.name}`}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+              className="kenburns-image h-full w-full object-cover object-[50%_32%] transition duration-[1800ms] ease-out motion-safe:group-hover:scale-[1.06]"
             />
           ) : (
             <div className="flex h-full min-h-[220px] items-center justify-center text-center">
@@ -315,16 +315,16 @@ function ServiceCard({
           )}
         </div>
 
-        <div className="flex flex-col justify-center p-6 md:p-7">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
+        <div className="flex min-w-0 flex-col justify-center p-6 sm:p-7 md:p-8">
+          <p className="break-words text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
             {service.category}
           </p>
 
-          <h3 className="mt-3 text-2xl font-black text-white">
+          <h3 className="mt-3 break-words text-2xl font-black leading-tight text-white sm:text-3xl">
             {service.name}
           </h3>
 
-          <p className="mt-3 whitespace-pre-line break-words leading-7 text-slate-300">
+          <p className="mt-4 whitespace-pre-line break-words text-[15px] leading-7 text-slate-300 sm:text-base sm:leading-8">
             {service.description}
           </p>
 
@@ -349,7 +349,7 @@ function ServiceCard({
           </div>
         </div>
 
-        <div className="flex flex-col justify-center border-t border-slate-800 p-6 md:border-l md:border-t-0 md:p-7">
+        <div className="flex flex-col justify-center border-t border-slate-800 bg-[#0D1426]/55 p-6 sm:p-7 md:border-l md:border-t-0 md:p-8">
           {hasPromotion && (
             <p className="text-sm font-semibold text-slate-500 line-through">
               {formatCurrency(regularPrice, service.currency)}
@@ -535,16 +535,25 @@ export default async function TherapistProfilePage({
               )}
             </div>
 
-            <div className="overflow-hidden rounded-[32px] border border-slate-700 bg-[#111A33] shadow-2xl">
-              <div className="relative aspect-[4/5] bg-[#17213A]">
+            <div className="overflow-hidden rounded-[32px] border border-slate-700 bg-[#111A33] shadow-2xl ring-1 ring-white/5">
+              <div className="relative aspect-[4/5] overflow-hidden bg-[#17213A]">
                 {profilePhotoUrl ? (
-                  <img
-                    src={profilePhotoUrl}
-                    alt={`Foto de ${therapist.name}`}
-                    className="h-full w-full object-cover"
-                    loading="eager"
-                    referrerPolicy="no-referrer"
-                  />
+                  <>
+                    <img
+                      src={profilePhotoUrl}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 h-full w-full scale-110 object-cover object-[50%_25%] opacity-25 blur-2xl"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+                    <img
+                      src={profilePhotoUrl}
+                      alt={`Foto de ${therapist.name}`}
+                      className="kenburns-image relative h-full w-full object-cover object-[50%_20%]"
+                      loading="eager"
+                      referrerPolicy="no-referrer"
+                    />
+                  </>
                 ) : (
                   <div className="flex h-full items-center justify-center text-7xl font-black text-yellow-400">
                     {initials}

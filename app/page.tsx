@@ -632,13 +632,15 @@ function OfferCard({
     displayedSlots === 1 ? "Resta 1 vaga" : `Restam ${displayedSlots} vagas`;
 
   return (
-    <article className="group grid h-full overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.09)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(65,39,94,0.14)] md:grid-cols-[40%_60%]">
-      <div className="relative min-h-[240px] overflow-hidden bg-gradient-to-br from-[#f4ecfa] via-white to-[#eadcf5] md:min-h-full">
+    <article className="group grid h-full overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.09)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(65,39,94,0.14)] md:grid-cols-[42%_58%]">
+      <div className="relative min-h-[280px] overflow-hidden bg-gradient-to-br from-[#f4ecfa] via-white to-[#eadcf5] sm:min-h-[320px] md:min-h-full">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={`Imagem da experiência ${title}`}
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover object-[center_22%] transition-transform duration-[1400ms] ease-out motion-safe:group-hover:scale-[1.055] motion-safe:group-hover:-translate-y-1"
           />
         ) : (
           <>
@@ -646,16 +648,18 @@ function OfferCard({
             <div className="absolute -bottom-14 -right-8 h-36 w-36 rounded-full border border-[#7541ad]/15" />
 
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-[#7440aa] to-[#a470cb] text-2xl font-black text-white shadow-xl">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-[#7440aa] to-[#a470cb] text-2xl font-black text-white shadow-xl transition-transform duration-700 motion-safe:group-hover:scale-105">
                 {initials}
               </div>
             </div>
           </>
         )}
 
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-[#2a1642]/85 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white shadow-md backdrop-blur">
-          <GiftIcon className="h-3.5 w-3.5" />
-          {badge}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1f1230]/20 via-transparent to-transparent" />
+
+        <span className="absolute left-3 top-3 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-1.5 rounded-full border border-white/70 bg-[#2a1642]/85 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white shadow-md backdrop-blur">
+          <GiftIcon className="h-3.5 w-3.5 shrink-0" />
+          <span className="leading-4">{badge}</span>
         </span>
 
         <span className="absolute bottom-3 left-3 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#66359c] shadow-md">
@@ -669,34 +673,36 @@ function OfferCard({
             {imageUrl ? (
               <img
                 src={imageUrl}
-                alt=""
-                className="h-full w-full object-cover object-center"
+                alt={`Foto de ${therapistName}`}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover object-[center_22%] transition-transform duration-700 ease-out motion-safe:group-hover:scale-110"
               />
             ) : (
               initials
             )}
           </div>
 
-          <div className="min-w-0">
-            <p className="truncate text-sm font-black text-[#1c2944]">
+          <div className="min-w-0 flex-1 pt-1">
+            <p className="break-words text-sm font-black leading-5 text-[#1c2944]">
               {therapistName}
             </p>
 
-            <p className="mt-0.5 line-clamp-1 text-xs font-bold text-[#7541ad]">
+            <p className="mt-1 break-words text-xs font-bold leading-5 text-[#7541ad]">
               {specialty}
             </p>
           </div>
         </div>
 
-        <h3 className="mt-4 line-clamp-2 text-[21px] font-black leading-[1.18] tracking-[-0.025em] text-[#101d3b]">
+        <h3 className="mt-4 break-words text-[21px] font-black leading-[1.22] tracking-[-0.025em] text-[#101d3b]">
           {title}
         </h3>
 
-        <p className="mt-3 line-clamp-4 text-[13px] font-medium leading-5 text-[#5b6579]">
+        <p className="mt-3 break-words text-[13px] font-medium leading-6 text-[#5b6579]">
           {description}
         </p>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <OfferInfo
             icon={<ClockSmallIcon className="h-3.5 w-3.5" />}
             label={duration}
@@ -711,16 +717,17 @@ function OfferCard({
         <div className="mt-auto pt-5">
           <Link
             href={href}
-            className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7d45b5] to-[#57298f] px-4 text-[13px] font-extrabold text-white shadow-md transition group-hover:-translate-y-0.5"
+            className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7d45b5] to-[#57298f] px-4 text-center text-[13px] font-extrabold text-white shadow-md transition duration-300 hover:-translate-y-0.5 hover:shadow-lg"
           >
             Receber meu presente
-            <ArrowIcon className="h-4 w-4" />
+            <ArrowIcon className="h-4 w-4 shrink-0" />
           </Link>
         </div>
       </div>
     </article>
   );
 }
+
 
 function OfferCardSkeleton() {
   return (
@@ -763,7 +770,7 @@ function OfferInfo({
   return (
     <div className="flex min-w-0 items-center gap-1.5 rounded-xl bg-[#f8f5fa] px-2.5 py-2 text-[11px] font-bold text-[#4b5670]">
       <span className="text-[#7541ad]">{icon}</span>
-      <span className="truncate">{label}</span>
+      <span className="min-w-0 break-words leading-4">{label}</span>
     </div>
   );
 }

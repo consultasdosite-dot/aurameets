@@ -1,13 +1,139 @@
-"use client";
-
 import Link from "next/link";
 
-export default function EmpresaPage() {
+
+type PublicTherapist = {
+  name: string;
+  slug: string;
+  profile_photo_url: string | null;
+  photo_url: string | null;
+  speciality: string | null;
+};
+
+type Professional = {
+  name: string;
+  role: string;
+  image: string | null;
+  slug: string | null;
+  initials: string;
+};
+
+function getSupabasePublicConfig() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabasePublicKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  return {
+    supabaseUrl,
+    supabasePublicKey,
+  };
+}
+
+async function getProfessionalProfile({
+  slug,
+  namePrefix,
+}: {
+  slug?: string;
+  namePrefix?: string;
+}): Promise<PublicTherapist | null> {
+  const { supabaseUrl, supabasePublicKey } =
+    getSupabasePublicConfig();
+
+  if (!supabaseUrl || !supabasePublicKey) {
+    return null;
+  }
+
+  const query = new URLSearchParams({
+    select:
+      "name,slug,profile_photo_url,photo_url,speciality",
+    active: "eq.true",
+    limit: "1",
+  });
+
+  if (slug) {
+    query.set("slug", `eq.${slug}`);
+  } else if (namePrefix) {
+    query.set("name", `ilike.${namePrefix}%`);
+  } else {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/therapists?${query.toString()}`,
+      {
+        headers: {
+          apikey: supabasePublicKey,
+        },
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "Não foi possível carregar profissional da área Empresas:",
+        await response.text(),
+      );
+      return null;
+    }
+
+    const data = (await response.json()) as PublicTherapist[];
+    return data[0] ?? null;
+  } catch (error) {
+    console.error(
+      "Erro ao carregar profissional da área Empresas:",
+      error,
+    );
+    return null;
+  }
+}
+
+function getPhoto(
+  therapist: PublicTherapist | null,
+) {
+  return (
+    therapist?.profile_photo_url?.trim() ||
+    therapist?.photo_url?.trim() ||
+    null
+  );
+}
+
+
+export default async function EmpresaPage() {
+  const [naysaProfile, oscarProfile] = await Promise.all([
+    getProfessionalProfile({
+      namePrefix: "Naysa Lima",
+    }),
+    getProfessionalProfile({
+      slug: "oscar-ahumada",
+    }),
+  ]);
+
+  const professionals: Professional[] = [
+    {
+      name: naysaProfile?.name || "Naysa Lima",
+      role: "Desenvolvimento humano e organizações",
+      image: getPhoto(naysaProfile),
+      slug: naysaProfile?.slug || null,
+      initials: "NL",
+    },
+    {
+      name: oscarProfile?.name || "Oscar Ahumada",
+      role: "Numerologia Empresarial",
+      image: getPhoto(oscarProfile),
+      slug: oscarProfile?.slug || "oscar-ahumada",
+      initials: "OA",
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-[#050816] text-white">
       <header className="border-b border-white/10 bg-[#050816]/95">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-          <Link href="/" className="text-2xl font-black tracking-tight text-yellow-400">
+          <Link
+            href="/"
+            className="text-2xl font-black tracking-tight text-yellow-400"
+          >
             AuraMeets
           </Link>
 
@@ -23,94 +149,252 @@ export default function EmpresaPage() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.22),transparent_38%),linear-gradient(180deg,#070b1d_0%,#050816_100%)]" />
 
-        <div className="relative mx-auto grid min-h-[calc(100vh-81px)] w-full max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">
-          <div className="max-w-3xl">
+        <div className="relative mx-auto grid w-full max-w-7xl items-center gap-8 px-5 py-12 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10 lg:py-14">
+          <div className="max-w-2xl">
             <span className="inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-yellow-400">
               AuraMeets para empresas
             </span>
 
-            <h1 className="mt-7 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-              Uma nova ponte entre empresas, terapeutas e pessoas.
+            <h1 className="mt-5 text-4xl font-black leading-[1.08] sm:text-5xl lg:text-[3.35rem]">
+              Pessoas, estrutura, desenvolvimento e bem-estar.
             </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
-              Estamos preparando uma solução criada para aproximar sua empresa
-              de profissionais qualificados, experiências de cuidado e ações
-              voltadas ao bem-estar dos seus colaboradores.
+            <p className="mt-5 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
+              Uma nova forma de observar sua empresa, compreender pontos de
+              atenção e conectar sua organização a profissionais e soluções
+              voltadas ao desenvolvimento humano.
             </p>
 
-            <div className="mt-9 rounded-3xl border border-purple-400/20 bg-white/[0.05] p-6 backdrop-blur sm:p-8">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-purple-300">
-                Aguarde
-              </p>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <a
+                href="#mapeamento"
+                className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-yellow-400 px-6 py-4 text-center text-sm font-black text-slate-950 transition hover:-translate-y-0.5 hover:bg-yellow-300 sm:text-base"
+              >
+                MAPEAMENTO INICIAL GRATUITO
+              </a>
 
-              <p className="mt-3 text-2xl font-black leading-snug text-white sm:text-3xl">
-                Estamos criando algo muito útil para você, seus funcionários e
-                sua empresa.
-              </p>
-
-              <p className="mt-4 leading-7 text-slate-400">
-                Em breve, este espaço apresentará uma nova forma de conectar
-                cuidado humano, desenvolvimento e qualidade de vida dentro das
-                organizações.
-              </p>
+              <a
+                href="#numerologia"
+                className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-purple-400/50 bg-purple-500/10 px-6 py-4 text-center text-sm font-black text-purple-200 transition hover:border-purple-300 hover:bg-purple-500/20 sm:text-base"
+              >
+                CONSULTA NUMEROLÓGICA EMPRESARIAL
+              </a>
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-2xl">
-            <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-500/20 blur-3xl" />
+          <div className="relative mx-auto w-full max-w-xl lg:-translate-y-1">
+            <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-500/20 blur-3xl" />
 
-            <div className="relative overflow-hidden rounded-[36px] border border-white/10 bg-gradient-to-br from-[#111936] via-[#10162b] to-[#1c1230] p-6 shadow-2xl shadow-purple-950/40 sm:p-9">
-              <div className="grid gap-5 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-                <article className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-500/15 text-purple-300">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-8 w-8" aria-hidden="true">
-                      <circle cx="12" cy="7" r="3" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5.5 20a6.5 6.5 0 0 1 13 0" />
-                    </svg>
-                  </div>
+            <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#111936] via-[#10162b] to-[#1c1230] p-5 shadow-2xl shadow-purple-950/40 sm:p-7">
+              <p className="text-center text-xs font-black uppercase tracking-[0.22em] text-purple-300">
+                AuraMeets Empresas
+              </p>
 
-                  <h2 className="mt-5 text-xl font-black">Terapeutas</h2>
+              <h2 className="mx-auto mt-3 max-w-md text-center text-2xl font-black leading-snug sm:text-[2rem]">
+                Uma primeira leitura para compreender onde sua empresa pode
+                estar perdendo força, clareza e potencial.
+              </h2>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-400">
-                    Profissionais preparados para acolher, orientar e apoiar.
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+                  <p className="text-sm font-black text-yellow-400">
+                    Estrutura
                   </p>
-                </article>
-
-                <div className="relative flex items-center justify-center py-2 sm:py-0">
-                  <div className="absolute h-px w-20 bg-gradient-to-r from-transparent via-yellow-400 to-transparent sm:h-20 sm:w-px sm:bg-gradient-to-b" />
-
-                  <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full border border-yellow-400/30 bg-yellow-400 text-slate-950 shadow-lg shadow-yellow-400/20">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M12 4v16" />
-                    </svg>
-                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    Liderança, comunicação, processos, direção e crescimento.
+                  </p>
                 </div>
 
-                <article className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-400/10 text-yellow-400">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-8 w-8" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 21V8l8-5 8 5v13M8 21v-5h8v5" />
-                    </svg>
-                  </div>
-
-                  <h2 className="mt-5 text-xl font-black">Empresas</h2>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-400">
-                    Organizações que valorizam pessoas, propósito e bem-estar.
+                <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+                  <p className="text-sm font-black text-purple-300">
+                    Pessoas
                   </p>
-                </article>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    Cultura, relações, confiança, clareza e desenvolvimento.
+                  </p>
+                </div>
               </div>
 
-              <div className="mt-6 rounded-3xl border border-yellow-400/15 bg-yellow-400/[0.06] p-6 text-center">
-                <p className="text-sm font-bold text-yellow-400">AuraMeets</p>
-
-                <p className="mt-2 text-lg font-black text-white">
-                  A ponte que conecta cuidado e desenvolvimento humano.
+              <div className="mt-4 rounded-2xl border border-yellow-400/15 bg-yellow-400/[0.06] p-4 text-center">
+                <p className="text-sm font-bold text-yellow-400">
+                  Uma ferramenta simples, rápida e visual.
+                </p>
+                <p className="mt-1.5 text-sm leading-6 text-slate-300">
+                  Para enxergar o que merece ser observado antes do próximo
+                  passo da empresa.
                 </p>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section
+        id="mapeamento"
+        className="border-y border-white/10 bg-[#090F20]"
+      >
+        <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-18">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-yellow-400">
+              Mapeamento Inicial Gratuito
+            </p>
+
+            <h2 className="mt-4 text-3xl font-black sm:text-4xl">
+              Um primeiro olhar para sua empresa.
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg">
+              Responda a perguntas simples sobre o dia a dia da organização.
+              Ao final, você receberá um mapa inicial com possíveis pontos de
+              atenção, áreas que merecem ser observadas e um primeiro movimento.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-10 grid max-w-5xl gap-5 md:grid-cols-3">
+            {[
+              {
+                title: "Rápido",
+                text: "Perguntas objetivas, uma por vez, sem linguagem técnica.",
+              },
+              {
+                title: "Personalizado",
+                text: "A leitura considera suas respostas e o momento da empresa.",
+              },
+              {
+                title: "Útil",
+                text: "Você recebe clareza sobre o que merece atenção agora.",
+              },
+            ].map((item) => (
+              <article
+                key={item.title}
+                className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-center"
+              >
+                <h3 className="text-xl font-black text-white">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-slate-400">
+                  {item.text}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mx-auto mt-10 max-w-xl text-center">
+            <Link
+              href="/empresas/mapeamento"
+              className="inline-flex min-h-16 w-full items-center justify-center rounded-2xl bg-yellow-400 px-7 py-4 text-center text-lg font-black text-slate-950 shadow-[0_12px_30px_rgba(250,204,21,0.15)] transition hover:-translate-y-0.5 hover:bg-yellow-300"
+            >
+              FAZER MEU MAPEAMENTO GRATUITO
+            </Link>
+
+            <p className="mt-3 text-xs leading-5 text-slate-500">
+              O Mapeamento Inicial Gratuito é uma ferramenta de percepção e não
+              substitui uma análise empresarial completa ou consultoria
+              especializada.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-18">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-purple-300">
+            Profissionais responsáveis
+          </p>
+
+          <h2 className="mt-4 text-3xl font-black sm:text-4xl">
+            Pessoas por trás desta experiência
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-2xl leading-7 text-slate-400">
+            O AuraMeets Empresas conecta tecnologia, leitura humana e
+            profissionais com experiência em desenvolvimento e análise
+            empresarial.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-9 grid max-w-3xl gap-5 sm:grid-cols-2">
+          {professionals.map((professional, index) => (
+            <article
+              key={professional.name}
+              className="group rounded-[28px] border border-white/10 bg-[#10182D] p-5 text-center shadow-xl transition hover:-translate-y-1 hover:border-purple-400/30 sm:p-6"
+            >
+              <div
+                className={`relative mx-auto h-36 w-36 overflow-hidden rounded-full border-4 bg-[#18223D] shadow-xl ${
+                  index === 0
+                    ? "border-purple-400/35"
+                    : "border-yellow-400/35"
+                }`}
+              >
+                {professional.image ? (
+                  <img
+                    src={professional.image}
+                    alt={`Foto de ${professional.name}`}
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-3xl font-black text-yellow-400">
+                    {professional.initials}
+                  </div>
+                )}
+              </div>
+
+              <h3 className="mt-5 text-2xl font-black text-white">
+                {professional.name}
+              </h3>
+
+              <p className="mt-2 text-sm font-medium leading-6 text-slate-400">
+                {professional.role}
+              </p>
+
+              {professional.slug && (
+                <Link
+                  href={`/terapeutas/${professional.slug}`}
+                  className="mt-5 inline-flex items-center justify-center rounded-xl border border-white/10 px-4 py-2.5 text-sm font-black text-purple-200 transition hover:border-purple-400/50 hover:bg-purple-500/10"
+                >
+                  CONHECER PERFIL
+                </Link>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section
+        id="numerologia"
+        className="border-y border-purple-400/10 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.12),transparent_45%),#090F20]"
+      >
+        <div className="mx-auto max-w-5xl px-5 py-14 text-center sm:px-8 sm:py-18">
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-purple-300">
+            Análise complementar
+          </p>
+
+          <h2 className="mt-4 text-3xl font-black sm:text-4xl">
+            Consulta Numerológica Empresarial
+          </h2>
+
+          <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg">
+            Uma leitura aprofundada da identidade e do potencial da empresa por
+            meio da Numerologia Empresarial, considerando nome, data de início e
+            outros elementos da organização.
+          </p>
+
+          <Link
+            href="/empresas/numerologia"
+            className="mt-8 inline-flex min-h-16 items-center justify-center rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-8 py-4 text-lg font-black text-white shadow-[0_12px_30px_rgba(147,51,234,0.28)] transition hover:-translate-y-0.5 hover:brightness-110"
+          >
+            QUERO MINHA CONSULTA NUMEROLÓGICA
+          </Link>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+        <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-6 text-center">
+          <p className="text-sm leading-6 text-slate-500">
+            AuraMeets Empresas — uma ponte entre pessoas, estrutura,
+            desenvolvimento e bem-estar.
+          </p>
         </div>
       </section>
     </main>
