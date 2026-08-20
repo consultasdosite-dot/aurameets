@@ -127,6 +127,126 @@ export default function TherapistExperiencesPage() {
   const [successMessage, setSuccessMessage] =
     useState("");
 
+  const [auraAberta, setAuraAberta] =
+    useState(false);
+  const [auraTopico, setAuraTopico] =
+    useState<string | null>(null);
+
+  const auraExperiencias: Record<
+    string,
+    {
+      titulo: string;
+      passos: string[];
+      acao?: "nova" | "lista";
+    }
+  > = {
+    criar: {
+      titulo: "Quero criar uma experiência",
+      passos: [
+        "A experiência é uma forma simples de apresentar seu trabalho a uma pessoa nova.",
+        "Escolha algo que você realmente possa entregar com qualidade.",
+        "Informe o que a pessoa vai receber, o formato, o tempo de entrega e a quantidade disponível.",
+        "Depois toque em ENVIAR PARA APROVAÇÃO. Ela só irá para a Home depois da aprovação.",
+      ],
+      acao: "nova",
+    },
+    oferecer: {
+      titulo: "O que posso oferecer?",
+      passos: [
+        "Escolha uma pequena experiência que mostre o valor do seu trabalho.",
+        "Pode ser online, presencial, uma entrega digital ou outra forma que você consiga cumprir.",
+        "Explique claramente o que a pessoa receberá. Evite prometer cura ou resultado garantido.",
+        "Defina uma quantidade que você consiga atender sem dificuldade.",
+      ],
+      acao: "nova",
+    },
+    foto: {
+      titulo: "Como escolho a foto?",
+      passos: [
+        "Nesta área atual, a experiência ainda não possui campo próprio para cadastrar foto.",
+        "Não procure um botão de foto aqui porque ele ainda não existe neste formulário.",
+        "Quando a função de imagem for adicionada às experiências, a AURA poderá orientar você passo a passo.",
+      ],
+    },
+    descricao: {
+      titulo: "Como escrevo a descrição?",
+      passos: [
+        "Comece dizendo o que a pessoa vai receber.",
+        "Depois explique de forma simples como a experiência funciona.",
+        "Use frases curtas e palavras fáceis.",
+        "Não prometa cura, resultado garantido ou algo que você não possa cumprir.",
+      ],
+      acao: "nova",
+    },
+    desconto: {
+      titulo: "Como defino o desconto?",
+      passos: [
+        "O formulário atual de Experiências não possui um campo próprio de preço ou percentual de desconto.",
+        "Não invente um desconto dentro de outro campo.",
+        "Cadastre aqui somente a experiência e as condições reais de entrega.",
+      ],
+    },
+    home: {
+      titulo: "Minha experiência não aparece na Home",
+      passos: [
+        "Primeiro veja o status da experiência na lista.",
+        "Se estiver EM ANÁLISE, aguarde a aprovação administrativa.",
+        "Depois de aprovada, a experiência precisa estar ATIVA.",
+        "Experiências pausadas ou ainda não aprovadas não aparecem ao público.",
+      ],
+      acao: "lista",
+    },
+    alterar: {
+      titulo: "Quero alterar ou excluir",
+      passos: [
+        "Encontre a experiência em MINHAS EXPERIÊNCIAS.",
+        "Para mudar informações, toque em EDITAR.",
+        "Para interromper temporariamente uma experiência aprovada, use PAUSAR.",
+        "Para apagar definitivamente, toque em EXCLUIR e confirme somente se tiver certeza.",
+      ],
+      acao: "lista",
+    },
+    entender: {
+      titulo: "Não entendi como funciona",
+      passos: [
+        "Você cria uma experiência simples para apresentar seu trabalho.",
+        "O AuraMeets envia essa experiência para aprovação.",
+        "Depois de aprovada e ativada, ela pode aparecer diretamente na Home.",
+        "Quando o visitante se interessar, ele usa o botão da experiência para entrar em contato conforme a configuração da plataforma.",
+      ],
+    },
+  };
+
+  function fecharAura() {
+    setAuraAberta(false);
+    setAuraTopico(null);
+  }
+
+  function abrirNovaExperienciaPelaAura() {
+    fecharAura();
+    openNewExperience();
+
+    window.setTimeout(() => {
+      document
+        .getElementById("form-experiencia")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+    }, 50);
+  }
+
+  function irParaMinhasExperiencias() {
+    fecharAura();
+
+    document
+      .getElementById("minhas-experiencias")
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+  }
+
   async function loadExperiences(
     therapistId: number,
   ) {
@@ -617,6 +737,33 @@ export default function TherapistExperiencesPage() {
             ))}
           </div>
 
+          <section className="mt-7 rounded-3xl border border-yellow-300 bg-yellow-400 p-5 text-black shadow-sm sm:p-7">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-black">
+                  Precisa de ajuda?
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-black sm:text-3xl">
+                  Sou AURA, sua assistente virtual
+                </h2>
+                <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-black/80">
+                  Eu ajudo você a criar e cuidar das suas experiências. Uma coisa por vez.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAuraAberta(true);
+                  setAuraTopico(null);
+                }}
+                className="min-h-16 rounded-2xl bg-[#050816] px-8 py-4 text-lg font-black text-yellow-400 transition hover:bg-black"
+              >
+                PEÇA AJUDA
+              </button>
+            </div>
+          </section>
+
           {errorMessage && (
             <div
               role="alert"
@@ -636,7 +783,7 @@ export default function TherapistExperiencesPage() {
           )}
 
           {showForm && (
-            <section className="mt-7 rounded-[32px] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8">
+            <section id="form-experiencia" className="mt-7 scroll-mt-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8">
               <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-600">
@@ -905,7 +1052,7 @@ export default function TherapistExperiencesPage() {
             </section>
           )}
 
-          <section className="mt-7 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <section id="minhas-experiencias" className="mt-7 scroll-mt-6 rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-600">
@@ -1123,6 +1270,122 @@ export default function TherapistExperiencesPage() {
           </section>
         </section>
       </main>
+
+      {auraAberta && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/75 px-4 py-6 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Ajuda da AURA em Experiências"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) {
+              fecharAura();
+            }
+          }}
+        >
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-yellow-400/30 bg-[#0b1020] p-5 text-white shadow-2xl sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+                  AURA
+                </p>
+                <h2 className="mt-2 text-2xl font-black sm:text-3xl">
+                  {auraTopico
+                    ? auraExperiencias[auraTopico].titulo
+                    : "Em que posso ajudar?"}
+                </h2>
+
+                {!auraTopico && (
+                  <p className="mt-2 text-base leading-7 text-slate-300">
+                    Toque somente no assunto em que você precisa de ajuda.
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={fecharAura}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-600 text-2xl text-white"
+                aria-label="Fechar ajuda"
+              >
+                ×
+              </button>
+            </div>
+
+            {!auraTopico ? (
+              <div className="mt-7 grid gap-3">
+                {[
+                  ["criar", "QUERO CRIAR UMA EXPERIÊNCIA"],
+                  ["oferecer", "O QUE POSSO OFERECER?"],
+                  ["foto", "COMO ESCOLHO A FOTO?"],
+                  ["descricao", "COMO ESCREVO A DESCRIÇÃO?"],
+                  ["desconto", "COMO DEFINO O DESCONTO?"],
+                  ["home", "MINHA EXPERIÊNCIA NÃO APARECE NA HOME"],
+                  ["alterar", "QUERO ALTERAR OU EXCLUIR"],
+                  ["entender", "NÃO ENTENDI COMO FUNCIONA"],
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setAuraTopico(key)}
+                    className="min-h-16 rounded-2xl border border-slate-700 bg-slate-950/60 px-5 py-4 text-left text-lg font-black text-white transition hover:border-yellow-400"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-7">
+                <div className="space-y-4">
+                  {auraExperiencias[auraTopico].passos.map(
+                    (passo, index) => (
+                      <div
+                        key={`${auraTopico}-${index}`}
+                        className="flex gap-4 rounded-2xl border border-slate-700 bg-slate-950/50 p-5"
+                      >
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-lg font-black text-black">
+                          {index + 1}
+                        </div>
+                        <p className="pt-1 text-lg leading-7 text-white">
+                          {passo}
+                        </p>
+                      </div>
+                    ),
+                  )}
+                </div>
+
+                {auraExperiencias[auraTopico].acao === "nova" && (
+                  <button
+                    type="button"
+                    onClick={abrirNovaExperienciaPelaAura}
+                    className="mt-6 min-h-16 w-full rounded-2xl bg-yellow-400 px-6 py-4 text-lg font-black text-black"
+                  >
+                    ABRIR NOVA EXPERIÊNCIA
+                  </button>
+                )}
+
+                {auraExperiencias[auraTopico].acao === "lista" && (
+                  <button
+                    type="button"
+                    onClick={irParaMinhasExperiencias}
+                    className="mt-6 min-h-16 w-full rounded-2xl bg-yellow-400 px-6 py-4 text-lg font-black text-black"
+                  >
+                    IR PARA MINHAS EXPERIÊNCIAS
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setAuraTopico(null)}
+                  className="mt-3 min-h-14 w-full rounded-2xl border border-slate-600 px-5 py-3 font-bold text-white"
+                >
+                  VOLTAR
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
