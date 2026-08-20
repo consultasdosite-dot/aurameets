@@ -324,7 +324,7 @@ function ServiceCard({
             {service.name}
           </h3>
 
-          <p className="mt-3 line-clamp-3 leading-7 text-slate-300">
+          <p className="mt-3 whitespace-pre-line break-words leading-7 text-slate-300">
             {service.description}
           </p>
 
