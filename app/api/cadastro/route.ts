@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import {
+  notifyNewTherapistCreated,
+  notifyTherapistPixConfigured,
+  notifyTherapistServiceCreated,
+} from "@/lib/whatsapp-notifications";
 
 interface CadastroProfissionalBody {
   nome?: string;
@@ -714,7 +719,7 @@ export async function POST(request: Request) {
         review_required: true,
 
         plan: "Profissional",
-        plan_status: "active",
+        plan_status: "pending_payment",
 
         profile_status: "under_review",
 
@@ -873,6 +878,47 @@ export async function POST(request: Request) {
     }
 
     /*
+     * 8. NOTIFICAÇÕES ADMINISTRATIVAS
+     *
+     * As notificações não podem bloquear nem desfazer o cadastro.
+     * Se a API do WhatsApp ainda não estiver configurada, as funções
+     * apenas registram aviso no servidor e o cadastro segue normalmente.
+     */
+
+    const resultadosNotificacoes =
+      await Promise.allSettled([
+        notifyNewTherapistCreated({
+          name: nome,
+          specialty: especialidade,
+          city: cidade,
+          state: estado,
+          phone: telefone,
+          email,
+        }),
+
+        notifyTherapistServiceCreated({
+          therapistName: nome,
+          serviceName: servicoNome,
+          price: servicoPreco,
+        }),
+
+        notifyTherapistPixConfigured({
+          therapistName: nome,
+        }),
+      ]);
+
+    resultadosNotificacoes.forEach(
+      (resultado, index) => {
+        if (resultado.status === "rejected") {
+          console.error(
+            `Falha na notificação administrativa ${index + 1}:`,
+            resultado.reason,
+          );
+        }
+      },
+    );
+
+    /*
      * CADASTRO COMPLETO
      */
 
@@ -881,7 +927,10 @@ export async function POST(request: Request) {
         success: true,
 
         message:
-          "Cadastro profissional realizado com sucesso.",
+          "Cadastro profissional salvo. Falta concluir o pagamento da mensalidade.",
+
+        paymentRequired: true,
+        monthlyAmount: 35,
 
         userId: authUserId,
 
