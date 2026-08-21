@@ -5,11 +5,52 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
-const MENSALIDADE_AURAMEETS_CENTAVOS = 3500;
+const MENSALIDADE_FUNDADOR_CENTAVOS = 1700;
+const MENSALIDADE_PROFISSIONAL_CENTAVOS = 3500;
 
 type AssinaturaBody = {
   userId?: string;
 };
+
+type TherapistData = {
+  id: number;
+  profile_id: string | null;
+  name: string;
+  email: string | null;
+  plan: string | null;
+  plan_status: string | null;
+};
+
+function normalizarPlano(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function obterMensalidade(therapist: TherapistData) {
+  const plano = normalizarPlano(therapist.plan);
+
+  const fundador =
+    plano === "fundador" ||
+    plano === "cofundador" ||
+    plano.includes("fundador");
+
+  if (fundador) {
+    return {
+      amountInCents: MENSALIDADE_FUNDADOR_CENTAVOS,
+      amount: 17,
+      label: "Fundador",
+    };
+  }
+
+  return {
+    amountInCents: MENSALIDADE_PROFISSIONAL_CENTAVOS,
+    amount: 35,
+    label: "Profissional",
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,13 +70,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /*
-     * Localiza o terapeuta criado no cadastro.
-     * Não confiamos em nome, e-mail ou valor enviados pelo navegador.
-     */
-
     const {
-      data: therapist,
+      data: therapistResult,
       error: therapistError,
     } = await supabaseAdmin
       .from("therapists")
@@ -69,7 +105,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!therapist) {
+    if (!therapistResult) {
       return NextResponse.json(
         {
           error:
@@ -81,7 +117,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!therapist.email) {
+    const therapist =
+      therapistResult as TherapistData;
+
+    if (!therapist.email?.trim()) {
       return NextResponse.json(
         {
           error:
@@ -93,10 +132,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /*
-     * O valor da mensalidade é definido exclusivamente no servidor.
-     * O navegador não pode alterar R$ 35,00.
-     */
+    if (therapist.plan_status === "active") {
+      return NextResponse.json(
+        {
+          error:
+            "Esta assinatura já está ativa.",
+        },
+        {
+          status: 409,
+        },
+      );
+    }
+
+    const mensalidade =
+      obterMensalidade(therapist);
 
     const origin =
       request.headers.get("origin") ||
@@ -109,7 +158,7 @@ export async function POST(request: NextRequest) {
 
         payment_method_types: ["card"],
 
-        customer_email: therapist.email,
+        customer_email: therapist.email.trim(),
 
         line_items: [
           {
@@ -119,7 +168,7 @@ export async function POST(request: NextRequest) {
               currency: "brl",
 
               unit_amount:
-                MENSALIDADE_AURAMEETS_CENTAVOS,
+                mensalidade.amountInCents,
 
               recurring: {
                 interval: "month",
@@ -128,10 +177,14 @@ export async function POST(request: NextRequest) {
 
               product_data: {
                 name:
-                  "Perfil Profissional AuraMeets",
+                  mensalidade.label === "Fundador"
+                    ? "AuraMeets — Terapeuta Fundador"
+                    : "AuraMeets — Perfil Profissional",
 
                 description:
-                  "Mensalidade do Perfil Profissional AuraMeets.",
+                  mensalidade.label === "Fundador"
+                    ? "Mensalidade especial do Terapeuta Fundador AuraMeets."
+                    : "Mensalidade do Perfil Profissional AuraMeets.",
               },
             },
           },
@@ -139,19 +192,21 @@ export async function POST(request: NextRequest) {
 
         metadata: {
           tipo: "assinatura_terapeuta",
-          userId: userId,
+          userId,
           therapistId: String(therapist.id),
-          plano: "Profissional",
-          valorMensal: "35.00",
+          plano: mensalidade.label,
+          valorMensal:
+            mensalidade.amount.toFixed(2),
         },
 
         subscription_data: {
           metadata: {
             tipo: "assinatura_terapeuta",
-            userId: userId,
+            userId,
             therapistId: String(therapist.id),
-            plano: "Profissional",
-            valorMensal: "35.00",
+            plano: mensalidade.label,
+            valorMensal:
+              mensalidade.amount.toFixed(2),
           },
         },
 
@@ -168,21 +223,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /*
-     * Enquanto o Stripe não confirmar o pagamento,
-     * o plano permanece aguardando pagamento.
-     */
-
-    const {
-      error: updateError,
-    } = await supabaseAdmin
-      .from("therapists")
-      .update({
-        plan: "Profissional",
-        plan_status: "pending_payment",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", therapist.id);
+    const { error: updateError } =
+      await supabaseAdmin
+        .from("therapists")
+        .update({
+          plan_status: "pending_payment",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", therapist.id);
 
     if (updateError) {
       console.error(
@@ -195,6 +243,8 @@ export async function POST(request: NextRequest) {
       success: true,
       checkoutUrl: session.url,
       sessionId: session.id,
+      monthlyAmount: mensalidade.amount,
+      plan: mensalidade.label,
     });
   } catch (error) {
     console.error(
