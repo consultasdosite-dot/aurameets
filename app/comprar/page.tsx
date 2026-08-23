@@ -153,20 +153,12 @@ function ComprarContent() {
     const buyerPhone = whatsapp.trim();
     const buyerEmail = email.trim().toLowerCase();
 
-    if (!buyerName) {
-      setErro("Informe seu nome.");
+    if (!buyerName || !buyerPhone || !buyerEmail) {
+      setErro("Preencha seus dados acima antes de continuar com o pagamento.");
       return null;
     }
 
-    if (!buyerPhone) {
-      setErro("Informe seu WhatsApp.");
-      return null;
-    }
-
-    if (
-      !buyerEmail ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)
-    ) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) {
       setErro("Informe um e-mail válido.");
       return null;
     }
