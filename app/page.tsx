@@ -225,7 +225,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#1c1027]/60 via-transparent to-[#2b1736]/5" />
 
         {/* LOGO CENTRALIZADA */}
-        <div className="absolute left-1/2 top-8 z-20 -translate-x-1/2 sm:top-10">
+        <div className="absolute left-1/2 top-8 z-20 hidden -translate-x-1/2 sm:block sm:top-10">
           <div className="flex flex-col items-center">
             <AuraLogo className="h-16 w-16 sm:h-20 sm:w-20" />
 

@@ -63,9 +63,10 @@ function obterValorFinalServico(
     service.promotional_price !== null &&
     service.promotional_price !== undefined
   ) {
-    const promocional = converterValorParaCentavos(
-      service.promotional_price,
-    );
+    const promocional =
+      converterValorParaCentavos(
+        service.promotional_price,
+      );
 
     if (promocional) {
       return service.promotional_price;
@@ -134,7 +135,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!buyerEmail || !emailValido(buyerEmail)) {
+    if (
+      !buyerEmail ||
+      !emailValido(buyerEmail)
+    ) {
       return NextResponse.json(
         {
           error:
@@ -304,7 +308,7 @@ export async function POST(request: NextRequest) {
 
     /*
      * =========================================================
-     * VALIDAÇÃO STRIPE CONNECT
+     * STRIPE CONNECT
      * =========================================================
      */
 
@@ -332,6 +336,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    /*
+     * ESTES CAMPOS CONTINUAM SENDO SINCRONIZADOS
+     * NO SUPABASE APENAS COMO INFORMAÇÃO.
+     */
+
     const stripeChargesEnabled =
       stripeAccount.charges_enabled === true;
 
@@ -341,53 +350,74 @@ export async function POST(request: NextRequest) {
     const stripeDetailsSubmitted =
       stripeAccount.details_submitted === true;
 
-    const stripeStatusChanged =
-      therapist.stripe_charges_enabled !==
-        stripeChargesEnabled ||
-      therapist.stripe_payouts_enabled !==
-        stripePayoutsEnabled ||
-      therapist.stripe_details_submitted !==
-        stripeDetailsSubmitted;
+    /*
+     * REGRA CORRETA PARA O FLUXO AURAMEETS:
+     *
+     * Destination charges + application_fee_amount
+     *
+     * Precisamos de:
+     * card_payments = active
+     * transfers = active
+     */
 
-    if (stripeStatusChanged) {
-      const {
-        error: stripeStatusUpdateError,
-      } = await supabaseAdmin
-        .from("therapists")
-        .update({
-          stripe_charges_enabled:
-            stripeChargesEnabled,
-          stripe_payouts_enabled:
-            stripePayoutsEnabled,
-          stripe_details_submitted:
-            stripeDetailsSubmitted,
-        })
-        .eq("id", therapist.id);
+    const cardPaymentsActive =
+      stripeAccount.capabilities
+        ?.card_payments === "active";
 
-      if (stripeStatusUpdateError) {
-        console.error(
-          "Conta Stripe validada, mas o status não pôde ser sincronizado no Supabase:",
-          stripeStatusUpdateError,
-        );
-      }
+    const transfersActive =
+      stripeAccount.capabilities
+        ?.transfers === "active";
+
+    const stripeAvailable =
+      cardPaymentsActive &&
+      transfersActive;
+
+    /*
+     * SINCRONIZA STATUS NO SUPABASE.
+     */
+
+    const {
+      error: stripeStatusUpdateError,
+    } = await supabaseAdmin
+      .from("therapists")
+      .update({
+        stripe_account_status:
+          stripeAvailable
+            ? "connected"
+            : "onboarding_pending",
+
+        stripe_charges_enabled:
+          stripeChargesEnabled,
+
+        stripe_payouts_enabled:
+          stripePayoutsEnabled,
+
+        stripe_details_submitted:
+          stripeDetailsSubmitted,
+      })
+      .eq("id", therapist.id);
+
+    if (stripeStatusUpdateError) {
+      console.error(
+        "Conta Stripe validada, mas o status não pôde ser sincronizado no Supabase:",
+        stripeStatusUpdateError,
+      );
     }
 
-    if (
-      !stripeChargesEnabled ||
-      !stripePayoutsEnabled ||
-      !stripeDetailsSubmitted
-    ) {
+    /*
+     * BLOQUEIA SOMENTE SE AS CAPACIDADES
+     * NECESSÁRIAS NÃO ESTIVEREM ATIVAS.
+     */
+
+    if (!stripeAvailable) {
       return NextResponse.json(
         {
           error:
-            "A conta Stripe do terapeuta ainda não está pronta para receber pagamentos.",
+            "A conta Stripe do terapeuta ainda não está pronta para receber pagamentos por cartão.",
+
           stripeStatus: {
-            chargesEnabled:
-              stripeChargesEnabled,
-            payoutsEnabled:
-              stripePayoutsEnabled,
-            detailsSubmitted:
-              stripeDetailsSubmitted,
+            cardPaymentsActive,
+            transfersActive,
           },
         },
         {
@@ -442,7 +472,8 @@ export async function POST(request: NextRequest) {
     let clientId: number;
 
     if (clienteExistente) {
-      clientId = Number(clienteExistente.id);
+      clientId =
+        Number(clienteExistente.id);
 
       const {
         error: clienteAtualizacaoError,
@@ -491,7 +522,10 @@ export async function POST(request: NextRequest) {
         .select("id")
         .single();
 
-      if (novoClienteError || !novoCliente) {
+      if (
+        novoClienteError ||
+        !novoCliente
+      ) {
         console.error(
           "Erro ao criar cliente da compra:",
           novoClienteError,
@@ -508,12 +542,13 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      clientId = Number(novoCliente.id);
+      clientId =
+        Number(novoCliente.id);
     }
 
     /*
      * =========================================================
-     * VALOR E COMISSÃO
+     * VALOR
      * =========================================================
      */
 
@@ -536,7 +571,9 @@ export async function POST(request: NextRequest) {
     }
 
     const amountInCents =
-      converterValorParaCentavos(valorFinal);
+      converterValorParaCentavos(
+        valorFinal,
+      );
 
     if (!amountInCents) {
       return NextResponse.json(
@@ -549,6 +586,12 @@ export async function POST(request: NextRequest) {
         },
       );
     }
+
+    /*
+     * =========================================================
+     * COMISSÃO AURAMEETS — 3%
+     * =========================================================
+     */
 
     const platformFeeInCents =
       Math.round(
@@ -564,7 +607,7 @@ export async function POST(request: NextRequest) {
 
     /*
      * =========================================================
-     * PAGAMENTO
+     * REGISTRA PAGAMENTO
      * =========================================================
      */
 
@@ -574,18 +617,32 @@ export async function POST(request: NextRequest) {
     } = await supabaseAdmin
       .from("payments")
       .insert({
-        therapist_id: therapist.id,
-        client_id: clientId,
-        appointment_id: null,
-        service_id: service.id,
+        therapist_id:
+          therapist.id,
+
+        client_id:
+          clientId,
+
+        appointment_id:
+          null,
+
+        service_id:
+          service.id,
+
         amount,
+
         commission,
-        status: "checkout_created",
+
+        status:
+          "checkout_created",
       })
       .select("id")
       .single();
 
-    if (paymentError || !payment) {
+    if (
+      paymentError ||
+      !payment
+    ) {
       console.error(
         "Erro ao registrar compra direta:",
         paymentError,
@@ -602,7 +659,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    paymentId = Number(payment.id);
+    paymentId =
+      Number(payment.id);
 
     /*
      * =========================================================
@@ -640,28 +698,42 @@ export async function POST(request: NextRequest) {
 
     const metadata = {
       purchaseType: "service",
-      serviceId: service.id,
-      paymentId: String(paymentId),
+
+      serviceId:
+        service.id,
+
+      paymentId:
+        String(paymentId),
+
       therapistId:
         String(therapist.id),
+
       therapistProfileId:
         service.therapist_id,
+
       clientId:
         String(clientId),
+
       buyerName,
       buyerEmail,
       buyerPhone,
+
       auraMeetsFeePercentage:
-        String(PERCENTUAL_AURAMEETS),
+        String(
+          PERCENTUAL_AURAMEETS,
+        ),
     };
 
     const session =
       await stripe.checkout.sessions.create({
         mode: "payment",
 
-        payment_method_types: ["card"],
+        payment_method_types: [
+          "card",
+        ],
 
-        customer_email: buyerEmail,
+        customer_email:
+          buyerEmail,
 
         line_items: [
           {
@@ -669,11 +741,14 @@ export async function POST(request: NextRequest) {
 
             price_data: {
               currency,
+
               unit_amount:
                 amountInCents,
 
               product_data: {
-                name: service.name,
+                name:
+                  service.name,
+
                 description:
                   service.description?.trim() ||
                   `Serviço de ${therapist.name} no AuraMeets`,
@@ -681,6 +756,14 @@ export async function POST(request: NextRequest) {
             },
           },
         ],
+
+        /*
+         * DESTINATION CHARGE
+         *
+         * O pagamento é criado pela plataforma,
+         * a comissão de 3% fica com AuraMeets,
+         * e o restante segue para o terapeuta.
+         */
 
         payment_intent_data: {
           application_fee_amount:
@@ -696,8 +779,11 @@ export async function POST(request: NextRequest) {
 
         metadata,
 
-        success_url: successUrl,
-        cancel_url: cancelUrl,
+        success_url:
+          successUrl,
+
+        cancel_url:
+          cancelUrl,
       });
 
     if (!session.url) {
@@ -705,6 +791,12 @@ export async function POST(request: NextRequest) {
         "A Stripe não retornou o endereço do Checkout.",
       );
     }
+
+    /*
+     * =========================================================
+     * SALVA SESSION ID
+     * =========================================================
+     */
 
     const {
       error: sessionUpdateError,
@@ -724,10 +816,17 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      checkoutUrl: session.url,
-      sessionId: session.id,
+      checkoutUrl:
+        session.url,
+
+      sessionId:
+        session.id,
+
       paymentId,
-      serviceId: service.id,
+
+      serviceId:
+        service.id,
+
       clientId,
     });
   } catch (error) {
@@ -763,6 +862,7 @@ export async function POST(request: NextRequest) {
       {
         error:
           "Não foi possível iniciar a compra deste serviço.",
+
         details:
           process.env.NODE_ENV ===
           "development"
