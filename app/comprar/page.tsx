@@ -13,6 +13,7 @@ type CheckoutResponse = {
 type CompraResponse = {
   success?: boolean;
   error?: string;
+
   service?: {
     id: string;
     name: string;
@@ -25,15 +26,18 @@ type CompraResponse = {
     online: boolean;
     inPerson: boolean;
   };
+
   therapist?: {
     id: number;
     name: string;
     slug: string | null;
     photoUrl: string | null;
   };
+
   payment?: {
     pixAvailable: boolean;
     stripeAvailable: boolean;
+
     pix: {
       keyType: string;
       key: string;
@@ -67,18 +71,18 @@ function labelTipoPix(tipo: string) {
 function ComprarContent() {
   const searchParams = useSearchParams();
 
-  const serviceId =
-    searchParams.get("servico")?.trim() ?? "";
+  const serviceId = searchParams.get("servico")?.trim() ?? "";
 
   const [erro, setErro] = useState<string | null>(null);
-  const [carregandoDados, setCarregandoDados] =
-    useState(true);
-  const [carregandoStripe, setCarregandoStripe] =
-    useState(false);
+  const [carregandoDados, setCarregandoDados] = useState(true);
+  const [carregandoStripe, setCarregandoStripe] = useState(false);
   const [copiado, setCopiado] = useState(false);
-  const [dados, setDados] = useState<CompraResponse | null>(
-    null,
-  );
+
+  const [dados, setDados] = useState<CompraResponse | null>(null);
+
+  const [nome, setNome] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     let ativo = true;
@@ -95,17 +99,14 @@ function ComprarContent() {
         setCarregandoDados(true);
 
         const response = await fetch(
-          `/api/comprar/servico?servico=${encodeURIComponent(
-            serviceId,
-          )}`,
+          `/api/comprar/servico?servico=${encodeURIComponent(serviceId)}`,
           {
             method: "GET",
             cache: "no-store",
           },
         );
 
-        const resultado =
-          (await response.json()) as CompraResponse;
+        const resultado = (await response.json()) as CompraResponse;
 
         if (!response.ok) {
           throw new Error(
@@ -147,9 +148,45 @@ function ComprarContent() {
       : "/terapeutas";
   }, [dados]);
 
+  function validarComprador() {
+    const buyerName = nome.trim();
+    const buyerPhone = whatsapp.trim();
+    const buyerEmail = email.trim().toLowerCase();
+
+    if (!buyerName) {
+      setErro("Informe seu nome.");
+      return null;
+    }
+
+    if (!buyerPhone) {
+      setErro("Informe seu WhatsApp.");
+      return null;
+    }
+
+    if (
+      !buyerEmail ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)
+    ) {
+      setErro("Informe um e-mail válido.");
+      return null;
+    }
+
+    return {
+      buyerName,
+      buyerPhone,
+      buyerEmail,
+    };
+  }
+
   async function pagarComCartao() {
     if (!serviceId) {
       setErro("O serviço não foi identificado.");
+      return;
+    }
+
+    const comprador = validarComprador();
+
+    if (!comprador) {
       return;
     }
 
@@ -157,21 +194,18 @@ function ComprarContent() {
       setErro(null);
       setCarregandoStripe(true);
 
-      const response = await fetch(
-        "/api/stripe/checkout-servico",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            serviceId,
-          }),
+      const response = await fetch("/api/stripe/checkout-servico", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          serviceId,
+          ...comprador,
+        }),
+      });
 
-      const resultado =
-        (await response.json()) as CheckoutResponse;
+      const resultado = (await response.json()) as CheckoutResponse;
 
       if (!response.ok) {
         throw new Error(
@@ -194,6 +228,7 @@ function ComprarContent() {
           ? error.message
           : "Não foi possível iniciar o pagamento.",
       );
+
       setCarregandoStripe(false);
     }
   }
@@ -208,8 +243,12 @@ function ComprarContent() {
 
     try {
       await navigator.clipboard.writeText(chave);
+
       setCopiado(true);
-      setTimeout(() => setCopiado(false), 2500);
+
+      setTimeout(() => {
+        setCopiado(false);
+      }, 2500);
     } catch {
       setErro(
         "Não foi possível copiar a chave PIX automaticamente.",
@@ -221,11 +260,7 @@ function ComprarContent() {
     return <ComprarFallback />;
   }
 
-  if (
-    !dados?.service ||
-    !dados.therapist ||
-    !dados.payment
-  ) {
+  if (!dados?.service || !dados.therapist || !dados.payment) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F8F8FB] px-4 py-10">
         <div className="w-full max-w-xl rounded-3xl border border-red-200 bg-white p-8 text-center shadow-xl">
@@ -238,8 +273,7 @@ function ComprarContent() {
           </h1>
 
           <p className="mt-4 leading-7 text-slate-600">
-            {erro ||
-              "Verifique se o serviço continua disponível."}
+            {erro || "Verifique se o serviço continua disponível."}
           </p>
 
           <Link
@@ -258,6 +292,21 @@ function ComprarContent() {
   return (
     <main className="min-h-screen bg-[#F8F8FB] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
+
+        {/* LOGO */}
+        <div className="mb-8 flex flex-col items-center text-center">
+          <AuraLogo className="h-16 w-16" />
+
+          <div className="mt-1 text-[30px] font-extrabold tracking-[-0.05em]">
+            <span className="text-[#7342ad]">Aura</span>
+            <span className="text-[#101d3b]">Meets</span>
+          </div>
+
+          <p className="mt-3 max-w-xl text-base font-semibold leading-7 text-slate-600">
+            Seu momento de cuidado começa aqui.
+          </p>
+        </div>
+
         <div className="mb-6 flex items-center justify-between gap-4">
           <Link
             href={voltarHref}
@@ -273,6 +322,8 @@ function ComprarContent() {
 
         <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-2xl">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
+
+            {/* SERVIÇO */}
             <div className="border-b border-slate-200 p-6 sm:p-8 lg:border-b-0 lg:border-r lg:p-10">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-700">
                 Você está comprando
@@ -291,10 +342,7 @@ function ComprarContent() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    therapist.name
-                      .trim()
-                      .charAt(0)
-                      .toUpperCase() || "T"
+                    therapist.name.trim().charAt(0).toUpperCase() || "T"
                   )}
                 </div>
 
@@ -303,14 +351,14 @@ function ComprarContent() {
                     Terapeuta
                   </p>
 
-                  <p className="mt-1 text-xl font-black text-slate-950">
+                  <p className="mt-1 text-xl font-black">
                     {therapist.name}
                   </p>
                 </div>
               </div>
 
               {service.description && (
-                <p className="mt-6 leading-7 text-slate-600">
+                <p className="mt-6 whitespace-pre-line leading-7 text-slate-600">
                   {service.description}
                 </p>
               )}
@@ -342,8 +390,7 @@ function ComprarContent() {
 
                 {service.promotionalPrice !== null &&
                   service.originalPrice !== null &&
-                  service.promotionalPrice <
-                    service.originalPrice && (
+                  service.promotionalPrice < service.originalPrice && (
                     <p className="mt-3 text-lg font-bold text-slate-400 line-through">
                       {formatarPreco(
                         service.originalPrice,
@@ -353,118 +400,112 @@ function ComprarContent() {
                   )}
 
                 <p className="mt-1 text-4xl font-black text-purple-800">
-                  {formatarPreco(
-                    service.price,
-                    service.currency,
-                  )}
+                  {formatarPreco(service.price, service.currency)}
                 </p>
               </div>
             </div>
 
+            {/* COMPRADOR + PAGAMENTO */}
             <div className="p-6 sm:p-8 lg:p-10">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-700">
-                Escolha como deseja pagar
+                Seus dados
               </p>
 
-              <h2 className="mt-4 text-3xl font-black">
-                Pagamento do seu serviço
+              <h2 className="mt-3 text-3xl font-black">
+                Identifique sua compra
               </h2>
 
-              <p className="mt-3 leading-7 text-slate-600">
-                Selecione uma das formas disponíveis abaixo.
-              </p>
+              <div className="mt-6 space-y-4">
+                <input
+                  type="text"
+                  value={nome}
+                  onChange={(event) => setNome(event.target.value)}
+                  placeholder="Nome"
+                  autoComplete="name"
+                  className="min-h-[56px] w-full rounded-2xl border border-slate-300 px-4 font-semibold outline-none focus:border-purple-500"
+                />
+
+                <input
+                  type="tel"
+                  value={whatsapp}
+                  onChange={(event) => setWhatsapp(event.target.value)}
+                  placeholder="WhatsApp"
+                  autoComplete="tel"
+                  className="min-h-[56px] w-full rounded-2xl border border-slate-300 px-4 font-semibold outline-none focus:border-purple-500"
+                />
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="E-mail"
+                  autoComplete="email"
+                  className="min-h-[56px] w-full rounded-2xl border border-slate-300 px-4 font-semibold outline-none focus:border-purple-500"
+                />
+              </div>
 
               {erro && (
-                <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+                <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
                   {erro}
                 </div>
               )}
 
-              <div className="mt-8 space-y-5">
-                {payment.pixAvailable && payment.pix ? (
+              <div className="my-8 border-t border-slate-200" />
+
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-700">
+                Escolha como deseja pagar
+              </p>
+
+              <div className="mt-6 space-y-5">
+
+                {/* PIX */}
+                {payment.pixAvailable && payment.pix && (
                   <section className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-black text-white">
-                        PIX
-                      </span>
+                    <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-black text-white">
+                      PIX
+                    </span>
 
-                      <span className="text-sm font-bold text-emerald-800">
-                        Pagamento direto ao terapeuta
-                      </span>
-                    </div>
-
-                    <h3 className="mt-5 text-2xl font-black text-slate-950">
+                    <h3 className="mt-5 text-2xl font-black">
                       Pagar por PIX
                     </h3>
 
                     <div className="mt-5 space-y-3 rounded-2xl bg-white p-5">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
-                          Tipo da chave
-                        </p>
-                        <p className="mt-1 font-bold text-slate-800">
-                          {labelTipoPix(
-                            payment.pix.keyType,
-                          )}
-                        </p>
-                      </div>
+                      <p className="font-bold">
+                        {labelTipoPix(payment.pix.keyType)}
+                      </p>
 
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
-                          Chave PIX
-                        </p>
-                        <p className="mt-1 break-all font-black text-slate-950">
-                          {payment.pix.key}
-                        </p>
-                      </div>
+                      <p className="break-all font-black">
+                        {payment.pix.key}
+                      </p>
 
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
-                          Titular
-                        </p>
-                        <p className="mt-1 font-bold text-slate-800">
-                          {payment.pix.holderName}
-                        </p>
-                      </div>
+                      <p className="font-bold">
+                        {payment.pix.holderName}
+                      </p>
 
                       {payment.pix.bankName && (
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">
-                            Banco / instituição
-                          </p>
-                          <p className="mt-1 font-bold text-slate-800">
-                            {payment.pix.bankName}
-                          </p>
-                        </div>
+                        <p className="font-bold">
+                          {payment.pix.bankName}
+                        </p>
                       )}
                     </div>
 
                     <button
                       type="button"
                       onClick={() => void copiarPix()}
-                      className="mt-5 w-full rounded-xl bg-emerald-600 px-6 py-4 font-black text-white transition hover:bg-emerald-700"
+                      className="mt-5 w-full rounded-xl bg-emerald-600 px-6 py-4 font-black text-white"
                     >
                       {copiado
                         ? "CHAVE PIX COPIADA"
-                        : `COPIAR PIX — ${service.name}`}
+                        : "COPIAR CHAVE PIX"}
                     </button>
-                  </section>
-                ) : (
-                  <section className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-                    <p className="font-black text-slate-700">
-                      PIX indisponível
-                    </p>
-
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Este terapeuta ainda não ativou o PIX no AuraMeets.
-                    </p>
                   </section>
                 )}
 
+                {/* CARTÃO */}
                 {payment.stripeAvailable ? (
                   <section className="rounded-3xl border border-purple-200 bg-white p-6 shadow-sm">
                     <span className="rounded-full bg-purple-700 px-3 py-1 text-xs font-black text-white">
-                      STRIPE
+                      CARTÃO
                     </span>
 
                     <h3 className="mt-5 text-2xl font-black">
@@ -472,41 +513,31 @@ function ComprarContent() {
                     </h3>
 
                     <p className="mt-3 leading-7 text-slate-600">
-                      Você será direcionado para o ambiente seguro da Stripe.
+                      Pagamento seguro processado pela Stripe.
                     </p>
 
                     <button
                       type="button"
-                      onClick={() =>
-                        void pagarComCartao()
-                      }
+                      onClick={() => void pagarComCartao()}
                       disabled={carregandoStripe}
-                      className="mt-5 w-full rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-6 py-4 font-black text-white shadow-[0_14px_30px_rgba(147,51,234,0.25)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="mt-5 w-full rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-6 py-4 font-black text-white shadow-lg disabled:opacity-60"
                     >
                       {carregandoStripe
                         ? "PREPARANDO PAGAMENTO..."
                         : `PAGAR ${formatarPreco(
                             service.price,
                             service.currency,
-                          )} — ${service.name}`}
+                          )} COM CARTÃO`}
                     </button>
                   </section>
                 ) : (
                   <section className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-                    <p className="font-black text-slate-700">
-                      Cartão ainda indisponível
-                    </p>
-
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      O pagamento por cartão aparecerá quando este terapeuta concluir a conexão com a Stripe.
+                    <p className="font-black">
+                      Cartão indisponível.
                     </p>
                   </section>
                 )}
               </div>
-
-              <p className="mt-6 text-xs leading-5 text-slate-400">
-                Antes de pagar, confira sempre o nome do serviço, o terapeuta e o valor exibidos nesta página.
-              </p>
             </div>
           </div>
         </section>
@@ -515,11 +546,59 @@ function ComprarContent() {
   );
 }
 
+function AuraLogo({
+  className = "",
+}: {
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      className={className}
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M32 47C22 40 18 30 20 18c8 3 13 9 12 19"
+        stroke="#8B75CF"
+        strokeWidth="2"
+      />
+      <path
+        d="M32 47c10-7 14-17 12-29-8 3-13 9-12 19"
+        stroke="#78B7C8"
+        strokeWidth="2"
+      />
+      <path
+        d="M32 47C17 46 8 38 6 25c10-1 19 5 24 15"
+        stroke="#9C8AD6"
+        strokeWidth="2"
+      />
+      <path
+        d="M32 47c15-1 24-9 26-22-10-1-19 5-24 15"
+        stroke="#71B1C6"
+        strokeWidth="2"
+      />
+      <path
+        d="M32 47C22 32 23 18 32 8c9 10 10 24 0 39Z"
+        stroke="#A68CD4"
+        strokeWidth="2"
+      />
+      <path
+        d="M14 49c10 5 26 5 36 0"
+        stroke="#7E68BC"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function ComprarFallback() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#F8F8FB] px-4">
       <div className="text-center">
         <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-purple-100 border-t-purple-700" />
+
         <p className="mt-4 text-sm font-semibold text-slate-500">
           Preparando sua compra...
         </p>

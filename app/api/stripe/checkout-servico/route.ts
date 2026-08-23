@@ -9,6 +9,9 @@ const PERCENTUAL_AURAMEETS = 3;
 
 type CheckoutServicoBody = {
   serviceId?: string;
+  buyerName?: string;
+  buyerEmail?: string;
+  buyerPhone?: string;
 };
 
 type ServiceData = {
@@ -60,10 +63,9 @@ function obterValorFinalServico(
     service.promotional_price !== null &&
     service.promotional_price !== undefined
   ) {
-    const promocional =
-      converterValorParaCentavos(
-        service.promotional_price,
-      );
+    const promocional = converterValorParaCentavos(
+      service.promotional_price,
+    );
 
     if (promocional) {
       return service.promotional_price;
@@ -71,6 +73,22 @@ function obterValorFinalServico(
   }
 
   return service.price;
+}
+
+function normalizarTexto(
+  valor: string | undefined,
+): string {
+  return valor?.trim() ?? "";
+}
+
+function normalizarEmail(
+  valor: string | undefined,
+): string {
+  return normalizarTexto(valor).toLowerCase();
+}
+
+function emailValido(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 export async function POST(request: NextRequest) {
@@ -81,7 +99,16 @@ export async function POST(request: NextRequest) {
       (await request.json()) as CheckoutServicoBody;
 
     const serviceId =
-      body.serviceId?.trim();
+      body.serviceId?.trim() ?? "";
+
+    const buyerName =
+      normalizarTexto(body.buyerName);
+
+    const buyerEmail =
+      normalizarEmail(body.buyerEmail);
+
+    const buyerPhone =
+      normalizarTexto(body.buyerPhone);
 
     if (!serviceId) {
       return NextResponse.json(
@@ -94,6 +121,48 @@ export async function POST(request: NextRequest) {
         },
       );
     }
+
+    if (!buyerName) {
+      return NextResponse.json(
+        {
+          error:
+            "Informe seu nome para continuar.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (!buyerEmail || !emailValido(buyerEmail)) {
+      return NextResponse.json(
+        {
+          error:
+            "Informe um e-mail válido para continuar.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (!buyerPhone) {
+      return NextResponse.json(
+        {
+          error:
+            "Informe seu WhatsApp para continuar.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    /*
+     * =========================================================
+     * SERVIÇO
+     * =========================================================
+     */
 
     const {
       data: serviceResult,
@@ -159,6 +228,12 @@ export async function POST(request: NextRequest) {
         },
       );
     }
+
+    /*
+     * =========================================================
+     * TERAPEUTA
+     * =========================================================
+     */
 
     const {
       data: therapistResult,
@@ -227,12 +302,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    /*
+     * =========================================================
+     * VALIDAÇÃO STRIPE CONNECT
+     * =========================================================
+     */
+
     let stripeAccount;
 
     try {
-      stripeAccount = await stripe.accounts.retrieve(
-        therapist.stripe_account_id,
-      );
+      stripeAccount =
+        await stripe.accounts.retrieve(
+          therapist.stripe_account_id,
+        );
     } catch (stripeAccountError) {
       console.error(
         "Erro ao consultar conta Stripe do terapeuta:",
@@ -252,26 +334,35 @@ export async function POST(request: NextRequest) {
 
     const stripeChargesEnabled =
       stripeAccount.charges_enabled === true;
+
     const stripePayoutsEnabled =
       stripeAccount.payouts_enabled === true;
+
     const stripeDetailsSubmitted =
       stripeAccount.details_submitted === true;
 
     const stripeStatusChanged =
-      therapist.stripe_charges_enabled !== stripeChargesEnabled ||
-      therapist.stripe_payouts_enabled !== stripePayoutsEnabled ||
-      therapist.stripe_details_submitted !== stripeDetailsSubmitted;
+      therapist.stripe_charges_enabled !==
+        stripeChargesEnabled ||
+      therapist.stripe_payouts_enabled !==
+        stripePayoutsEnabled ||
+      therapist.stripe_details_submitted !==
+        stripeDetailsSubmitted;
 
     if (stripeStatusChanged) {
-      const { error: stripeStatusUpdateError } =
-        await supabaseAdmin
-          .from("therapists")
-          .update({
-            stripe_charges_enabled: stripeChargesEnabled,
-            stripe_payouts_enabled: stripePayoutsEnabled,
-            stripe_details_submitted: stripeDetailsSubmitted,
-          })
-          .eq("id", therapist.id);
+      const {
+        error: stripeStatusUpdateError,
+      } = await supabaseAdmin
+        .from("therapists")
+        .update({
+          stripe_charges_enabled:
+            stripeChargesEnabled,
+          stripe_payouts_enabled:
+            stripePayoutsEnabled,
+          stripe_details_submitted:
+            stripeDetailsSubmitted,
+        })
+        .eq("id", therapist.id);
 
       if (stripeStatusUpdateError) {
         console.error(
@@ -291,9 +382,12 @@ export async function POST(request: NextRequest) {
           error:
             "A conta Stripe do terapeuta ainda não está pronta para receber pagamentos.",
           stripeStatus: {
-            chargesEnabled: stripeChargesEnabled,
-            payoutsEnabled: stripePayoutsEnabled,
-            detailsSubmitted: stripeDetailsSubmitted,
+            chargesEnabled:
+              stripeChargesEnabled,
+            payoutsEnabled:
+              stripePayoutsEnabled,
+            detailsSubmitted:
+              stripeDetailsSubmitted,
           },
         },
         {
@@ -301,6 +395,127 @@ export async function POST(request: NextRequest) {
         },
       );
     }
+
+    /*
+     * =========================================================
+     * CLIENTE
+     * =========================================================
+     */
+
+    const {
+      data: clienteExistente,
+      error: clienteConsultaError,
+    } = await supabaseAdmin
+      .from("clients")
+      .select(
+        `
+          id,
+          name,
+          email,
+          phone
+        `,
+      )
+      .ilike("email", buyerEmail)
+      .order("id", {
+        ascending: true,
+      })
+      .limit(1)
+      .maybeSingle();
+
+    if (clienteConsultaError) {
+      console.error(
+        "Erro ao consultar cliente:",
+        clienteConsultaError,
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Não foi possível identificar o comprador.",
+        },
+        {
+          status: 500,
+        },
+      );
+    }
+
+    let clientId: number;
+
+    if (clienteExistente) {
+      clientId = Number(clienteExistente.id);
+
+      const {
+        error: clienteAtualizacaoError,
+      } = await supabaseAdmin
+        .from("clients")
+        .update({
+          name: buyerName,
+          email: buyerEmail,
+          phone: buyerPhone,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("id", clientId);
+
+      if (clienteAtualizacaoError) {
+        console.error(
+          "Erro ao atualizar dados do comprador:",
+          clienteAtualizacaoError,
+        );
+
+        return NextResponse.json(
+          {
+            error:
+              "Não foi possível atualizar os dados do comprador.",
+          },
+          {
+            status: 500,
+          },
+        );
+      }
+    } else {
+      const {
+        data: novoCliente,
+        error: novoClienteError,
+      } = await supabaseAdmin
+        .from("clients")
+        .insert({
+          name: buyerName,
+          email: buyerEmail,
+          phone: buyerPhone,
+          source: "compra_servico",
+          profile_active: true,
+          updated_at:
+            new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+
+      if (novoClienteError || !novoCliente) {
+        console.error(
+          "Erro ao criar cliente da compra:",
+          novoClienteError,
+        );
+
+        return NextResponse.json(
+          {
+            error:
+              "Não foi possível registrar os dados do comprador.",
+          },
+          {
+            status: 500,
+          },
+        );
+      }
+
+      clientId = Number(novoCliente.id);
+    }
+
+    /*
+     * =========================================================
+     * VALOR E COMISSÃO
+     * =========================================================
+     */
 
     const valorFinal =
       obterValorFinalServico(service);
@@ -347,6 +562,12 @@ export async function POST(request: NextRequest) {
     const commission =
       platformFeeInCents / 100;
 
+    /*
+     * =========================================================
+     * PAGAMENTO
+     * =========================================================
+     */
+
     const {
       data: payment,
       error: paymentError,
@@ -354,7 +575,7 @@ export async function POST(request: NextRequest) {
       .from("payments")
       .insert({
         therapist_id: therapist.id,
-        client_id: null,
+        client_id: clientId,
         appointment_id: null,
         service_id: service.id,
         amount,
@@ -383,6 +604,12 @@ export async function POST(request: NextRequest) {
 
     paymentId = Number(payment.id);
 
+    /*
+     * =========================================================
+     * CHECKOUT STRIPE
+     * =========================================================
+     */
+
     const currency =
       (service.currency || "BRL")
         .trim()
@@ -400,7 +627,9 @@ export async function POST(request: NextRequest) {
       `${origin}/pagamento/sucesso` +
       `?tipo=servico` +
       `&session_id={CHECKOUT_SESSION_ID}` +
-      `&servico=${encodeURIComponent(service.id)}`;
+      `&servico=${encodeURIComponent(
+        service.id,
+      )}`;
 
     const cancelUrl =
       therapistSlug
@@ -413,9 +642,15 @@ export async function POST(request: NextRequest) {
       purchaseType: "service",
       serviceId: service.id,
       paymentId: String(paymentId),
-      therapistId: String(therapist.id),
+      therapistId:
+        String(therapist.id),
       therapistProfileId:
         service.therapist_id,
+      clientId:
+        String(clientId),
+      buyerName,
+      buyerEmail,
+      buyerPhone,
       auraMeetsFeePercentage:
         String(PERCENTUAL_AURAMEETS),
     };
@@ -426,13 +661,16 @@ export async function POST(request: NextRequest) {
 
         payment_method_types: ["card"],
 
+        customer_email: buyerEmail,
+
         line_items: [
           {
             quantity: 1,
 
             price_data: {
               currency,
-              unit_amount: amountInCents,
+              unit_amount:
+                amountInCents,
 
               product_data: {
                 name: service.name,
@@ -473,7 +711,8 @@ export async function POST(request: NextRequest) {
     } = await supabaseAdmin
       .from("payments")
       .update({
-        stripe_session_id: session.id,
+        stripe_session_id:
+          session.id,
       })
       .eq("id", paymentId);
 
@@ -489,6 +728,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
       paymentId,
       serviceId: service.id,
+      clientId,
     });
   } catch (error) {
     console.error(

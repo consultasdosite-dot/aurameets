@@ -62,7 +62,7 @@ export default function HomePage() {
           setOfertasEspeciais(ofertas);
         }
       } catch (error) {
-        console.error("Erro ao carregar experiências AuraMeets:", error);
+        console.error("Erro ao carregar experi├¬ncias AuraMeets:", error);
 
         if (componenteAtivo) {
           setOfertasEspeciais([]);
@@ -87,7 +87,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#fffdfb] text-[#101d3b]">
-      {/* CABEÇALHO */}
+      {/* CABE├çALHO */}
       <header className="relative z-50 border-b border-[#ece5ef] bg-white shadow-[0_4px_20px_rgba(34,31,52,0.05)]">
         <div className="mx-auto flex h-[86px] max-w-[1560px] items-center justify-between px-5 sm:px-8 lg:px-12">
           <Link
@@ -105,13 +105,6 @@ export default function HomePage() {
           </Link>
 
           <nav className="hidden items-center gap-8 text-[14px] font-bold text-[#101d3b] xl:flex">
-            <a href="#ofertas" className="transition hover:text-[#7342ad]">
-              Experiências Presente
-            </a>
-
-            <a href="#para-voce" className="transition hover:text-[#7342ad]">
-              Para você
-            </a>
 
             <a href="#terapeutas" className="transition hover:text-[#7342ad]">
               Terapeutas
@@ -123,10 +116,6 @@ export default function HomePage() {
 
             <a href="#acolhimento" className="transition hover:text-[#7342ad]">
               Acolhimento
-            </a>
-
-            <a href="#sobre-nos" className="transition hover:text-[#7342ad]">
-              Sobre nós
             </a>
           </nav>
 
@@ -178,21 +167,6 @@ export default function HomePage() {
         {menuAberto && (
           <div className="border-t border-[#eee7f2] bg-white px-5 py-5 shadow-xl lg:hidden">
             <nav className="mx-auto flex max-w-[1560px] flex-col gap-1">
-              <a
-                href="#ofertas"
-                onClick={fecharMenu}
-                className="rounded-xl px-4 py-3 font-bold hover:bg-[#faf7fd]"
-              >
-                Experiências Presente
-              </a>
-
-              <a
-                href="#para-voce"
-                onClick={fecharMenu}
-                className="rounded-xl px-4 py-3 font-bold hover:bg-[#faf7fd]"
-              >
-                Para você
-              </a>
 
               <a
                 href="#terapeutas"
@@ -218,14 +192,6 @@ export default function HomePage() {
                 Acolhimento
               </a>
 
-              <a
-                href="#sobre-nos"
-                onClick={fecharMenu}
-                className="rounded-xl px-4 py-3 font-bold hover:bg-[#faf7fd]"
-              >
-                Sobre nós
-              </a>
-
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <Link
                   href="/login"
@@ -248,30 +214,35 @@ export default function HomePage() {
         )}
       </header>
 
-       {/* ENTRADA PRINCIPAL */}
-<section className="relative min-h-[640px] overflow-hidden bg-[#24122f] sm:min-h-[720px] lg:min-h-[760px]">
-  <img
-    src="/hero-aura-maos-limpa.png"
-    alt="AuraMeets — duas mãos se aproximando"
-    className="absolute inset-0 h-full w-full object-cover object-center"
-  />
+      {/* ENTRADA PRINCIPAL */}
+      <section className="relative min-h-[640px] overflow-hidden bg-[#24122f] sm:min-h-[720px] lg:min-h-[760px]">
+        <img
+          src="/hero-aura-maos.png"
+          alt="AuraMeets — duas mãos se aproximando"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
 
-  <div className="absolute inset-0 bg-gradient-to-t from-[#1c1027]/60 via-transparent to-[#2b1736]/5" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1c1027]/60 via-transparent to-[#2b1736]/5" />
 
-  {/* LOGO CENTRALIZADA */}
-  <div className="absolute left-1/2 top-8 z-20 -translate-x-1/2 sm:top-10">
-    <div className="flex flex-col items-center">
-      <AuraLogo className="h-16 w-16 sm:h-20 sm:w-20" />
+        {/* LOGO CENTRALIZADA */}
+        <div className="absolute left-1/2 top-8 z-20 -translate-x-1/2 sm:top-10">
+          <div className="flex flex-col items-center">
+            <AuraLogo className="h-16 w-16 sm:h-20 sm:w-20" />
 
-      <div className="mt-1 whitespace-nowrap text-[34px] font-extrabold tracking-[-0.05em] sm:text-[46px]">
-        <span className="text-[#7342ad]">Aura</span>
-        <span className="text-[#101d3b]">Meets</span>
-      </div>
-    </div>
-  </div>
-</section>
+            <div className="mt-1 whitespace-nowrap text-[34px] font-extrabold tracking-[-0.05em] sm:text-[46px]">
+              <span className="text-[#7342ad]">Aura</span>
+              <span className="text-[#101d3b]">Meets</span>
+            </div>
+          </div>
+        </div>
 
-      {/* EXPERIÊNCIAS PRESENTE */}
+        {/* FRASE DE ACOLHIMENTO */}
+        <h1 className="absolute inset-x-0 bottom-12 z-20 mx-auto max-w-5xl px-6 text-center text-[24px] font-black leading-tight text-white [text-shadow:0_4px_14px_rgba(0,0,0,0.85)] sm:bottom-16 sm:text-[32px] lg:bottom-20 lg:text-[38px]">
+          Encontre o cuidado que faz sentido para o seu momento.
+        </h1>
+      </section>
+
+      {/* EXPERI├èNCIAS PRESENTE */}
       <section
         id="ofertas"
         className="scroll-mt-24 bg-gradient-to-b from-[#f8f2fc] to-white px-5 py-16 sm:px-8 sm:py-20 lg:px-12"
@@ -281,16 +252,16 @@ export default function HomePage() {
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#e2cef2] bg-white px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[#713aa8] shadow-sm">
                 <GiftIcon className="h-4 w-4" />
-                Experiências Presente
+                Experi├¬ncias Presente
               </div>
 
               <h2 className="mt-5 text-[34px] font-black leading-tight tracking-[-0.035em] text-[#101d3b] sm:text-[42px]">
-                Receba um presente e conheça um terapeuta
+                Receba um presente e conhe├ºa um terapeuta
               </h2>
 
               <p className="mt-4 max-w-2xl text-[16px] font-medium leading-7 text-[#4d5870]">
-                Escolha uma experiência oferecida por um terapeuta, conheça seu trabalho
-                e dê um primeiro passo em direção ao seu bem-estar. Cada presente
+                Escolha uma experi├¬ncia oferecida por um terapeuta, conhe├ºa seu trabalho
+                e d├¬ um primeiro passo em dire├º├úo ao seu bem-estar. Cada presente
                 possui apenas 3 vagas.
               </p>
             </div>
@@ -320,7 +291,7 @@ export default function HomePage() {
                   title={oferta.title}
                   description={
                     oferta.description?.trim() ||
-                    "Receba este presente, conheça o trabalho do terapeuta e dê o primeiro passo em sua jornada de cuidado."
+                    "Receba este presente, conhe├ºa o trabalho do terapeuta e d├¬ o primeiro passo em sua jornada de cuidado."
                   }
                   slots={oferta.remaining_slots}
                   duration={oferta.display_duration}
@@ -339,27 +310,27 @@ export default function HomePage() {
               </div>
 
               <p className="mt-5 text-sm font-extrabold uppercase tracking-[0.15em] text-[#7740aa]">
-                Novos presentes em preparação
+                Novos presentes em prepara├º├úo
               </p>
 
               <h3 className="mt-3 text-[25px] font-black text-[#101d3b]">
-                Em breve, você encontrará novas Experiências Presente aqui.
+                Em breve, voc├¬ encontrar├í novas Experi├¬ncias Presente aqui.
               </h3>
 
               <p className="mx-auto mt-3 max-w-3xl text-sm font-medium leading-7 text-[#5c667b]">
-                As Experiências Presente terão apenas 3 vagas, prazo de validade
-                e formatos como encontros de até 10 minutos ou entregas por e-mail.
+                As Experi├¬ncias Presente ter├úo apenas 3 vagas, prazo de validade
+                e formatos como encontros de at├® 10 minutos ou entregas por e-mail.
               </p>
             </div>
           )}
 
           <div className="mt-8 rounded-[24px] border border-[#e4d4ef] bg-white p-6 text-center shadow-[0_14px_35px_rgba(68,42,103,0.08)] sm:p-8">
             <p className="text-sm font-extrabold uppercase tracking-[0.15em] text-[#7740aa]">
-              Presentes com critérios claros
+              Presentes com crit├®rios claros
             </p>
 
             <h3 className="mt-3 text-[25px] font-black text-[#101d3b]">
-              Experiências Presente de até 10 minutos ou entregas personalizadas
+              Experi├¬ncias Presente de at├® 10 minutos ou entregas personalizadas
               por e-mail.
             </h3>
 
@@ -380,7 +351,7 @@ export default function HomePage() {
             </p>
 
             <h2 className="mt-3 text-[31px] font-black tracking-[-0.03em] text-[#111e3c]">
-              Como o AuraMeets pode ajudar você?
+              Como o AuraMeets pode ajudar voc├¬?
             </h2>
           </div>
 
@@ -408,8 +379,8 @@ export default function HomePage() {
             <AccessCard
               id="empresas"
               title="Sou Empresa"
-              description="Quero cuidar da saúde emocional da minha equipe."
-              buttonText="Soluções para Empresas"
+              description="Quero cuidar da sa├║de emocional da minha equipe."
+              buttonText="Solu├º├Áes para Empresas"
               href="/empresas"
               tone="blue"
               icon={<BriefcaseIcon className="h-9 w-9" />}
@@ -418,7 +389,7 @@ export default function HomePage() {
             <AccessCard
               id="acolhimento"
               title="Preciso de Acolhimento"
-              description="Quero conversar com um terapeuta voluntário agora."
+              description="Quero conversar com um terapeuta volunt├írio agora."
               buttonText="Receber Acolhimento"
               href="/acolhimento"
               tone="green"
@@ -446,29 +417,29 @@ export default function HomePage() {
           <div className="mt-12 grid gap-9 md:grid-cols-2 xl:grid-cols-4">
             <Step
               number="1"
-              title="Conte o que está vivendo"
-              description="Fale sobre o que você sente e do que precisa neste momento."
+              title="Conte o que est├í vivendo"
+              description="Fale sobre o que voc├¬ sente e do que precisa neste momento."
               icon={<MessageIcon className="h-10 w-10" />}
             />
 
             <Step
               number="2"
-              title="Receba uma reflexão"
-              description="Nossa jornada oferece uma orientação inicial personalizada."
+              title="Receba uma reflex├úo"
+              description="Nossa jornada oferece uma orienta├º├úo inicial personalizada."
               icon={<BrainIcon className="h-10 w-10" />}
             />
 
             <Step
               number="3"
-              title="Conheça terapeutas compatíveis"
-              description="Encontre profissionais alinhados às suas necessidades."
+              title="Conhe├ºa terapeutas compat├¡veis"
+              description="Encontre profissionais alinhados ├ás suas necessidades."
               icon={<PeopleIcon className="h-10 w-10" />}
             />
 
             <Step
               number="4"
               title="Agende seu atendimento"
-              description="Escolha o melhor horário e comece sua jornada de transformação."
+              description="Escolha o melhor hor├írio e comece sua jornada de transforma├º├úo."
               icon={<CalendarIcon className="h-10 w-10" />}
             />
           </div>
@@ -488,8 +459,8 @@ export default function HomePage() {
                 </h3>
 
                 <p className="mt-2 text-[14px] font-medium leading-6 text-[#172542]">
-                  Se você está passando por um momento difícil, converse agora
-                  com um terapeuta voluntário.
+                  Se voc├¬ est├í passando por um momento dif├¡cil, converse agora
+                  com um terapeuta volunt├írio.
                 </p>
               </div>
             </div>
@@ -497,13 +468,13 @@ export default function HomePage() {
             <Feature
               icon={<ShieldIcon className="h-7 w-7" />}
               title="Sigilo total"
-              description="Tudo é confidencial e seguro."
+              description="Tudo ├® confidencial e seguro."
             />
 
             <Feature
               icon={<BadgeIcon className="h-7 w-7" />}
-              title="Terapeutas voluntários"
-              description="Escuta acolhedora para você."
+              title="Terapeutas volunt├írios"
+              description="Escuta acolhedora para voc├¬."
             />
 
             <div className="flex flex-col justify-center border-t border-[#eadff1] p-7 lg:border-l lg:border-t-0">
@@ -511,10 +482,10 @@ export default function HomePage() {
                 <CalendarIcon className="mt-0.5 h-7 w-7 shrink-0 text-[#7541ad]" />
 
                 <div>
-                  <p className="font-black text-[#172542]">Disponível online</p>
+                  <p className="font-black text-[#172542]">Dispon├¡vel online</p>
 
                   <p className="mt-1 text-sm leading-5 text-[#4d5870]">
-                    Quando você mais precisar.
+                    Quando voc├¬ mais precisar.
                   </p>
                 </div>
               </div>
@@ -529,7 +500,7 @@ export default function HomePage() {
 
               <p className="mt-3 flex items-center justify-center gap-2 text-[11px] text-[#697188]">
                 <LockIcon className="h-3.5 w-3.5" />
-                Serviço solidário do AuraMeets
+                Servi├ºo solid├írio do AuraMeets
               </p>
             </div>
           </div>
@@ -545,12 +516,12 @@ export default function HomePage() {
             </p>
 
             <h2 className="mt-4 text-[34px] font-black leading-tight tracking-[-0.035em] sm:text-[42px]">
-              Apresente seu trabalho e crie experiências que aproximam novos
+              Apresente seu trabalho e crie experi├¬ncias que aproximam novos
               clientes.
             </h2>
 
             <p className="mt-5 text-[16px] font-medium leading-8 text-[#b9c2d5]">
-              Publique seu perfil, receba solicitações e crie Experiências Presente
+              Publique seu perfil, receba solicita├º├Áes e crie Experi├¬ncias Presente
               para apresentar seu trabalho a novos clientes.
             </p>
           </div>
@@ -565,7 +536,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* RODAPÉ */}
+      {/* RODAP├ë */}
       <footer className="border-t border-[#eee7f2] bg-[#fbf9fc] px-5 py-8 sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-[1560px] flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
           <div className="flex items-center gap-2">
@@ -578,7 +549,7 @@ export default function HomePage() {
           </div>
 
           <p className="text-sm text-[#687188]">
-            © {new Date().getFullYear()} AuraMeets. Cuidado, conexão e
+            ┬® {new Date().getFullYear()} AuraMeets. Cuidado, conex├úo e
             acolhimento.
           </p>
         </div>
@@ -592,7 +563,7 @@ function HeroTrustItem({ text }: { text: string }) {
   return (
     <div className="flex items-center gap-2">
       <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/30 bg-white/15 text-[11px] text-white">
-        ✓
+        Ô£ô
       </span>
       <span>{text}</span>
     </div>
@@ -622,7 +593,7 @@ function OfferCard({
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={`Imagem da experiência ${title}`}
+            alt={`Imagem da experi├¬ncia ${title}`}
             loading="lazy"
             decoding="async"
             className="absolute inset-0 h-full w-full object-cover object-[center_22%] transition-transform duration-[1400ms] ease-out motion-safe:group-hover:scale-[1.055] motion-safe:group-hover:-translate-y-1"
