@@ -249,42 +249,27 @@ export default function HomePage() {
       </header>
 
        {/* ENTRADA PRINCIPAL */}
-      <section className="relative min-h-[640px] overflow-hidden bg-[#24122f] sm:min-h-[720px] lg:min-h-[760px]">
-        <img
-          src="/hero-aura-maos-limpa.png"
-          alt="AuraMeets — duas mãos se aproximando"
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
+<section className="relative min-h-[640px] overflow-hidden bg-[#24122f] sm:min-h-[720px] lg:min-h-[760px]">
+  <img
+    src="/hero-aura-maos-limpa.png"
+    alt="AuraMeets — duas mãos se aproximando"
+    className="absolute inset-0 h-full w-full object-cover object-center"
+  />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1c1027]/60 via-transparent to-[#2b1736]/5" />
+  <div className="absolute inset-0 bg-gradient-to-t from-[#1c1027]/60 via-transparent to-[#2b1736]/5" />
 
-        <div className="relative z-20 mx-auto flex min-h-[640px] max-w-[1560px] items-end justify-center px-5 pb-10 pt-8 sm:min-h-[720px] sm:px-8 sm:pb-14 lg:min-h-[760px] lg:px-12 lg:pb-16">
-          <div className="grid w-full max-w-[920px] gap-3 sm:gap-4 md:grid-cols-3">
+  {/* LOGO CENTRALIZADA */}
+  <div className="absolute left-1/2 top-8 z-20 -translate-x-1/2 sm:top-10">
+    <div className="flex flex-col items-center">
+      <AuraLogo className="h-16 w-16 sm:h-20 sm:w-20" />
 
-            <Link
-              href="/quero-ser-acolhido"
-              className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/70 bg-gradient-to-r from-[#a855b5] via-[#8244a9] to-[#5a287d] px-5 text-center text-[14px] font-black uppercase tracking-[0.04em] text-white shadow-[0_12px_30px_rgba(63,25,82,0.32)] transition hover:-translate-y-0.5 hover:brightness-110 sm:min-h-[64px] sm:text-[15px]"
-            >
-              Sou Visitante
-            </Link>
-
-            <Link
-              href="/login"
-              className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/70 bg-gradient-to-r from-[#a855b5] via-[#8244a9] to-[#5a287d] px-5 text-center text-[14px] font-black uppercase tracking-[0.04em] text-white shadow-[0_12px_30px_rgba(63,25,82,0.32)] transition hover:-translate-y-0.5 hover:brightness-110 sm:min-h-[64px] sm:text-[15px]"
-            >
-              Sou Cadastrado
-            </Link>
-
-            <Link
-              href="/login"
-              className="inline-flex min-h-[58px] items-center justify-center rounded-2xl border border-white/70 bg-gradient-to-r from-[#a855b5] via-[#8244a9] to-[#5a287d] px-5 text-center text-[14px] font-black uppercase tracking-[0.04em] text-white shadow-[0_12px_30px_rgba(63,25,82,0.32)] transition hover:-translate-y-0.5 hover:brightness-110 sm:min-h-[64px] sm:text-[15px]"
-            >
-              Sou Terapeuta
-            </Link>
-
-          </div>
-        </div>
-      </section>
+      <div className="mt-1 whitespace-nowrap text-[34px] font-extrabold tracking-[-0.05em] sm:text-[46px]">
+        <span className="text-[#7342ad]">Aura</span>
+        <span className="text-[#101d3b]">Meets</span>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* EXPERIÊNCIAS PRESENTE */}
       <section
