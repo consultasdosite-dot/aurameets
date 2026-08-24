@@ -28,13 +28,40 @@ import SolicitacoesList, {
 
 import type { TherapistProfile } from "./types";
 
-type NotificacaoCompra = {
-  id: string;
-  title: string;
-  message: string;
-  is_read: boolean;
-  created_at: string;
+type Venda = {
+  id: number;
+  created_at: string | null;
+  client_id: number | null;
+  service_id: string | null;
+  amount: number | string | null;
+  commission: number | string | null;
+  status: string | null;
+  stripe_session_id: string | null;
+  client_name: string | null;
+  client_email: string | null;
+  client_phone: string | null;
+  service_name: string | null;
 };
+
+function formatarDinheiro(valor: number | string | null) {
+  const numero = Number(valor ?? 0);
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(numero) ? numero : 0);
+}
+
+function formatarDataHora(valor?: string | null) {
+  if (!valor) return "—";
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return "—";
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(data);
+}
 
 
 function formatarHorario(horario?: string | null) {
@@ -83,10 +110,8 @@ export default function DashboardTerapeutaPage() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  const [notificacoesCompra, setNotificacoesCompra] =
-    useState<NotificacaoCompra[]>([]);
-
-  const [carregandoNotificacoes, setCarregandoNotificacoes] =
+  const [vendas, setVendas] = useState<Venda[]>([]);
+  const [carregandoVendas, setCarregandoVendas] =
     useState(false);
 
 
@@ -194,47 +219,111 @@ export default function DashboardTerapeutaPage() {
   }, [router]);
 
 
-  const carregarNotificacoesCompra =
+  const carregarVendas =
     useCallback(async () => {
-      if (!profile?.id) {
-        setNotificacoesCompra([]);
+      if (therapistId === null) {
+        setVendas([]);
         return;
       }
 
-      setCarregandoNotificacoes(true);
+      setCarregandoVendas(true);
 
-      const { data, error } = await supabase
-        .from("notifications")
-        .select(
-          `
-            id,
-            title,
-            message,
-            is_read,
-            created_at
-          `,
-        )
-        .eq("recipient_profile_id", profile.id)
-        .eq("recipient_type", "therapist")
-        .eq("notification_type", "nova_compra")
-        .order("created_at", { ascending: false })
-        .limit(10);
+      const { data: pagamentos, error: pagamentosError } =
+        await supabase
+          .from("payments")
+          .select(
+            `
+              id,
+              created_at,
+              client_id,
+              service_id,
+              amount,
+              commission,
+              status,
+              stripe_session_id
+            `,
+          )
+          .eq("therapist_id", therapistId)
+          .eq("status", "paid")
+          .order("created_at", { ascending: false })
+          .limit(50);
 
-      if (error) {
-        console.error(
-          "Erro ao carregar notificações de compra:",
-          error,
-        );
-        setNotificacoesCompra([]);
-        setCarregandoNotificacoes(false);
+      if (pagamentosError) {
+        console.error("Erro ao carregar vendas:", pagamentosError);
+        setVendas([]);
+        setCarregandoVendas(false);
         return;
       }
 
-      setNotificacoesCompra(
-        (data ?? []) as NotificacaoCompra[],
+      const lista = pagamentos ?? [];
+      const clientIds = Array.from(
+        new Set(
+          lista
+            .map((item) => item.client_id)
+            .filter((id): id is number => typeof id === "number"),
+        ),
       );
-      setCarregandoNotificacoes(false);
-    }, [profile?.id]);
+
+      const serviceIds = Array.from(
+        new Set(
+          lista
+            .map((item) => item.service_id)
+            .filter(
+              (id): id is string =>
+                typeof id === "string" && id.length > 0,
+            ),
+        ),
+      );
+
+      const clientesPorId = new Map<number, any>();
+      const servicosPorId = new Map<string, any>();
+
+      if (clientIds.length > 0) {
+        const { data: clientes } = await supabase
+          .from("clients")
+          .select("id, name, email, phone")
+          .in("id", clientIds);
+
+        (clientes ?? []).forEach((cliente) => {
+          clientesPorId.set(cliente.id, cliente);
+        });
+      }
+
+      if (serviceIds.length > 0) {
+        const { data: servicos } = await supabase
+          .from("services")
+          .select("id, name")
+          .in("id", serviceIds);
+
+        (servicos ?? []).forEach((servico) => {
+          servicosPorId.set(servico.id, servico);
+        });
+      }
+
+      setVendas(
+        lista.map((pagamento) => {
+          const cliente =
+            typeof pagamento.client_id === "number"
+              ? clientesPorId.get(pagamento.client_id)
+              : null;
+
+          const servico =
+            typeof pagamento.service_id === "string"
+              ? servicosPorId.get(pagamento.service_id)
+              : null;
+
+          return {
+            ...pagamento,
+            client_name: cliente?.name ?? null,
+            client_email: cliente?.email ?? null,
+            client_phone: cliente?.phone ?? null,
+            service_name: servico?.name ?? null,
+          } as Venda;
+        }),
+      );
+
+      setCarregandoVendas(false);
+    }, [therapistId]);
 
   const carregarSolicitacoes =
     useCallback(async () => {
@@ -278,13 +367,10 @@ export default function DashboardTerapeutaPage() {
   }, [carregarSolicitacoes, therapistId]);
 
   useEffect(() => {
-    if (profile?.id) {
-      void carregarNotificacoesCompra();
+    if (therapistId !== null) {
+      void carregarVendas();
     }
-  }, [
-    carregarNotificacoesCompra,
-    profile?.id,
-  ]);
+  }, [carregarVendas, therapistId]);
 
   async function aceitarSolicitacao(
     solicitacaoRecebida: SolicitacaoAtendimento,
@@ -654,76 +740,121 @@ export default function DashboardTerapeutaPage() {
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-600">
                       Vendas
                     </p>
-
                     <h2 className="mt-2 text-xl font-bold text-slate-950">
-                      Novas compras recebidas
+                      Compras confirmadas
                     </h2>
-
                     <p className="mt-1 text-sm leading-6 text-slate-600">
-                      Aqui aparecem as compras confirmadas dos seus produtos e serviços.
+                      Aqui aparecem somente as vendas pagas dos seus produtos e serviços.
                     </p>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() =>
-                      void carregarNotificacoesCompra()
-                    }
-                    disabled={carregandoNotificacoes}
+                    onClick={() => void carregarVendas()}
+                    disabled={carregandoVendas}
                     className="min-h-11 w-full rounded-xl border border-purple-200 bg-white px-5 py-2.5 text-sm font-semibold text-purple-700 transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
                   >
-                    {carregandoNotificacoes
-                      ? "Atualizando..."
-                      : "Atualizar compras"}
+                    {carregandoVendas ? "Atualizando..." : "Atualizar vendas"}
                   </button>
                 </div>
 
-                <div className="mt-5 space-y-3">
-                  {carregandoNotificacoes &&
-                  notificacoesCompra.length === 0 ? (
+                <div className="mt-5 space-y-4">
+                  {carregandoVendas && vendas.length === 0 ? (
                     <p className="text-sm font-medium text-slate-500">
-                      Carregando compras...
+                      Carregando vendas...
                     </p>
-                  ) : notificacoesCompra.length === 0 ? (
+                  ) : vendas.length === 0 ? (
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
                       <p className="text-sm font-semibold text-slate-700">
-                        Nenhuma compra confirmada até o momento.
+                        Nenhuma venda paga até o momento.
                       </p>
                     </div>
                   ) : (
-                    notificacoesCompra.map((notificacao) => (
-                      <article
-                        key={notificacao.id}
-                        className="rounded-2xl border border-purple-100 bg-purple-50/60 p-5"
-                      >
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                          <h3 className="font-bold text-slate-950">
-                            {notificacao.title}
-                          </h3>
+                    vendas.map((venda) => {
+                      const valor = Number(venda.amount ?? 0);
+                      const comissao = Number(venda.commission ?? 0);
+                      const liquido = Math.max(
+                        (Number.isFinite(valor) ? valor : 0) -
+                          (Number.isFinite(comissao) ? comissao : 0),
+                        0,
+                      );
 
-                          {!notificacao.is_read && (
-                            <span className="w-fit rounded-full bg-purple-700 px-3 py-1 text-xs font-bold text-white">
-                              NOVA
+                      return (
+                        <article
+                          key={venda.id}
+                          className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5"
+                        >
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-700">
+                                Venda #{venda.id}
+                              </p>
+                              <h3 className="mt-1 text-lg font-bold text-slate-950">
+                                {venda.service_name ?? "Produto/serviço AuraMeets"}
+                              </h3>
+                            </div>
+
+                            <span className="w-fit rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">
+                              PAGO
                             </span>
-                          )}
-                        </div>
+                          </div>
 
-                        <p className="mt-3 whitespace-pre-line text-sm font-medium leading-7 text-slate-700">
-                          {notificacao.message}
-                        </p>
+                          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                                Comprador
+                              </p>
+                              <p className="mt-1 font-semibold text-slate-900">
+                                {venda.client_name ?? "Não identificado"}
+                              </p>
+                              {venda.client_email && (
+                                <p className="mt-1 text-sm text-slate-600">
+                                  {venda.client_email}
+                                </p>
+                              )}
+                              {venda.client_phone && (
+                                <p className="mt-1 text-sm text-slate-600">
+                                  {venda.client_phone}
+                                </p>
+                              )}
+                            </div>
 
-                        <p className="mt-3 text-xs font-semibold text-slate-500">
-                          {new Intl.DateTimeFormat("pt-BR", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          }).format(
-                            new Date(
-                              notificacao.created_at,
-                            ),
-                          )}
-                        </p>
-                      </article>
-                    ))
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                                Valor da venda
+                              </p>
+                              <p className="mt-1 text-lg font-black text-slate-950">
+                                {formatarDinheiro(venda.amount)}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                                Comissão AuraMeets
+                              </p>
+                              <p className="mt-1 text-lg font-black text-amber-700">
+                                {formatarDinheiro(venda.commission)}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                                Líquido do terapeuta
+                              </p>
+                              <p className="mt-1 text-lg font-black text-emerald-700">
+                                {formatarDinheiro(liquido)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 border-t border-emerald-200 pt-4">
+                            <p className="text-xs font-semibold text-slate-500">
+                              Compra confirmada em {formatarDataHora(venda.created_at)}
+                            </p>
+                          </div>
+                        </article>
+                      );
+                    })
                   )}
                 </div>
               </section>
