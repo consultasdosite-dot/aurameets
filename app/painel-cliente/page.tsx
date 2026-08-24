@@ -21,6 +21,21 @@ type StatusConfig = {
   classe: string;
 };
 
+
+type Pedido = {
+  id: number;
+  created_at: string | null;
+  therapist_id: number | null;
+  client_id: number | null;
+  service_id: string | null;
+  amount: number | string | null;
+  commission: number | string | null;
+  status: string | null;
+  stripe_session_id: string | null;
+  service_name: string | null;
+  therapist_name: string | null;
+};
+
 const statusConfig: Record<AppointmentStatus, StatusConfig> = {
   pending: {
     titulo: "Aguardando terapeuta",
@@ -132,6 +147,32 @@ function formatarPreco(valor: number | null): string {
   });
 }
 
+
+function formatarValorPedido(
+  valor: number | string | null,
+): string {
+  const numero = Number(valor ?? 0);
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(numero) ? numero : 0);
+}
+
+function formatarDataCompra(
+  valor: string | null,
+): string {
+  if (!valor) return "Data não informada";
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return "Data não informada";
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(data);
+}
+
 function obterDataAtendimento(
   atendimento: Appointment,
 ): string | null {
@@ -174,8 +215,12 @@ export default function PainelClientePage() {
   const [erro, setErro] = useState<string | null>(null);
   const [nomeCliente, setNomeCliente] = useState("Visitante");
 
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [carregandoPedidos, setCarregandoPedidos] = useState(true);
+
   const carregarAtendimentos = useCallback(async () => {
     setCarregando(true);
+    setCarregandoPedidos(true);
     setErro(null);
 
     try {
@@ -203,22 +248,147 @@ export default function PainelClientePage() {
 
       setNomeCliente(nomeDaConta);
 
-      const clientId = await getClientIdByProfileId(
-        session.user.id,
+      const clientIds = new Set<number>();
+
+      try {
+        const clientId = await getClientIdByProfileId(session.user.id);
+
+        if (clientId) {
+          clientIds.add(clientId);
+          const dados = await getAppointmentsByClientId(clientId);
+          setAtendimentos(dados);
+        } else {
+          setAtendimentos([]);
+        }
+      } catch (erroCliente) {
+        console.warn(
+          "Cliente sem vínculo direto por profile_id:",
+          erroCliente,
+        );
+        setAtendimentos([]);
+      }
+
+      const emailConta = session.user.email?.trim().toLowerCase();
+
+      if (emailConta) {
+        const { data: clientesPorEmail, error: clientesPorEmailError } =
+          await supabase
+            .from("clients")
+            .select("id")
+            .ilike("email", emailConta);
+
+        if (clientesPorEmailError) {
+          console.error(
+            "Erro ao localizar compras pelo e-mail:",
+            clientesPorEmailError,
+          );
+        } else {
+          (clientesPorEmail ?? []).forEach((cliente) => {
+            if (typeof cliente.id === "number") clientIds.add(cliente.id);
+          });
+        }
+      }
+
+      const ids = Array.from(clientIds);
+      if (ids.length === 0) {
+        setPedidos([]);
+        return;
+      }
+
+      const { data: pagamentos, error: pagamentosError } = await supabase
+        .from("payments")
+        .select(`
+          id,
+          created_at,
+          therapist_id,
+          client_id,
+          service_id,
+          amount,
+          commission,
+          status,
+          stripe_session_id
+        `)
+        .in("client_id", ids)
+        .eq("status", "paid")
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (pagamentosError) {
+        throw new Error(
+          `Não foi possível carregar seus pedidos: ${pagamentosError.message}`,
+        );
+      }
+
+      const listaPagamentos = pagamentos ?? [];
+      const therapistIds = Array.from(
+        new Set(
+          listaPagamentos
+            .map((item) => item.therapist_id)
+            .filter((id): id is number => typeof id === "number"),
+        ),
+      );
+      const serviceIds = Array.from(
+        new Set(
+          listaPagamentos
+            .map((item) => item.service_id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0),
+        ),
       );
 
-      const dados = await getAppointmentsByClientId(clientId);
+      const terapeutasPorId = new Map<number, string | null>();
+      const servicosPorId = new Map<string, string | null>();
 
-      setAtendimentos(dados);
+      if (therapistIds.length > 0) {
+        const { data: terapeutas, error: terapeutasError } = await supabase
+          .from("therapists")
+          .select("id, name")
+          .in("id", therapistIds);
+
+        if (terapeutasError) {
+          console.error("Erro ao carregar terapeutas dos pedidos:", terapeutasError);
+        } else {
+          (terapeutas ?? []).forEach((terapeuta) => {
+            terapeutasPorId.set(terapeuta.id, terapeuta.name);
+          });
+        }
+      }
+
+      if (serviceIds.length > 0) {
+        const { data: servicos, error: servicosError } = await supabase
+          .from("services")
+          .select("id, name")
+          .in("id", serviceIds);
+
+        if (servicosError) {
+          console.error("Erro ao carregar produtos dos pedidos:", servicosError);
+        } else {
+          (servicos ?? []).forEach((servico) => {
+            servicosPorId.set(servico.id, servico.name);
+          });
+        }
+      }
+
+      setPedidos(
+        listaPagamentos.map((pagamento) => ({
+          ...pagamento,
+          service_name: pagamento.service_id
+            ? servicosPorId.get(pagamento.service_id) ?? null
+            : null,
+          therapist_name: pagamento.therapist_id
+            ? terapeutasPorId.get(pagamento.therapist_id) ?? null
+            : null,
+        })) as Pedido[],
+      );
     } catch (erroDesconhecido) {
       setErro(
         obterMensagemErro(
           erroDesconhecido,
-          "Não foi possível carregar seus atendimentos.",
+          "Não foi possível carregar seu espaço.",
         ),
       );
     } finally {
       setCarregando(false);
+      setCarregandoPedidos(false);
     }
   }, [router]);
 
@@ -497,6 +667,112 @@ export default function PainelClientePage() {
               </p>
             </article>
           </div>
+
+          <section className="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-violet-700">
+                  Meus pedidos
+                </p>
+                <h2 className="mt-1 text-2xl font-bold text-slate-900">
+                  Compras confirmadas
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                  Aqui aparecem somente compras com pagamento confirmado vinculadas à sua conta ou ao mesmo e-mail utilizado na compra.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void carregarAtendimentos()}
+                disabled={carregandoPedidos}
+                className="min-h-11 rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {carregandoPedidos ? "Atualizando..." : "Atualizar pedidos"}
+              </button>
+            </div>
+
+            {carregandoPedidos ? (
+              <div className="flex min-h-40 items-center justify-center">
+                <div className="text-center">
+                  <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-violet-100 border-t-violet-600" />
+                  <p className="mt-4 text-sm font-semibold text-slate-600">
+                    Carregando pedidos...
+                  </p>
+                </div>
+              </div>
+            ) : pedidos.length === 0 ? (
+              <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center">
+                <h3 className="text-lg font-bold text-slate-900">
+                  Nenhuma compra confirmada encontrada
+                </h3>
+                <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
+                  Quando uma compra for aprovada, ela aparecerá aqui automaticamente.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-6 space-y-4">
+                {pedidos.map((pedido) => (
+                  <article
+                    key={pedido.id}
+                    className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                            Pedido #{pedido.id}
+                          </p>
+                          <span className="rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800">
+                            PAGO
+                          </span>
+                        </div>
+                        <h3 className="mt-3 text-xl font-bold text-slate-900">
+                          {pedido.service_name ?? "Produto ou serviço AuraMeets"}
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-600">
+                          Terapeuta: <span className="font-semibold text-slate-800">{pedido.therapist_name ?? "Terapeuta AuraMeets"}</span>
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 text-left lg:text-right">
+                        <p className="text-sm font-medium text-slate-500">Valor pago</p>
+                        <p className="mt-1 text-2xl font-black text-slate-950">
+                          {formatarValorPedido(pedido.amount)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid gap-4 border-t border-emerald-200 pt-5 sm:grid-cols-2 lg:grid-cols-3">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Data da compra</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-800">{formatarDataCompra(pedido.created_at)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Forma de pagamento</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-800">Cartão</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Situação</p>
+                        <p className="mt-1 text-sm font-semibold text-emerald-700">Pagamento confirmado</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                      <a
+                        href="https://wa.me/5551980339532"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-violet-200 bg-white px-5 py-2.5 text-sm font-bold text-violet-700 transition hover:bg-violet-50"
+                      >
+                        Preciso de ajuda com meu pagamento
+                      </a>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

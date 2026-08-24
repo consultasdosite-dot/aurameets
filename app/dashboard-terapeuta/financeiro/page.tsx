@@ -523,7 +523,11 @@ function FinanceiroTerapeutaContent() {
           setTherapistId(data.therapistId);
         }
 
-        setPayments(data.payments ?? []);
+        setPayments(
+          (data.payments ?? []).filter(
+            (payment) => payment.status === "paid",
+          ),
+        );
       } catch (error) {
         const message =
           error instanceof Error
@@ -1593,8 +1597,8 @@ function FinanceiroTerapeutaContent() {
                   "pt-BR",
                 )}{" "}
                 {payments.length === 1
-                  ? "pagamento"
-                  : "pagamentos"}
+                  ? "venda paga"
+                  : "vendas pagas"}
               </p>
             </div>
 

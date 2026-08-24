@@ -5,8 +5,8 @@ type HeroClienteProps = {
 export default function HeroCliente({ nome }: HeroClienteProps) {
   return (
     <section className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#047857] via-[#0F766E] to-[#115E59] text-white shadow-md">
-      <div className="grid min-h-[300px] lg:grid-cols-[1.35fr_0.65fr]">
-        <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-10">
+      <div className="grid min-h-[300px] lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="relative z-10 flex flex-col justify-center p-6 sm:p-8 lg:p-10">
           <p className="text-sm font-medium text-emerald-100">
             {nome ? `Bem-vindo, ${nome}` : "Bem-vindo ao AuraMeets"}
           </p>
@@ -21,22 +21,14 @@ export default function HeroCliente({ nome }: HeroClienteProps) {
           </p>
         </div>
 
-        <div className="relative hidden min-h-[300px] lg:block">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0F766E] via-[#115E59]/70 to-transparent" />
+        <div className="relative min-h-[220px] sm:min-h-[260px] lg:min-h-[300px]">
+          <img
+            src="/hero-aura-maos.png"
+            alt="AuraMeets — cuidado, conexão e acolhimento"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
 
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex h-44 w-44 items-center justify-center rounded-full border border-white/30 bg-white/10 shadow-lg backdrop-blur-sm">
-              <div className="px-5 text-center">
-                <p className="text-sm font-semibold text-white">
-                  Imagem AuraMeets
-                </p>
-
-                <p className="mt-2 text-xs leading-5 text-emerald-100">
-                  Foto das mãos será adicionada aqui
-                </p>
-              </div>
-            </div>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0F766E] via-[#0F766E]/35 to-transparent lg:from-[#0F766E]/80 lg:via-[#0F766E]/20" />
         </div>
       </div>
     </section>
