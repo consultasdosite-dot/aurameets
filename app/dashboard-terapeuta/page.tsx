@@ -28,6 +28,15 @@ import SolicitacoesList, {
 
 import type { TherapistProfile } from "./types";
 
+type NotificacaoCompra = {
+  id: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+};
+
+
 function formatarHorario(horario?: string | null) {
   if (!horario) {
     return "";
@@ -73,6 +82,13 @@ export default function DashboardTerapeutaPage() {
 
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+
+  const [notificacoesCompra, setNotificacoesCompra] =
+    useState<NotificacaoCompra[]>([]);
+
+  const [carregandoNotificacoes, setCarregandoNotificacoes] =
+    useState(false);
+
 
   const [
     solicitacaoEmAtualizacao,
@@ -178,6 +194,48 @@ export default function DashboardTerapeutaPage() {
   }, [router]);
 
 
+  const carregarNotificacoesCompra =
+    useCallback(async () => {
+      if (!profile?.id) {
+        setNotificacoesCompra([]);
+        return;
+      }
+
+      setCarregandoNotificacoes(true);
+
+      const { data, error } = await supabase
+        .from("notifications")
+        .select(
+          `
+            id,
+            title,
+            message,
+            is_read,
+            created_at
+          `,
+        )
+        .eq("recipient_profile_id", profile.id)
+        .eq("recipient_type", "therapist")
+        .eq("notification_type", "nova_compra")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error(
+          "Erro ao carregar notificações de compra:",
+          error,
+        );
+        setNotificacoesCompra([]);
+        setCarregandoNotificacoes(false);
+        return;
+      }
+
+      setNotificacoesCompra(
+        (data ?? []) as NotificacaoCompra[],
+      );
+      setCarregandoNotificacoes(false);
+    }, [profile?.id]);
+
   const carregarSolicitacoes =
     useCallback(async () => {
       if (therapistId === null) {
@@ -218,6 +276,15 @@ export default function DashboardTerapeutaPage() {
       void carregarSolicitacoes();
     }
   }, [carregarSolicitacoes, therapistId]);
+
+  useEffect(() => {
+    if (profile?.id) {
+      void carregarNotificacoesCompra();
+    }
+  }, [
+    carregarNotificacoesCompra,
+    profile?.id,
+  ]);
 
   async function aceitarSolicitacao(
     solicitacaoRecebida: SolicitacaoAtendimento,
@@ -580,6 +647,86 @@ export default function DashboardTerapeutaPage() {
                 totalPendentes={totalPendentes}
                 totalAceitas={totalAceitas}
               />
+
+              <section className="rounded-3xl border border-purple-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-600">
+                      Vendas
+                    </p>
+
+                    <h2 className="mt-2 text-xl font-bold text-slate-950">
+                      Novas compras recebidas
+                    </h2>
+
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      Aqui aparecem as compras confirmadas dos seus produtos e serviços.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void carregarNotificacoesCompra()
+                    }
+                    disabled={carregandoNotificacoes}
+                    className="min-h-11 w-full rounded-xl border border-purple-200 bg-white px-5 py-2.5 text-sm font-semibold text-purple-700 transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
+                  >
+                    {carregandoNotificacoes
+                      ? "Atualizando..."
+                      : "Atualizar compras"}
+                  </button>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {carregandoNotificacoes &&
+                  notificacoesCompra.length === 0 ? (
+                    <p className="text-sm font-medium text-slate-500">
+                      Carregando compras...
+                    </p>
+                  ) : notificacoesCompra.length === 0 ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+                      <p className="text-sm font-semibold text-slate-700">
+                        Nenhuma compra confirmada até o momento.
+                      </p>
+                    </div>
+                  ) : (
+                    notificacoesCompra.map((notificacao) => (
+                      <article
+                        key={notificacao.id}
+                        className="rounded-2xl border border-purple-100 bg-purple-50/60 p-5"
+                      >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <h3 className="font-bold text-slate-950">
+                            {notificacao.title}
+                          </h3>
+
+                          {!notificacao.is_read && (
+                            <span className="w-fit rounded-full bg-purple-700 px-3 py-1 text-xs font-bold text-white">
+                              NOVA
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-3 whitespace-pre-line text-sm font-medium leading-7 text-slate-700">
+                          {notificacao.message}
+                        </p>
+
+                        <p className="mt-3 text-xs font-semibold text-slate-500">
+                          {new Intl.DateTimeFormat("pt-BR", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          }).format(
+                            new Date(
+                              notificacao.created_at,
+                            ),
+                          )}
+                        </p>
+                      </article>
+                    ))
+                  )}
+                </div>
+              </section>
 
               <div className="grid gap-6">
                 <ApprovalCard status="em_analise" />

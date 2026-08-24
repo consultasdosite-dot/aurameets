@@ -32,6 +32,19 @@ function obterTextoMetadata(
   return normalized || null;
 }
 
+function formatarValorBRL(
+  amountTotal: number | null | undefined,
+): string {
+  const valor = (amountTotal ?? 0) / 100;
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(valor);
+}
+
 function ehAssinaturaTerapeuta(
   metadata: Stripe.Metadata | null | undefined,
 ) {
@@ -381,6 +394,214 @@ async function confirmarPagamentoAgendamento(
   );
 }
 
+
+async function criarNotificacaoCompraServico(
+  session: Stripe.Checkout.Session,
+  paymentId: number,
+  serviceId: string,
+) {
+  const {
+    data: service,
+    error: serviceError,
+  } = await supabaseAdmin
+    .from("services")
+    .select(
+      `
+        id,
+        name,
+        therapist_id
+      `,
+    )
+    .eq("id", serviceId)
+    .maybeSingle();
+
+  if (serviceError) {
+    throw new Error(
+      `Erro ao consultar serviço ${serviceId} para notificação: ${serviceError.message}`,
+    );
+  }
+
+  if (!service) {
+    throw new Error(
+      `Serviço ${serviceId} não encontrado para criar notificação da compra.`,
+    );
+  }
+
+  const recipientProfileId =
+    obterTextoMetadata(
+      session.metadata?.therapistProfileId,
+    ) ??
+    obterTextoMetadata(
+      String(service.therapist_id ?? ""),
+    );
+
+  if (!recipientProfileId) {
+    throw new Error(
+      `Compra ${paymentId} sem recipient_profile_id do terapeuta.`,
+    );
+  }
+
+  const clientId =
+    obterNumeroMetadata(
+      session.metadata?.clientId,
+    );
+
+  let buyerName =
+    obterTextoMetadata(
+      session.metadata?.buyerName,
+    );
+
+  let buyerEmail =
+    obterTextoMetadata(
+      session.metadata?.buyerEmail,
+    );
+
+  let buyerPhone =
+    obterTextoMetadata(
+      session.metadata?.buyerPhone,
+    );
+
+  if (
+    (!buyerName ||
+      !buyerEmail ||
+      !buyerPhone) &&
+    clientId
+  ) {
+    const {
+      data: client,
+      error: clientError,
+    } = await supabaseAdmin
+      .from("clients")
+      .select(
+        `
+          id,
+          name,
+          email,
+          phone
+        `,
+      )
+      .eq("id", clientId)
+      .maybeSingle();
+
+    if (clientError) {
+      throw new Error(
+        `Erro ao consultar cliente ${clientId} para notificação: ${clientError.message}`,
+      );
+    }
+
+    if (client) {
+      buyerName =
+        buyerName ??
+        obterTextoMetadata(
+          client.name ?? undefined,
+        );
+
+      buyerEmail =
+        buyerEmail ??
+        obterTextoMetadata(
+          client.email ?? undefined,
+        );
+
+      buyerPhone =
+        buyerPhone ??
+        obterTextoMetadata(
+          client.phone ?? undefined,
+        );
+    }
+  }
+
+  const serviceName =
+    obterTextoMetadata(
+      service.name ?? undefined,
+    ) ??
+    "Produto/serviço AuraMeets";
+
+  const valorPago =
+    formatarValorBRL(
+      session.amount_total,
+    );
+
+  const {
+    data: notificacaoExistente,
+    error: notificationLookupError,
+  } = await supabaseAdmin
+    .from("notifications")
+    .select("id")
+    .eq(
+      "recipient_profile_id",
+      recipientProfileId,
+    )
+    .eq(
+      "notification_type",
+      "nova_compra",
+    )
+    .eq(
+      "reference_id",
+      String(paymentId),
+    )
+    .maybeSingle();
+
+  if (notificationLookupError) {
+    throw new Error(
+      `Erro ao verificar notificação da compra ${paymentId}: ${notificationLookupError.message}`,
+    );
+  }
+
+  if (notificacaoExistente) {
+    console.log(
+      `Notificação da compra ${paymentId} já existe. Nenhuma duplicata criada.`,
+    );
+
+    return;
+  }
+
+  const mensagem = [
+    `Produto/serviço: ${serviceName}`,
+    `Comprador: ${buyerName ?? "Não informado"}`,
+    `WhatsApp: ${buyerPhone ?? "Não informado"}`,
+    `E-mail: ${buyerEmail ?? "Não informado"}`,
+    `Valor pago: ${valorPago}`,
+    "Status: PAGO",
+  ].join("\n");
+
+  const {
+    error: notificationError,
+  } = await supabaseAdmin
+    .from("notifications")
+    .insert({
+      recipient_profile_id:
+        recipientProfileId,
+
+      recipient_type:
+        "therapist",
+
+      title:
+        "Nova compra recebida",
+
+      message:
+        mensagem,
+
+      notification_type:
+        "nova_compra",
+
+      reference_id:
+        String(paymentId),
+
+      is_read:
+        false,
+    });
+
+  if (notificationError) {
+    throw new Error(
+      `Erro ao criar notificação da compra ${paymentId}: ${notificationError.message}`,
+    );
+  }
+
+  console.log(
+    `Notificação criada para o terapeuta ${recipientProfileId}. Compra ${paymentId}, serviço ${serviceId}.`,
+  );
+}
+
 /*
  * =========================================================
  * PAGAMENTO DIRETO DE SERVIÇO
@@ -468,6 +689,12 @@ async function confirmarPagamentoServico(
       `Erro ao confirmar compra direta ${paymentId}: ${paymentError.message}`,
     );
   }
+
+  await criarNotificacaoCompraServico(
+    session,
+    paymentId,
+    serviceId,
+  );
 
   console.log(
     `Compra direta confirmada. Pagamento ${paymentId}, serviço ${serviceId}.`,

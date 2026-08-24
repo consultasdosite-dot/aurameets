@@ -117,6 +117,15 @@ export default function HomePage() {
             <a href="#acolhimento" className="transition hover:text-[#7342ad]">
               Acolhimento
             </a>
+
+            <a
+              href="https://wa.me/5551980339532"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:text-[#7342ad]"
+            >
+              Fale com um atendente
+            </a>
           </nav>
 
           <div className="hidden items-center gap-4 lg:flex">
@@ -190,6 +199,16 @@ export default function HomePage() {
                 className="rounded-xl px-4 py-3 font-bold hover:bg-[#faf7fd]"
               >
                 Acolhimento
+              </a>
+
+              <a
+                href="https://wa.me/5551980339532"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={fecharMenu}
+                className="rounded-xl px-4 py-3 font-bold hover:bg-[#faf7fd]"
+              >
+                Fale com um atendente
               </a>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
