@@ -64,58 +64,57 @@ function normalizarIntakeFields(
     "number",
   ]);
 
-  return valor
-    .map((item) => {
-      if (
-        !item ||
-        typeof item !== "object"
-      ) {
-        return null;
-      }
+  const resultado: IntakeField[] = [];
 
-      const registro =
-        item as Record<string, unknown>;
+  for (const item of valor) {
+    if (
+      !item ||
+      typeof item !== "object"
+    ) {
+      continue;
+    }
 
-      const key =
-        typeof registro.key === "string"
-          ? registro.key.trim()
-          : "";
+    const registro =
+      item as Record<string, unknown>;
 
-      const label =
-        typeof registro.label === "string"
-          ? registro.label.trim()
-          : "";
+    const key =
+      typeof registro.key === "string"
+        ? registro.key.trim()
+        : "";
 
-      const tipoRecebido =
-        typeof registro.type === "string"
-          ? registro.type.trim()
-          : "text";
+    const label =
+      typeof registro.label === "string"
+        ? registro.label.trim()
+        : "";
 
-      const type =
-        tiposPermitidos.has(tipoRecebido)
-          ? (tipoRecebido as IntakeField["type"])
-          : "text";
+    if (!key || !label) {
+      continue;
+    }
 
-      if (!key || !label) {
-        return null;
-      }
+    const tipoRecebido =
+      typeof registro.type === "string"
+        ? registro.type.trim()
+        : "text";
 
-      return {
-        key,
-        label,
-        type,
-        required:
-          registro.required === true,
-        placeholder:
-          typeof registro.placeholder === "string"
-            ? registro.placeholder.trim()
-            : null,
-      } satisfies IntakeField;
-    })
-    .filter(
-      (item): item is IntakeField =>
-        item !== null,
-    );
+    const type: IntakeField["type"] =
+      tiposPermitidos.has(tipoRecebido)
+        ? (tipoRecebido as IntakeField["type"])
+        : "text";
+
+    resultado.push({
+      key,
+      label,
+      type,
+      required:
+        registro.required === true,
+      placeholder:
+        typeof registro.placeholder === "string"
+          ? registro.placeholder.trim()
+          : null,
+    });
+  }
+
+  return resultado;
 }
 
 export async function GET(request: NextRequest) {
@@ -159,12 +158,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    /*
-     * =========================================================
-     * VALIDA A SESSÃO DIRETAMENTE NA STRIPE
-     * =========================================================
-     */
-
     let stripeSession;
 
     try {
@@ -207,12 +200,6 @@ export async function GET(request: NextRequest) {
         },
       );
     }
-
-    /*
-     * =========================================================
-     * BUSCA O PAGAMENTO
-     * =========================================================
-     */
 
     const {
       data: paymentData,
@@ -270,12 +257,6 @@ export async function GET(request: NextRequest) {
     const payment =
       paymentData as PaymentRow;
 
-    /*
-     * =========================================================
-     * CONFIRMA PAGAMENTO
-     * =========================================================
-     */
-
     const pagamentoConfirmado =
       stripeSession.payment_status ===
         "paid";
@@ -291,11 +272,6 @@ export async function GET(request: NextRequest) {
         },
       );
     }
-
-    /*
-     * SINCRONIZA O STATUS CASO O WEBHOOK
-     * AINDA NÃO TENHA TERMINADO
-     */
 
     if (payment.status !== "paid") {
       const {
@@ -318,15 +294,6 @@ export async function GET(request: NextRequest) {
         );
       }
     }
-
-    /*
-     * =========================================================
-     * PRODUTO / SERVIÇO
-     *
-     * Cada um dos serviços pode possuir suas próprias
-     * perguntas em intake_fields.
-     * =========================================================
-     */
 
     let produto =
       "Produto ou serviço AuraMeets";
@@ -384,12 +351,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    /*
-     * =========================================================
-     * TERAPEUTA RESPONSÁVEL
-     * =========================================================
-     */
-
     let terapeuta =
       "Terapeuta AuraMeets";
 
@@ -423,12 +384,6 @@ export async function GET(request: NextRequest) {
           therapistData.name;
       }
     }
-
-    /*
-     * =========================================================
-     * COMPRADOR
-     * =========================================================
-     */
 
     let comprador =
       stripeSession.customer_details
@@ -492,13 +447,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    /*
-     * =========================================================
-     * VERIFICA SE OS DADOS COMPLEMENTARES
-     * JÁ FORAM ENVIADOS
-     * =========================================================
-     */
-
     let dadosComplementaresEnviados =
       false;
 
@@ -531,12 +479,6 @@ export async function GET(request: NextRequest) {
       dadosComplementaresEnviados =
         true;
     }
-
-    /*
-     * =========================================================
-     * RESPOSTA
-     * =========================================================
-     */
 
     return NextResponse.json(
       {
