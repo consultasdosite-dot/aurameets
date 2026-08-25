@@ -456,6 +456,13 @@ reviewed_by: user?.id || null,
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row xl:justify-end">
+              <Link
+                href={`/admin/terapeutas/${terapeuta.id}/financeiro`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-300/30 bg-amber-300/10 px-5 py-3 text-sm font-bold text-amber-300 transition hover:bg-amber-300 hover:text-slate-950"
+              >
+                Ver financeiro
+              </Link>
+
               {terapeuta.slug && (
                 <Link
                   href={`/terapeutas/${terapeuta.slug}`}

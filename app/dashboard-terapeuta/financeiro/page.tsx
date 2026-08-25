@@ -59,6 +59,24 @@ type StripeFinanceResponse = {
   details?: string;
 };
 
+type PurchaseIntakeResponse = {
+  id: string;
+  paymentId: number;
+  serviceId: string | null;
+  buyerName: string | null;
+  buyerEmail: string | null;
+  buyerPhone: string | null;
+  responses: Record<string, string>;
+  status: string;
+  submittedAt: string | null;
+};
+
+type PurchaseIntakeApiResponse = {
+  responses?: PurchaseIntakeResponse[];
+  error?: string;
+  details?: string;
+};
+
 type PixSettings = {
   pixEnabled: boolean;
   pixKeyType: string;
@@ -229,6 +247,12 @@ function FinanceiroTerapeutaContent() {
   const [loadingPayments, setLoadingPayments] =
     useState(true);
   const [paymentsError, setPaymentsError] =
+    useState("");
+  const [purchaseIntakes, setPurchaseIntakes] =
+    useState<PurchaseIntakeResponse[]>([]);
+  const [loadingPurchaseIntakes, setLoadingPurchaseIntakes] =
+    useState(true);
+  const [purchaseIntakesError, setPurchaseIntakesError] =
     useState("");
   const [
     deletingStripePaymentId,
@@ -541,6 +565,53 @@ function FinanceiroTerapeutaContent() {
       }
     }, [getAccessToken]);
 
+  const carregarDadosCompradores =
+    useCallback(async () => {
+      try {
+        setLoadingPurchaseIntakes(true);
+        setPurchaseIntakesError("");
+
+        const accessToken =
+          await getAccessToken();
+
+        const response = await fetch(
+          "/api/stripe/financeiro/dados-compradores",
+          {
+            method: "GET",
+            headers: {
+              Authorization:
+                `Bearer ${accessToken}`,
+            },
+          },
+        );
+
+        const data =
+          (await response.json()) as PurchaseIntakeApiResponse;
+
+        if (!response.ok) {
+          throw new Error(
+            data.details ||
+              data.error ||
+              "Não foi possível carregar os dados enviados pelos compradores.",
+          );
+        }
+
+        setPurchaseIntakes(
+          data.responses ?? [],
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Erro ao carregar dados dos compradores.";
+
+        setPurchaseIntakes([]);
+        setPurchaseIntakesError(message);
+      } finally {
+        setLoadingPurchaseIntakes(false);
+      }
+    }, [getAccessToken]);
+
   const carregarPix =
     useCallback(async () => {
       try {
@@ -725,11 +796,13 @@ function FinanceiroTerapeutaContent() {
     void carregarPix();
     void consultarStatusStripe();
     void carregarPagamentos();
+    void carregarDadosCompradores();
     void carregarRecebimentosExternos();
   }, [
     carregarPix,
     consultarStatusStripe,
     carregarPagamentos,
+    carregarDadosCompradores,
     carregarRecebimentosExternos,
   ]);
 
@@ -1044,6 +1117,16 @@ function FinanceiroTerapeutaContent() {
       ),
     [payments],
   );
+
+  const purchaseIntakesByPaymentId =
+    useMemo(() => {
+      return new Map(
+        purchaseIntakes.map((item) => [
+          item.paymentId,
+          item,
+        ]),
+      );
+    }, [purchaseIntakes]);
 
   const totals = useMemo(() => {
     const now = new Date();
@@ -1604,9 +1687,10 @@ function FinanceiroTerapeutaContent() {
 
             <button
               type="button"
-              onClick={() =>
-                void carregarPagamentos()
-              }
+              onClick={() => {
+                void carregarPagamentos();
+                void carregarDadosCompradores();
+              }}
               disabled={loadingPayments}
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-purple-200 bg-white px-5 text-sm font-bold text-purple-700 transition hover:bg-purple-50 disabled:opacity-50"
             >
@@ -1622,6 +1706,12 @@ function FinanceiroTerapeutaContent() {
             </div>
           )}
 
+          {purchaseIntakesError && (
+            <div className="border-b border-amber-100 bg-amber-50 px-6 py-4 text-sm font-semibold text-amber-800">
+              {purchaseIntakesError}
+            </div>
+          )}
+
           {loadingPayments ? (
             <LoadingState text="Carregando vendas Stripe..." />
           ) : payments.length === 0 ? (
@@ -1632,7 +1722,13 @@ function FinanceiroTerapeutaContent() {
           ) : (
             <div className="grid gap-5 p-5 sm:p-6 xl:grid-cols-2">
               {payments.map(
-                (payment) => (
+                (payment) => {
+                  const intake =
+                    purchaseIntakesByPaymentId.get(
+                      payment.id,
+                    );
+
+                  return (
                   <article
                     key={payment.id}
                     className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5 sm:p-6"
@@ -1707,7 +1803,92 @@ function FinanceiroTerapeutaContent() {
                         </span>
                       )}
 
-                      {(payment.stripeSessionId?.startsWith(
+                      {loadingPurchaseIntakes ? (
+                      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+                        <p className="text-sm font-semibold text-slate-500">
+                          Carregando dados enviados pelo comprador...
+                        </p>
+                      </div>
+                    ) : intake ? (
+                      <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-700">
+                              Dados enviados pelo comprador
+                            </p>
+
+                            <h4 className="mt-2 text-lg font-black text-slate-950">
+                              {intake.buyerName || "Comprador não informado"}
+                            </h4>
+                          </div>
+
+                          <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-black text-emerald-700">
+                            DADOS RECEBIDOS
+                          </span>
+                        </div>
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                          <Info
+                            label="E-mail"
+                            value={
+                              intake.buyerEmail ||
+                              "Não informado"
+                            }
+                          />
+
+                          <Info
+                            label="WhatsApp"
+                            value={
+                              intake.buyerPhone ||
+                              "Não informado"
+                            }
+                          />
+                        </div>
+
+                        {Object.keys(intake.responses ?? {}).length > 0 && (
+                          <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-4">
+                            <p className="text-sm font-black text-slate-950">
+                              Informações para preparar este pedido
+                            </p>
+
+                            <div className="mt-3 grid gap-3">
+                              {Object.entries(
+                                intake.responses ?? {},
+                              ).map(([key, value]) => (
+                                <div
+                                  key={key}
+                                  className="rounded-xl bg-slate-50 px-4 py-3"
+                                >
+                                  <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
+                                    {formatIntakeLabel(key)}
+                                  </p>
+
+                                  <p className="mt-1 break-words text-sm font-semibold text-slate-900">
+                                    {value || "Não informado"}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <p className="mt-4 text-xs leading-5 text-emerald-800">
+                          Estes dados pertencem somente ao pedido #{payment.id} e foram enviados para a preparação deste produto ou serviço.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                        <p className="text-sm font-bold text-amber-800">
+                          Aguardando dados do comprador
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-amber-700">
+                          O pagamento está confirmado, mas o comprador ainda não concluiu os dados necessários para este pedido.
+                        </p>
+                      </div>
+                    )}
+
+                    {(payment.stripeSessionId?.startsWith(
                         "cs_test_",
                       ) ||
                         (!payment.stripeSessionId &&
@@ -1749,7 +1930,8 @@ function FinanceiroTerapeutaContent() {
                       </div>
                     )}
                   </article>
-                ),
+                  );
+                },
               )}
             </div>
           )}
@@ -2245,6 +2427,14 @@ function SummaryCard({
       </p>
     </article>
   );
+}
+
+function formatIntakeLabel(key: string) {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letra) =>
+      letra.toUpperCase(),
+    );
 }
 
 function Info({

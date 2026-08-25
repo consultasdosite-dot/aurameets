@@ -682,9 +682,11 @@ export async function POST(request: NextRequest) {
       therapist.slug?.trim();
 
     const successUrl =
-      `${origin}/pagamento/sucesso` +
-      `?tipo=servico` +
-      `&session_id={CHECKOUT_SESSION_ID}` +
+      `${origin}/compra-confirmada` +
+      `?session_id={CHECKOUT_SESSION_ID}` +
+      `&pedido=${encodeURIComponent(
+        String(paymentId),
+      )}` +
       `&servico=${encodeURIComponent(
         service.id,
       )}`;
