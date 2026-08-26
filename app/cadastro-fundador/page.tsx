@@ -30,20 +30,20 @@ const specialties = [
   "Coaching",
   "Mentoria",
   "Terapias Integrativas",
+  "Tarô / Cartomancia",
+  "Feng Shui",
   "Outra especialidade",
 ];
 
 const professionalBenefits = [
   "Perfil profissional próprio dentro do AuraMeets",
+  "Divulgação do seu trabalho e dos seus serviços",
   "Cadastro de serviços e ofertas especiais",
-  "Divulgação do seu trabalho dentro da plataforma",
-  "Recebimentos integrados com Stripe",
+  "Recebimentos diretos por PIX e InfinitePay",
   "Mensalidade de R$ 35,00, sem fidelidade",
-  "Taxa de 3% somente nas vendas processadas pelo AuraMeets",
+  "Taxa de 3% sobre serviços originados pela plataforma",
+  "Investimento em tráfego pago, redes sociais e divulgação nacional",
 ];
-
-const WHATSAPP_GROUP_URL =
-  "https://chat.whatsapp.com/J3iBwvzqdgQImNgrO5PZBG";
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 
@@ -53,7 +53,12 @@ const ALLOWED_PHOTO_TYPES = [
   "image/webp",
 ];
 
-export default function CadastroFundadorPage() {
+const AURAMEETS_PIX = "08677876863";
+const AURAMEETS_PIX_FORMATADO = "086.778.768-63";
+const AURAMEETS_PIX_TITULAR = "Oscar José Ahumada";
+const AURAMEETS_PIX_BANCO = "Wise";
+
+export default function CadastroPage() {
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const [nome, setNome] = useState("");
@@ -67,8 +72,6 @@ export default function CadastroFundadorPage() {
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [aceitouTermos, setAceitouTermos] = useState(false);
-  const [abriuGrupoWhatsApp, setAbriuGrupoWhatsApp] = useState(false);
-  const [confirmouGrupoWhatsApp, setConfirmouGrupoWhatsApp] = useState(false);
 
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState("");
@@ -77,7 +80,10 @@ export default function CadastroFundadorPage() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [tutorialAberto, setTutorialAberto] = useState(false);
-  const [usuarioPendenteId, setUsuarioPendenteId] = useState<string | null>(null);
+
+  const [cadastroCriado, setCadastroCriado] = useState(false);
+  const [usuarioCriadoId, setUsuarioCriadoId] = useState<string | null>(null);
+  const [pixCopiado, setPixCopiado] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -137,51 +143,19 @@ export default function CadastroFundadorPage() {
     photoInputRef.current?.click();
   }
 
-  function abrirGrupoWhatsApp() {
-    window.open(
-      WHATSAPP_GROUP_URL,
-      "_blank",
-      "noopener,noreferrer",
-    );
+  async function copiarPixAuraMeets() {
+    try {
+      await navigator.clipboard.writeText(AURAMEETS_PIX);
+      setPixCopiado(true);
 
-    setAbriuGrupoWhatsApp(true);
-    setErro("");
-  }
-
-
-  async function iniciarAssinatura(
-    userId: string,
-    emailTerapeuta: string,
-  ) {
-    const resposta = await fetch(
-      "/api/stripe/assinatura-terapeuta",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          email: emailTerapeuta,
-        }),
-      },
-    );
-
-    const resultado = (await resposta.json()) as {
-      checkoutUrl?: string;
-      error?: string;
-      details?: string;
-    };
-
-    if (!resposta.ok || !resultado.checkoutUrl) {
-      throw new Error(
-        resultado.details ||
-          resultado.error ||
-          "Seu cadastro foi criado, mas não foi possível abrir o pagamento.",
+      window.setTimeout(() => {
+        setPixCopiado(false);
+      }, 2500);
+    } catch {
+      setErro(
+        `Não foi possível copiar automaticamente. Use a chave ${AURAMEETS_PIX_FORMATADO}.`,
       );
     }
-
-    window.location.assign(resultado.checkoutUrl);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -202,13 +176,6 @@ export default function CadastroFundadorPage() {
 
     if (!telefone.trim()) {
       setErro("Informe seu WhatsApp.");
-      return;
-    }
-
-    if (!confirmouGrupoWhatsApp) {
-      setErro(
-        "Entre no grupo oficial e confirme sua solicitação de entrada para continuar.",
-      );
       return;
     }
 
@@ -274,10 +241,13 @@ export default function CadastroFundadorPage() {
       formData.append("atendePresencial", String(atendePresencial));
       formData.append("senha", senha);
       formData.append("aceitouTermos", String(aceitouTermos));
-      formData.append(
-        "confirmouGrupoWhatsApp",
-        String(confirmouGrupoWhatsApp),
-      );
+
+      /*
+       * Compatibilidade temporária com a API antiga.
+       * Não existe mais grupo de WhatsApp na interface.
+       * Quando a API for migrada para /api/cadastro, este campo poderá ser removido.
+       */
+      formData.append("confirmouGrupoWhatsApp", "true");
 
       if (foto) {
         formData.append("foto", foto);
@@ -310,14 +280,11 @@ export default function CadastroFundadorPage() {
         return;
       }
 
-      setUsuarioPendenteId(resultado.userId);
-
-      await iniciarAssinatura(
-        resultado.userId,
-        email.trim().toLowerCase(),
-      );
+      setUsuarioCriadoId(resultado.userId);
+      setCadastroCriado(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
-      console.error("Erro no cadastro/pagamento:", error);
+      console.error("Erro no cadastro:", error);
 
       setErro(
         error instanceof Error
@@ -329,9 +296,169 @@ export default function CadastroFundadorPage() {
     }
   }
 
+  if (cadastroCriado) {
+    return (
+      <main className="min-h-screen bg-[#050816] px-4 py-8 text-white sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+        <div className="mx-auto w-full max-w-4xl">
+          <Link
+            href="/"
+            className="inline-block text-2xl font-black text-yellow-400 transition hover:text-yellow-300"
+          >
+            AuraMeets
+          </Link>
+
+          <section className="mt-8 overflow-hidden rounded-3xl border border-yellow-300/60 bg-[#111A33] shadow-2xl">
+            <div className="bg-yellow-400 p-6 text-black sm:p-8">
+              <p className="text-xs font-black uppercase tracking-[0.2em]">
+                Cadastro recebido
+              </p>
+
+              <h1 className="mt-3 text-3xl font-black sm:text-4xl">
+                Falta somente a mensalidade de R$ 35,00
+              </h1>
+
+              <p className="mt-4 max-w-2xl text-base font-semibold leading-7">
+                Seu cadastro profissional foi criado. Agora faça o PIX da
+                mensalidade AuraMeets para concluir esta etapa.
+              </p>
+            </div>
+
+            <div className="p-6 sm:p-8">
+              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-yellow-400">
+                    Pagamento por PIX
+                  </p>
+
+                  <div className="mt-5 space-y-4 rounded-2xl border border-slate-700 bg-[#080D22] p-5">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                        Valor
+                      </p>
+                      <p className="mt-1 text-3xl font-black text-white">
+                        R$ 35,00
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                        Chave PIX / CPF
+                      </p>
+                      <p className="mt-1 break-all text-xl font-black text-white">
+                        {AURAMEETS_PIX_FORMATADO}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                        Titular
+                      </p>
+                      <p className="mt-1 font-bold text-white">
+                        {AURAMEETS_PIX_TITULAR}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                        Instituição
+                      </p>
+                      <p className="mt-1 font-bold text-white">
+                        {AURAMEETS_PIX_BANCO}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => void copiarPixAuraMeets()}
+                    className="mt-5 min-h-14 w-full rounded-2xl bg-yellow-400 px-6 font-black text-black transition hover:bg-yellow-300"
+                  >
+                    {pixCopiado
+                      ? "CHAVE PIX COPIADA"
+                      : "COPIAR CHAVE PIX"}
+                  </button>
+                </div>
+
+                <div className="rounded-2xl border border-purple-400/30 bg-purple-400/10 p-5 sm:p-6">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-purple-300">
+                    Importante
+                  </p>
+
+                  <h2 className="mt-3 text-2xl font-black text-white">
+                    Como funciona depois do pagamento
+                  </h2>
+
+                  <div className="mt-5 space-y-4 text-sm leading-6 text-slate-300">
+                    <p>
+                      <strong className="text-white">1.</strong> A mensalidade
+                      regular é de R$ 35,00.
+                    </p>
+
+                    <p>
+                      <strong className="text-white">2.</strong> O vencimento
+                      mensal é todo dia 1º.
+                    </p>
+
+                    <p>
+                      <strong className="text-white">3.</strong> O AuraMeets
+                      acompanha os serviços originados pela plataforma e calcula
+                      a taxa de 3%.
+                    </p>
+
+                    <p>
+                      <strong className="text-white">4.</strong> A conferência
+                      do pagamento e a liberação do perfil são realizadas pela
+                      equipe AuraMeets.
+                    </p>
+                  </div>
+
+                  {usuarioCriadoId && (
+                    <p className="mt-5 text-xs leading-5 text-slate-500">
+                      Cadastro identificado com sucesso.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {erro && (
+                <div className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">
+                  {erro}
+                </div>
+              )}
+
+              <Link
+                href="/login"
+                className="mt-7 inline-flex min-h-14 w-full items-center justify-center rounded-2xl border border-slate-600 px-6 text-center font-black text-white transition hover:border-yellow-400 hover:text-yellow-400"
+              >
+                IR PARA O LOGIN
+              </Link>
+
+              <p className="mt-4 text-center text-xs leading-5 text-slate-400">
+                Se o seu acesso ainda estiver aguardando liberação, tente
+                novamente depois da conferência do pagamento.
+              </p>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  const progresso =
+    aceitouTermos && senha.length >= 6
+      ? 90
+      : especialidade && cidade.trim()
+        ? 75
+        : foto && telefone.trim()
+          ? 60
+          : telefone.trim()
+            ? 45
+            : 25;
+
   return (
     <main className="min-h-screen bg-[#050816] px-4 py-8 text-white sm:px-6 sm:py-10 lg:px-8 lg:py-12 xl:px-12">
       <div className="mx-auto grid w-full max-w-[1500px] gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10 xl:grid-cols-[0.85fr_1.35fr] xl:gap-14">
+        {/* COLUNA ESQUERDA */}
         <section className="lg:sticky lg:top-8 lg:self-start xl:top-12">
           <Link
             href="/"
@@ -349,9 +476,10 @@ export default function CadastroFundadorPage() {
           </h1>
 
           <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-            Tenha presença profissional dentro do AuraMeets, publique seus serviços,
-            crie ofertas especiais e receba novos clientes em uma plataforma feita
-            para profissionais do cuidado e do desenvolvimento humano.
+            Tenha presença profissional dentro do AuraMeets, publique seus
+            serviços, crie ofertas especiais e receba novos clientes em uma
+            plataforma feita para profissionais do cuidado e do desenvolvimento
+            humano.
           </p>
 
           <button
@@ -359,7 +487,9 @@ export default function CadastroFundadorPage() {
             onClick={() => setTutorialAberto((valor) => !valor)}
             className="mt-5 inline-flex items-center justify-center rounded-xl border border-yellow-400/50 bg-yellow-400/10 px-5 py-3 text-sm font-black text-yellow-300 transition hover:bg-yellow-400/20"
           >
-            {tutorialAberto ? "FECHAR TUTORIAL" : "VER TUTORIAL DA PLATAFORMA"}
+            {tutorialAberto
+              ? "FECHAR TUTORIAL"
+              : "VER TUTORIAL DA PLATAFORMA"}
           </button>
 
           {tutorialAberto && (
@@ -369,15 +499,31 @@ export default function CadastroFundadorPage() {
               </p>
 
               <div className="mt-4 space-y-3 text-sm leading-6 text-slate-300">
-                <p><strong className="text-white">1.</strong> Crie seu perfil profissional e conclua a assinatura.</p>
-                <p><strong className="text-white">2.</strong> Complete sua apresentação, especialidades, agenda e serviços.</p>
-                <p><strong className="text-white">3.</strong> Publique serviços e ofertas especiais no seu perfil.</p>
-                <p><strong className="text-white">4.</strong> Conecte sua conta Stripe para receber pagamentos de clientes.</p>
-                <p><strong className="text-white">5.</strong> Acompanhe vendas e recebimentos no Centro Financeiro.</p>
+                <p>
+                  <strong className="text-white">1.</strong> Crie seu perfil
+                  profissional.
+                </p>
+                <p>
+                  <strong className="text-white">2.</strong> Complete sua
+                  apresentação, especialidades, agenda e serviços.
+                </p>
+                <p>
+                  <strong className="text-white">3.</strong> Publique seus
+                  serviços e ofertas especiais.
+                </p>
+                <p>
+                  <strong className="text-white">4.</strong> Cadastre PIX e
+                  links InfinitePay para receber diretamente.
+                </p>
+                <p>
+                  <strong className="text-white">5.</strong> Acompanhe seus
+                  recebimentos e a taxa de 3% no Centro Financeiro.
+                </p>
               </div>
             </div>
           )}
 
+          {/* CARD AMARELO */}
           <div className="mt-8 rounded-3xl border border-yellow-300/50 bg-yellow-400 p-6 text-black shadow-[0_20px_80px_rgba(250,204,21,0.12)] sm:p-8 lg:mt-10">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs font-black uppercase tracking-[0.2em] sm:text-sm sm:tracking-[0.25em]">
@@ -394,7 +540,8 @@ export default function CadastroFundadorPage() {
             </p>
 
             <p className="mt-4 text-base font-bold leading-7 sm:text-lg">
-              Cancele quando quiser. Nas vendas processadas pelo AuraMeets, a taxa da plataforma é de 3%.
+              Vencimento todo dia 1º. A taxa da plataforma é de 3% sobre os
+              serviços originados pelo AuraMeets.
             </p>
 
             <ul className="mt-8 space-y-4 text-sm font-semibold sm:text-base">
@@ -412,10 +559,12 @@ export default function CadastroFundadorPage() {
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
-              <p className="text-2xl font-black text-yellow-400">30</p>
+              <p className="text-xl font-black text-yellow-400">
+                DIVULGAÇÃO
+              </p>
 
               <p className="mt-1 text-sm text-slate-300">
-                terapeutas já iniciaram
+                presença contínua da plataforma
               </p>
             </div>
 
@@ -423,7 +572,7 @@ export default function CadastroFundadorPage() {
               <p className="text-2xl font-black text-yellow-400">3%</p>
 
               <p className="mt-1 text-sm text-slate-300">
-                sobre vendas na plataforma
+                sobre serviços originados
               </p>
             </div>
 
@@ -437,26 +586,30 @@ export default function CadastroFundadorPage() {
           </div>
         </section>
 
+        {/* COLUNA DIREITA */}
         <section className="min-w-0 rounded-3xl border border-slate-800 bg-[#111A33] p-5 shadow-2xl sm:p-8 lg:p-9 xl:p-12">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-yellow-400 sm:text-sm sm:tracking-[0.3em]">
             Seu Perfil Profissional
           </p>
 
           <h2 className="mt-4 text-3xl font-black leading-tight sm:text-4xl">
-            Crie seu perfil e ative sua assinatura
+            Crie seu perfil no AuraMeets
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-            Preencha seus dados profissionais. Ao concluir, você seguirá para o pagamento seguro da mensalidade de R$ 35,00 pela Stripe.
+            Preencha seus dados profissionais. Ao concluir, seu cadastro será
+            salvo e você verá os dados para pagamento da mensalidade de R$ 35,00
+            por PIX.
           </p>
 
           <section className="mt-6 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 p-5 sm:p-6">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-300">
-              Tem dúvidas antes de se cadastrar?
+              O que você terá no AuraMeets
             </p>
 
             <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Consulte informações sobre mensalidade, Experiências, Stripe, taxa de 3% e cancelamento.
+              Perfil próprio para divulgação, serviços, ofertas, PIX,
+              InfinitePay, avaliações, indicações e acesso ao Centro Financeiro.
             </p>
 
             <Link
@@ -468,6 +621,7 @@ export default function CadastroFundadorPage() {
           </section>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6 sm:mt-10">
+            {/* PROGRESSO */}
             <section className="rounded-2xl border border-slate-700 bg-[#080D22] p-5 sm:p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -476,49 +630,52 @@ export default function CadastroFundadorPage() {
                   </p>
 
                   <p className="mt-2 text-sm text-slate-300">
-                    Complete os passos para criar sua conta profissional AuraMeets.
+                    Complete os dados abaixo para criar sua conta profissional.
                   </p>
                 </div>
 
                 <span className="shrink-0 text-xl font-black text-white">
-                  {confirmouGrupoWhatsApp ? "75%" : telefone.trim() ? "55%" : "35%"}
+                  {progresso}%
                 </span>
               </div>
 
               <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-800">
                 <div
                   className="h-full rounded-full bg-yellow-400 transition-all duration-500"
-                  style={{
-                    width: confirmouGrupoWhatsApp
-                      ? "75%"
-                      : telefone.trim()
-                        ? "55%"
-                        : "35%",
-                  }}
+                  style={{ width: `${progresso}%` }}
                 />
               </div>
 
               <div className="mt-5 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-3">
                 <p className="font-bold text-emerald-300">✓ Dados iniciais</p>
-                <p className={foto ? "font-bold text-emerald-300" : "text-slate-400"}>
-                  {foto ? "✓" : "○"} Foto profissional
-                </p>
+
                 <p
                   className={
-                    confirmouGrupoWhatsApp
+                    foto
                       ? "font-bold text-emerald-300"
-                      : telefone.trim()
-                        ? "font-bold text-yellow-300"
-                        : "text-slate-400"
+                      : "text-slate-400"
                   }
                 >
-                  {confirmouGrupoWhatsApp ? "✓" : telefone.trim() ? "→" : "○"} Grupo oficial
+                  {foto ? "✓" : "○"} Foto profissional
                 </p>
+
+                <p
+                  className={
+                    especialidade
+                      ? "font-bold text-emerald-300"
+                      : "text-slate-400"
+                  }
+                >
+                  {especialidade ? "✓" : "○"} Especialidade
+                </p>
+
                 <p className="text-slate-400">○ Perfil profissional</p>
                 <p className="text-slate-400">○ Primeiro serviço</p>
                 <p className="text-slate-400">○ Análise da equipe</p>
               </div>
             </section>
+
+            {/* FOTO */}
             <section className="rounded-2xl border border-slate-700 bg-[#080D22] p-5 sm:p-6">
               <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
                 <button
@@ -618,6 +775,7 @@ export default function CadastroFundadorPage() {
               )}
             </section>
 
+            {/* DADOS */}
             <div>
               <label htmlFor="nome" className="mb-2 block font-bold">
                 Nome completo
@@ -673,69 +831,6 @@ export default function CadastroFundadorPage() {
                 />
               </div>
             </div>
-
-            {telefone.trim() && (
-              <section className="rounded-2xl border border-emerald-400/50 bg-emerald-400/10 p-5 shadow-[0_18px_60px_rgba(16,185,129,0.08)] sm:p-6">
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="max-w-2xl">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-400 text-xl font-black text-[#052e22]">
-                        W
-                      </span>
-
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
-                          Próximo passo obrigatório
-                        </p>
-
-                        <h3 className="mt-1 text-xl font-black text-white">
-                          Comunidade Oficial AuraMeets
-                        </h3>
-                      </div>
-                    </div>
-
-                    <p className="mt-4 text-sm leading-6 text-slate-200 sm:text-base">
-                      Entre no grupo exclusivo dos Terapeutas AuraMeets para receber
-                      treinamentos, novidades da plataforma, materiais, oportunidades
-                      e orientações diretas da equipe.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={abrirGrupoWhatsApp}
-                    disabled={carregando}
-                    className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-emerald-400 px-5 py-3 text-sm font-black text-[#052e22] transition hover:-translate-y-0.5 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-                  >
-                    {abriuGrupoWhatsApp
-                      ? "Abrir novamente o grupo"
-                      : "Entrar no Grupo Oficial"}
-                  </button>
-                </div>
-
-                <label
-                  className={`mt-5 flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
-                    confirmouGrupoWhatsApp
-                      ? "border-emerald-400 bg-emerald-400/15"
-                      : "border-emerald-400/40 bg-[#080D22] hover:border-emerald-300"
-                  } ${carregando ? "cursor-not-allowed opacity-60" : ""}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={confirmouGrupoWhatsApp}
-                    onChange={(event) =>
-                      setConfirmouGrupoWhatsApp(event.target.checked)
-                    }
-                    disabled={carregando}
-                    className="mt-1 h-5 w-5 shrink-0 accent-emerald-400"
-                  />
-
-                  <span className="text-sm font-semibold leading-6 text-slate-200">
-                    Já solicitei minha entrada no grupo oficial dos terapeutas AuraMeets.
-                  </span>
-                </label>
-              </section>
-            )}
 
             <div>
               <label
@@ -922,46 +1017,28 @@ export default function CadastroFundadorPage() {
               />
 
               <span className="text-sm leading-6 text-slate-300">
-                Confirmo que as informações fornecidas são verdadeiras, aceito os termos de uso
-                e a política de privacidade do AuraMeets e estou ciente da mensalidade
-                de R$ 35,00, sem fidelidade, além da taxa de 3% nas vendas processadas
-                pela plataforma.
+                Confirmo que as informações fornecidas são verdadeiras, aceito
+                os termos de uso e a política de privacidade do AuraMeets e
+                estou ciente da mensalidade de{" "}
+                <strong className="text-white">R$ 35,00</strong>, com vencimento
+                todo dia 1º, além da taxa de{" "}
+                <strong className="text-white">3%</strong> sobre os serviços
+                originados pela plataforma.
               </span>
             </label>
 
-            {usuarioPendenteId && erro && (
-              <div className="rounded-2xl border border-yellow-400/40 bg-yellow-400/10 p-5">
-                <p className="font-black text-yellow-300">
-                  Seu cadastro foi criado e está aguardando pagamento.
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-300">
-                  Você pode tentar abrir novamente o pagamento de R$ 35,00 sem refazer o cadastro.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCarregando(true);
-                    setErro("");
-                    void iniciarAssinatura(
-                      usuarioPendenteId,
-                      email.trim().toLowerCase(),
-                    )
-                      .catch((error) => {
-                        setErro(
-                          error instanceof Error
-                            ? error.message
-                            : "Não foi possível abrir o pagamento.",
-                        );
-                      })
-                      .finally(() => setCarregando(false));
-                  }}
-                  disabled={carregando}
-                  className="mt-4 rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black disabled:opacity-60"
-                >
-                  TENTAR PAGAMENTO NOVAMENTE
-                </button>
-              </div>
-            )}
+            <div className="rounded-2xl border border-purple-400/30 bg-purple-400/10 p-5">
+              <p className="font-black text-purple-200">
+                Compromisso de divulgação AuraMeets
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Os recursos arrecadados ajudam a financiar a manutenção e a
+                divulgação da plataforma, incluindo tráfego pago, presença em
+                Facebook e Instagram e ações de comunicação e assessoria de
+                imprensa em nível nacional.
+              </p>
+            </div>
 
             {erro && (
               <div
@@ -979,9 +1056,15 @@ export default function CadastroFundadorPage() {
               className="w-full rounded-xl bg-yellow-400 px-5 py-4 text-base font-black text-black shadow-[0_15px_45px_rgba(250,204,21,0.15)] transition hover:-translate-y-0.5 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:px-6 sm:py-5 sm:text-lg"
             >
               {carregando
-                ? "Preparando seu cadastro e pagamento..."
-                : "CRIAR PERFIL E IR PARA PAGAMENTO — R$ 35,00"}
+                ? "CRIANDO SEU PERFIL..."
+                : "CRIAR PERFIL E VER PAGAMENTO — R$ 35,00"}
             </button>
+
+            <p className="text-center text-sm leading-6 text-slate-400">
+              O pagamento não é feito neste botão. Primeiro criaremos seu
+              cadastro e, na tela seguinte, mostraremos a chave PIX oficial do
+              AuraMeets.
+            </p>
 
             <p className="text-center text-sm leading-6 text-slate-400">
               Já possui cadastro?{" "}

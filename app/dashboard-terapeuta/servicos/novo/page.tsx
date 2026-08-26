@@ -88,8 +88,9 @@ export default function NovoServicoPage() {
   const [moeda, setMoeda] = useState("BRL");
   const [modoVenda, setModoVenda] = useState<
     "schedule" | "direct_payment"
-  >("schedule");
+  >("direct_payment");
   const [linkPagamento, setLinkPagamento] = useState("");
+  const [mostrarAjudaInfinitePay, setMostrarAjudaInfinitePay] = useState(false);
   const [chavePix, setChavePix] = useState("");
   const [ativo, setAtivo] = useState(true);
 
@@ -859,6 +860,31 @@ export default function NovoServicoPage() {
                   <p className="mt-3 text-sm leading-6 text-slate-300">
                     Opcional. Gere o link no aplicativo InfinitePay, copie e cole aqui.
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => setMostrarAjudaInfinitePay((valor) => !valor)}
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-violet-400/50 bg-violet-500/10 px-5 py-3 text-sm font-black text-violet-200 transition hover:bg-violet-500/20 sm:w-auto"
+                  >
+                    PEÇA AJUDA — SOU AURA
+                  </button>
+
+                  {mostrarAjudaInfinitePay && (
+                    <div className="mt-4 rounded-2xl border border-violet-400/30 bg-[#11152D] p-5">
+                      <p className="font-black text-violet-200">
+                        AURA — Como criar seu link InfinitePay
+                      </p>
+                      <ol className="mt-4 space-y-3 text-sm leading-6 text-slate-200">
+                        <li><strong>1.</strong> Abra o aplicativo ou site da InfinitePay e entre na sua conta.</li>
+                        <li><strong>2.</strong> Procure a opção para criar uma cobrança ou link de pagamento.</li>
+                        <li><strong>3.</strong> Informe o valor do serviço e configure o parcelamento desejado.</li>
+                        <li><strong>4.</strong> Crie a cobrança e escolha copiar ou compartilhar o link de pagamento.</li>
+                        <li><strong>5.</strong> Volte ao AuraMeets e cole esse link no campo acima.</li>
+                      </ol>
+                      <p className="mt-4 text-xs leading-5 text-slate-400">
+                        Cole somente o link https:// da InfinitePay. Não é necessário copiar código HTML.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="h-px bg-emerald-400/20" />
