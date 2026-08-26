@@ -4,12 +4,6 @@ import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-type CheckoutResponse = {
-  checkoutUrl?: string;
-  error?: string;
-  details?: string;
-};
-
 type CompraResponse = {
   success?: boolean;
   error?: string;
@@ -18,6 +12,7 @@ type CompraResponse = {
     id: string;
     name: string;
     description: string;
+    coverPhotoUrl: string | null;
     price: number;
     originalPrice: number | null;
     promotionalPrice: number | null;
@@ -35,14 +30,12 @@ type CompraResponse = {
   };
 
   payment?: {
+    infinitePayAvailable: boolean;
+    infinitePayUrl: string | null;
     pixAvailable: boolean;
-    stripeAvailable: boolean;
 
     pix: {
-      keyType: string;
       key: string;
-      holderName: string;
-      bankName: string;
     } | null;
   };
 };
@@ -56,18 +49,6 @@ function formatarPreco(valor: number, moeda: string) {
   }).format(valor);
 }
 
-function labelTipoPix(tipo: string) {
-  const mapa: Record<string, string> = {
-    cpf: "CPF",
-    cnpj: "CNPJ",
-    email: "E-mail",
-    telefone: "Telefone",
-    aleatoria: "Chave aleatória",
-  };
-
-  return mapa[tipo] || tipo || "Chave PIX";
-}
-
 function ComprarContent() {
   const searchParams = useSearchParams();
 
@@ -75,7 +56,6 @@ function ComprarContent() {
 
   const [erro, setErro] = useState<string | null>(null);
   const [carregandoDados, setCarregandoDados] = useState(true);
-  const [carregandoStripe, setCarregandoStripe] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
   const [dados, setDados] = useState<CompraResponse | null>(null);
@@ -154,7 +134,9 @@ function ComprarContent() {
     const buyerEmail = email.trim().toLowerCase();
 
     if (!buyerName || !buyerPhone || !buyerEmail) {
-      setErro("Preencha seus dados acima antes de continuar com o pagamento.");
+      setErro(
+        "Preencha seu nome, WhatsApp e e-mail antes de continuar com o pagamento.",
+      );
       return null;
     }
 
@@ -170,62 +152,33 @@ function ComprarContent() {
     };
   }
 
-  async function pagarComCartao() {
-    if (!serviceId) {
-      setErro("O serviço não foi identificado.");
-      return;
-    }
-
+  function pagarComInfinitePay() {
     const comprador = validarComprador();
 
     if (!comprador) {
       return;
     }
 
-    try {
-      setErro(null);
-      setCarregandoStripe(true);
+    const link = dados?.payment?.infinitePayUrl?.trim();
 
-      const response = await fetch("/api/stripe/checkout-servico", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          serviceId,
-          ...comprador,
-        }),
-      });
-
-      const resultado = (await response.json()) as CheckoutResponse;
-
-      if (!response.ok) {
-        throw new Error(
-          resultado.details ||
-            resultado.error ||
-            "Não foi possível iniciar o pagamento.",
-        );
-      }
-
-      if (!resultado.checkoutUrl) {
-        throw new Error(
-          "A Stripe não retornou o endereço do pagamento.",
-        );
-      }
-
-      window.location.assign(resultado.checkoutUrl);
-    } catch (error) {
+    if (!dados?.payment?.infinitePayAvailable || !link) {
       setErro(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível iniciar o pagamento.",
+        "O pagamento pela InfinitePay não está disponível para este serviço.",
       );
-
-      setCarregandoStripe(false);
+      return;
     }
+
+    setErro(null);
+    window.location.assign(link);
   }
 
   async function copiarPix() {
+    const comprador = validarComprador();
+
+    if (!comprador) {
+      return;
+    }
+
     const chave = dados?.payment?.pix?.key?.trim();
 
     if (!chave) {
@@ -234,6 +187,8 @@ function ComprarContent() {
     }
 
     try {
+      setErro(null);
+
       await navigator.clipboard.writeText(chave);
 
       setCopiado(true);
@@ -280,11 +235,12 @@ function ComprarContent() {
   }
 
   const { service, therapist, payment } = dados;
+  const pagamentoDisponivel =
+    payment.pixAvailable || payment.infinitePayAvailable;
 
   return (
     <main className="min-h-screen bg-[#F8F8FB] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
-
         {/* LOGO */}
         <div className="mb-8 flex flex-col items-center text-center">
           <AuraLogo className="h-16 w-16" />
@@ -314,9 +270,20 @@ function ComprarContent() {
 
         <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-2xl">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
-
             {/* SERVIÇO */}
             <div className="border-b border-slate-200 p-6 sm:p-8 lg:border-b-0 lg:border-r lg:p-10">
+              {service.coverPhotoUrl && (
+                <div className="mb-7 overflow-hidden rounded-3xl border border-slate-200 bg-slate-100">
+                  <div className="aspect-[2/1] w-full">
+                    <img
+                      src={service.coverPhotoUrl}
+                      alt={`Foto do serviço ${service.name}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
               <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-700">
                 Você está comprando
               </p>
@@ -449,6 +416,35 @@ function ComprarContent() {
               </p>
 
               <div className="mt-6 space-y-5">
+                {/* INFINITEPAY */}
+                {payment.infinitePayAvailable &&
+                  payment.infinitePayUrl && (
+                    <section className="rounded-3xl border border-purple-200 bg-purple-50 p-6">
+                      <span className="rounded-full bg-purple-700 px-3 py-1 text-xs font-black text-white">
+                        CARTÃO / LINK
+                      </span>
+
+                      <h3 className="mt-5 text-2xl font-black">
+                        Pagar com InfinitePay
+                      </h3>
+
+                      <p className="mt-3 leading-7 text-slate-600">
+                        Você será direcionado para o link de pagamento
+                        cadastrado pelo terapeuta na InfinitePay.
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={pagarComInfinitePay}
+                        className="mt-5 w-full rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-6 py-4 font-black text-white shadow-lg transition hover:brightness-110"
+                      >
+                        {`PAGAR ${formatarPreco(
+                          service.price,
+                          service.currency,
+                        )} COM INFINITEPAY`}
+                      </button>
+                    </section>
+                  )}
 
                 {/* PIX */}
                 {payment.pixAvailable && payment.pix && (
@@ -461,30 +457,25 @@ function ComprarContent() {
                       Pagar por PIX
                     </h3>
 
-                    <div className="mt-5 space-y-3 rounded-2xl bg-white p-5">
-                      <p className="font-bold">
-                        {labelTipoPix(payment.pix.keyType)}
+                    <p className="mt-3 leading-7 text-slate-600">
+                      Copie a chave abaixo e faça o pagamento diretamente
+                      pelo aplicativo do seu banco.
+                    </p>
+
+                    <div className="mt-5 rounded-2xl bg-white p-5">
+                      <p className="text-sm font-bold uppercase tracking-wide text-slate-500">
+                        Chave PIX
                       </p>
 
-                      <p className="break-all font-black">
+                      <p className="mt-2 break-all text-lg font-black text-slate-950">
                         {payment.pix.key}
                       </p>
-
-                      <p className="font-bold">
-                        {payment.pix.holderName}
-                      </p>
-
-                      {payment.pix.bankName && (
-                        <p className="font-bold">
-                          {payment.pix.bankName}
-                        </p>
-                      )}
                     </div>
 
                     <button
                       type="button"
                       onClick={() => void copiarPix()}
-                      className="mt-5 w-full rounded-xl bg-emerald-600 px-6 py-4 font-black text-white"
+                      className="mt-5 w-full rounded-xl bg-emerald-600 px-6 py-4 font-black text-white transition hover:bg-emerald-700"
                     >
                       {copiado
                         ? "CHAVE PIX COPIADA"
@@ -493,43 +484,24 @@ function ComprarContent() {
                   </section>
                 )}
 
-                {/* CARTÃO */}
-                {payment.stripeAvailable ? (
-                  <section className="rounded-3xl border border-purple-200 bg-white p-6 shadow-sm">
-                    <span className="rounded-full bg-purple-700 px-3 py-1 text-xs font-black text-white">
-                      CARTÃO
-                    </span>
-
-                    <h3 className="mt-5 text-2xl font-black">
-                      Pagar com cartão
-                    </h3>
-
-                    <p className="mt-3 leading-7 text-slate-600">
-                      Pagamento seguro processado pela Stripe.
+                {!pagamentoDisponivel && (
+                  <section className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                    <p className="font-black text-slate-900">
+                      Pagamento ainda não configurado.
                     </p>
 
-                    <button
-                      type="button"
-                      onClick={() => void pagarComCartao()}
-                      disabled={carregandoStripe}
-                      className="mt-5 w-full rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-6 py-4 font-black text-white shadow-lg disabled:opacity-60"
-                    >
-                      {carregandoStripe
-                        ? "PREPARANDO PAGAMENTO..."
-                        : `PAGAR ${formatarPreco(
-                            service.price,
-                            service.currency,
-                          )} COM CARTÃO`}
-                    </button>
-                  </section>
-                ) : (
-                  <section className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-                    <p className="font-black">
-                      Cartão indisponível.
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Este terapeuta ainda não cadastrou InfinitePay ou PIX
+                      para este serviço.
                     </p>
                   </section>
                 )}
               </div>
+
+              <p className="mt-6 text-center text-xs leading-5 text-slate-400">
+                O pagamento é realizado diretamente pelos dados cadastrados
+                pelo terapeuta.
+              </p>
             </div>
           </div>
         </section>

@@ -16,6 +16,7 @@ type Servico = {
   duration_minutes: number;
   price: number;
   promotional_price: number | null;
+  payment_url: string | null;
   currency: string;
   status: "active" | "inactive" | "under_review";
   created_at: string;
@@ -328,6 +329,7 @@ export default function ServicosPage() {
               duration_minutes,
               price,
               promotional_price,
+              payment_url,
               currency,
               status,
               created_at
@@ -458,8 +460,8 @@ export default function ServicosPage() {
       return;
     }
 
-    if (formEdicao.description.length > 1500) {
-      setErro("A descrição pode ter no máximo 1.500 caracteres.");
+    if (formEdicao.description.length > 2000) {
+      setErro("A descrição pode ter no máximo 2.000 caracteres.");
       return;
     }
 
@@ -931,9 +933,9 @@ export default function ServicosPage() {
                   return (
                     <article
                       key={servico.id}
-                      className="overflow-hidden rounded-3xl border border-slate-700 bg-[#111A33] shadow-xl md:flex md:min-h-[360px]"
+                      className="overflow-hidden rounded-3xl border border-slate-700 bg-[#111A33] shadow-xl"
                     >
-                      <div className="flex aspect-[3/2] items-center justify-center overflow-hidden bg-[#1B2444] md:aspect-auto md:w-[42%] md:flex-none">
+                      <div className="flex aspect-[2/1] w-full items-center justify-center overflow-hidden bg-[#1B2444]">
                         {servico.cover_photo_url ? (
                           <img
                             src={
@@ -1030,6 +1032,17 @@ export default function ServicosPage() {
                             </p>
                           )}
                         </div>
+
+                        {servico.payment_url?.trim() && (
+                          <a
+                            href={servico.payment_url.trim()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-6 flex min-h-[54px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-6 py-4 text-center text-sm font-black uppercase tracking-[0.08em] text-white shadow-[0_12px_30px_rgba(147,51,234,0.28)] transition hover:-translate-y-0.5 hover:brightness-110"
+                          >
+                            QUERO COMPRAR
+                          </a>
+                        )}
 
                         <div className="mt-6 grid grid-cols-2 gap-3">
                           <button
@@ -1230,7 +1243,7 @@ export default function ServicosPage() {
                         </p>
 
                         <div className="mt-3 overflow-hidden rounded-2xl border border-yellow-400/30 bg-slate-950">
-                          <div className="aspect-[3/2] w-full">
+                          <div className="aspect-[2/1] w-full">
                             <img
                               src={auraImagemUrl}
                               alt="Foto criada pela AURA para o serviço"
@@ -1414,17 +1427,17 @@ export default function ServicosPage() {
                       })
                     }
                     rows={10}
-                    maxLength={1500}
+                    maxLength={2000}
                     placeholder="Descreva o serviço com clareza, benefícios, formato do atendimento e para quem ele é indicado."
                     className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
                   />
 
                   <div className="mt-2 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-slate-400">
-                      Descrição completa do serviço. Limite máximo de 1.500 caracteres.
+                      Descrição completa do serviço. Limite máximo de 2.000 caracteres.
                     </span>
                     <span className="font-bold text-yellow-400">
-                      {formEdicao.description.length} / 1500
+                      {formEdicao.description.length} / 2000
                     </span>
                   </div>
                 </label>
@@ -1447,12 +1460,12 @@ export default function ServicosPage() {
                   />
 
                   <p className="mt-2 text-sm leading-6 text-slate-400">
-                    Tamanho recomendado: 1200 × 800 px, proporção 3:2. Use uma imagem horizontal, nítida e sem textos próximos das bordas.
+                    Tamanho recomendado: 1200 × 600 px, proporção 2:1. Use uma imagem horizontal, nítida e sem textos próximos das bordas.
                   </p>
 
                   {formEdicao.cover_photo_url.trim() && (
                     <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700 bg-[#1B2444]">
-                      <div className="aspect-[3/2] w-full">
+                      <div className="aspect-[2/1] w-full">
                         <img
                           src={formEdicao.cover_photo_url}
                           alt="Prévia da foto do serviço"
@@ -1460,7 +1473,7 @@ export default function ServicosPage() {
                         />
                       </div>
                       <p className="px-4 py-3 text-xs text-slate-400">
-                        Prévia no formato recomendado 3:2. A imagem é recortada proporcionalmente, sem ser esticada.
+                        Prévia no formato recomendado 2:1 (1200 × 600). A imagem é recortada proporcionalmente, sem ser esticada.
                       </p>
                     </div>
                   )}

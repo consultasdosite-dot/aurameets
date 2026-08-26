@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
@@ -10,6 +9,7 @@ type ServiceData = {
   therapist_id: string;
   name: string;
   description: string | null;
+  cover_photo_url: string | null;
   price: number | string | null;
   promotional_price: number | string | null;
   currency: string | null;
@@ -17,6 +17,8 @@ type ServiceData = {
   online: boolean | null;
   in_person: boolean | null;
   status: string | null;
+  payment_url: string | null;
+  pix_key: string | null;
 };
 
 type TherapistData = {
@@ -25,18 +27,6 @@ type TherapistData = {
   slug: string | null;
   profile_photo_url: string | null;
   photo_url: string | null;
-  stripe_account_id: string | null;
-  stripe_charges_enabled: boolean | null;
-  stripe_payouts_enabled: boolean | null;
-  stripe_details_submitted: boolean | null;
-};
-
-type PixData = {
-  pix_enabled: boolean | null;
-  pix_key_type: string | null;
-  pix_key: string | null;
-  pix_holder_name: string | null;
-  pix_bank_name: string | null;
 };
 
 function converterValor(
@@ -73,6 +63,32 @@ function obterPrecoFinal(service: ServiceData): number | null {
   return converterValor(service.price);
 }
 
+function obterLinkInfinitePay(
+  valor: string | null | undefined,
+): string | null {
+  const link = valor?.trim();
+
+  if (!link) {
+    return null;
+  }
+
+  try {
+    const url = new URL(link);
+
+    if (url.protocol !== "https:") {
+      return null;
+    }
+
+    if (!url.hostname.toLowerCase().includes("infinitepay")) {
+      return null;
+    }
+
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const serviceId =
@@ -100,13 +116,16 @@ export async function GET(request: NextRequest) {
           therapist_id,
           name,
           description,
+          cover_photo_url,
           price,
           promotional_price,
           currency,
           duration_minutes,
           online,
           in_person,
-          status
+          status,
+          payment_url,
+          pix_key
         `,
       )
       .eq("id", serviceId)
@@ -154,11 +173,7 @@ export async function GET(request: NextRequest) {
           name,
           slug,
           profile_photo_url,
-          photo_url,
-          stripe_account_id,
-          stripe_charges_enabled,
-          stripe_payouts_enabled,
-          stripe_details_submitted
+          photo_url
         `,
       )
       .eq("profile_id", service.therapist_id)
@@ -195,94 +210,6 @@ export async function GET(request: NextRequest) {
 
     const therapist = therapistResult as TherapistData;
 
-    const {
-      data: pixResult,
-      error: pixError,
-    } = await supabaseAdmin
-      .from("therapist_payment_settings")
-      .select(
-        `
-          pix_enabled,
-          pix_key_type,
-          pix_key,
-          pix_holder_name,
-          pix_bank_name
-        `,
-      )
-      .eq("therapist_id", therapist.id)
-      .maybeSingle();
-
-    if (pixError) {
-      console.error(
-        "Erro ao consultar PIX para compra:",
-        pixError,
-      );
-    }
-
-    const pix =
-      (pixResult as PixData | null) ?? null;
-
-    const pixAvailable =
-      pix?.pix_enabled === true &&
-      Boolean(pix.pix_key?.trim()) &&
-      Boolean(pix.pix_holder_name?.trim());
-
-    let stripeAvailable = false;
-
-    if (therapist.stripe_account_id) {
-      try {
-        const stripeAccount = await stripe.accounts.retrieve(
-          therapist.stripe_account_id,
-        );
-
-        const cardPaymentsActive =
-          stripeAccount.capabilities?.card_payments === "active";
-
-        const transfersActive =
-          stripeAccount.capabilities?.transfers === "active";
-
-        stripeAvailable =
-          cardPaymentsActive &&
-          transfersActive;
-
-        const chargesEnabled =
-          stripeAccount.charges_enabled === true;
-
-        const payoutsEnabled =
-          stripeAccount.payouts_enabled === true;
-
-        const detailsSubmitted =
-          stripeAccount.details_submitted === true;
-
-        const { error: updateError } =
-          await supabaseAdmin
-            .from("therapists")
-            .update({
-              stripe_account_status: stripeAvailable
-                ? "connected"
-                : "onboarding_pending",
-              stripe_charges_enabled: chargesEnabled,
-              stripe_payouts_enabled: payoutsEnabled,
-              stripe_details_submitted: detailsSubmitted,
-            })
-            .eq("id", therapist.id);
-
-        if (updateError) {
-          console.error(
-            "Erro ao sincronizar status Stripe:",
-            updateError,
-          );
-        }
-      } catch (stripeError) {
-        console.error(
-          "Erro ao consultar conta Stripe:",
-          stripeError,
-        );
-
-        stripeAvailable = false;
-      }
-    }
-
     const price = obterPrecoFinal(service);
 
     if (price === null) {
@@ -297,31 +224,56 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const infinitePayUrl = obterLinkInfinitePay(
+      service.payment_url,
+    );
+
+    const pixKey = service.pix_key?.trim() || null;
+
+    const infinitePayAvailable = Boolean(infinitePayUrl);
+    const pixAvailable = Boolean(pixKey);
+
     return NextResponse.json({
       success: true,
+
       service: {
         id: service.id,
         name: service.name,
         description: service.description ?? "",
+        coverPhotoUrl:
+          service.cover_photo_url?.trim() || null,
+
         price,
+
         originalPrice:
           converterValor(service.price),
+
         promotionalPrice:
           converterValor(service.promotional_price),
-        currency: service.currency || "BRL",
+
+        currency:
+          service.currency || "BRL",
+
         durationMinutes:
           service.duration_minutes ?? null,
-        online: service.online === true,
-        inPerson: service.in_person === true,
+
+        online:
+          service.online === true,
+
+        inPerson:
+          service.in_person === true,
       },
 
       therapist: {
         id: therapist.id,
+
         name:
           therapist.name?.trim() ||
           "Terapeuta AuraMeets",
+
         slug:
           therapist.slug?.trim() || null,
+
         photoUrl:
           therapist.profile_photo_url?.trim() ||
           therapist.photo_url?.trim() ||
@@ -329,18 +281,14 @@ export async function GET(request: NextRequest) {
       },
 
       payment: {
+        infinitePayAvailable,
+        infinitePayUrl,
+
         pixAvailable,
-        stripeAvailable,
+
         pix: pixAvailable
           ? {
-              keyType:
-                pix?.pix_key_type?.trim() || "",
-              key:
-                pix?.pix_key?.trim() || "",
-              holderName:
-                pix?.pix_holder_name?.trim() || "",
-              bankName:
-                pix?.pix_bank_name?.trim() || "",
+              key: pixKey,
             }
           : null,
       },

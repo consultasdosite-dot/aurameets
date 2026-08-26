@@ -90,6 +90,7 @@ export default function NovoServicoPage() {
     "schedule" | "direct_payment"
   >("schedule");
   const [linkPagamento, setLinkPagamento] = useState("");
+  const [chavePix, setChavePix] = useState("");
   const [ativo, setAtivo] = useState(true);
 
   const [foto, setFoto] = useState<File | null>(null);
@@ -230,31 +231,34 @@ export default function NovoServicoPage() {
 
     if (modoVenda === "direct_payment") {
       const linkLimpo = linkPagamento.trim();
+      const pixLimpo = chavePix.trim();
 
-      if (!linkLimpo) {
+      if (!linkLimpo && !pixLimpo) {
         setErro(
-          "Informe o link de pagamento da InfinitePay para usar a venda direta.",
+          "Informe pelo menos um meio de pagamento: link da InfinitePay ou chave Pix.",
         );
         return;
       }
 
-      try {
-        const url = new URL(linkLimpo);
+      if (linkLimpo) {
+        try {
+          const url = new URL(linkLimpo);
 
-        if (
-          url.protocol !== "https:" ||
-          !url.hostname.toLowerCase().includes("infinitepay")
-        ) {
+          if (
+            url.protocol !== "https:" ||
+            !url.hostname.toLowerCase().includes("infinitepay")
+          ) {
+            setErro(
+              "Informe um link válido da InfinitePay começando com https://.",
+            );
+            return;
+          }
+        } catch {
           setErro(
             "Informe um link válido da InfinitePay começando com https://.",
           );
           return;
         }
-      } catch {
-        setErro(
-          "Informe um link válido da InfinitePay começando com https://.",
-        );
-        return;
       }
     }
 
@@ -334,8 +338,12 @@ export default function NovoServicoPage() {
           currency: moeda,
           sale_mode: modoVenda,
           payment_url:
-            modoVenda === "direct_payment"
+            modoVenda === "direct_payment" && linkPagamento.trim()
               ? linkPagamento.trim()
+              : null,
+          pix_key:
+            modoVenda === "direct_payment" && chavePix.trim()
+              ? chavePix.trim()
               : null,
           status: ativo ? "active" : "inactive",
         });
@@ -422,7 +430,7 @@ export default function NovoServicoPage() {
                 type="button"
                 onClick={abrirSeletorDeFoto}
                 disabled={carregando}
-                className="group relative flex h-72 w-full items-center justify-center overflow-hidden transition disabled:cursor-not-allowed disabled:opacity-60 sm:h-96"
+                className="group relative flex aspect-[2/1] w-full items-center justify-center overflow-hidden transition disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {fotoPreview ? (
                   <>
@@ -575,13 +583,13 @@ export default function NovoServicoPage() {
                   }
                   placeholder="Explique como funciona o serviço, para quem ele é indicado e quais benefícios oferece."
                   rows={6}
-                  maxLength={1500}
+                  maxLength={2000}
                   disabled={carregando}
                   className="w-full resize-none rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 leading-7 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
                 />
 
                 <p className="mt-2 text-right text-xs text-slate-400">
-                  {descricao.length}/1500 caracteres
+                  {descricao.length}/2000 caracteres
                 </p>
               </div>
             </div>
@@ -767,7 +775,7 @@ export default function NovoServicoPage() {
 
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
               Escolha se o visitante deverá solicitar um horário ou comprar
-              diretamente pelo seu link de pagamento.
+              diretamente por InfinitePay ou Pix.
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -816,40 +824,71 @@ export default function NovoServicoPage() {
 
                 <span>
                   <strong className="block text-white">
-                    Venda direta pela InfinitePay
+                    Venda direta — InfinitePay ou Pix
                   </strong>
 
                   <span className="mt-2 block text-sm leading-6 text-slate-300">
-                    O perfil mostrará um botão de compra.
+                    O perfil mostrará as opções de pagamento cadastradas.
                   </span>
                 </span>
               </label>
             </div>
 
             {modoVenda === "direct_payment" && (
-              <div className="mt-6 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 sm:p-6">
-                <label
-                  htmlFor="linkPagamento"
-                  className="block font-bold text-white"
-                >
-                  Link de pagamento InfinitePay
-                </label>
+              <div className="mt-6 grid gap-6 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 sm:p-6">
+                <div>
+                  <label
+                    htmlFor="linkPagamento"
+                    className="block font-bold text-white"
+                  >
+                    Link de pagamento InfinitePay
+                  </label>
 
-                <input
-                  id="linkPagamento"
-                  type="url"
-                  value={linkPagamento}
-                  onChange={(event) =>
-                    setLinkPagamento(event.target.value)
-                  }
-                  placeholder="https://link.infinitepay.io/..."
-                  disabled={carregando}
-                  className="mt-3 w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
-                />
+                  <input
+                    id="linkPagamento"
+                    type="url"
+                    value={linkPagamento}
+                    onChange={(event) =>
+                      setLinkPagamento(event.target.value)
+                    }
+                    placeholder="https://link.infinitepay.io/..."
+                    disabled={carregando}
+                    className="mt-3 w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
 
-                <p className="mt-3 text-sm leading-6 text-slate-300">
-                  Gere o link no aplicativo InfinitePay, copie e cole aqui.
-                </p>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    Opcional. Gere o link no aplicativo InfinitePay, copie e cole aqui.
+                  </p>
+                </div>
+
+                <div className="h-px bg-emerald-400/20" />
+
+                <div>
+                  <label
+                    htmlFor="chavePix"
+                    className="block font-bold text-white"
+                  >
+                    Chave Pix
+                  </label>
+
+                  <input
+                    id="chavePix"
+                    type="text"
+                    value={chavePix}
+                    onChange={(event) =>
+                      setChavePix(event.target.value)
+                    }
+                    maxLength={200}
+                    placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+                    disabled={carregando}
+                    className="mt-3 w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    Opcional. Cadastre a chave Pix que será apresentada ao cliente.
+                    É obrigatório informar pelo menos InfinitePay ou Pix.
+                  </p>
+                </div>
               </div>
             )}
           </section>

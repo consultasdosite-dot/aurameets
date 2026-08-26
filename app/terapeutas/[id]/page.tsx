@@ -295,74 +295,74 @@ function ServiceCard({
 
   return (
     <article className="group overflow-hidden rounded-[28px] border border-slate-800 bg-[#10182D] shadow-xl transition duration-500 hover:-translate-y-1 hover:border-yellow-400/40">
-      <div className="grid gap-0 md:grid-cols-[280px_minmax(0,1fr)_230px] lg:grid-cols-[320px_minmax(0,1fr)_240px]">
-        <div className="relative aspect-[5/4] overflow-hidden bg-[#18223D] md:aspect-auto md:min-h-full">
-          {service.cover_photo_url ? (
-            <img
-              src={service.cover_photo_url}
-              alt={`Imagem do serviço ${service.name}`}
-              className="kenburns-image h-full w-full object-cover object-[50%_32%] transition duration-[1800ms] ease-out motion-safe:group-hover:scale-[1.06]"
-            />
-          ) : (
-            <div className="flex h-full min-h-[220px] items-center justify-center text-center">
-              <div>
-                <div className="text-4xl text-yellow-400">✦</div>
-                <p className="mt-3 text-sm font-bold text-slate-400">
-                  Serviço AuraMeets
-                </p>
-              </div>
+      <div className="relative aspect-[2/1] w-full overflow-hidden bg-[#18223D]">
+        {service.cover_photo_url ? (
+          <img
+            src={service.cover_photo_url}
+            alt={`Imagem do serviço ${service.name}`}
+            className="kenburns-image h-full w-full object-cover object-center transition duration-[1800ms] ease-out motion-safe:group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="flex h-full min-h-[240px] items-center justify-center text-center">
+            <div>
+              <div className="text-4xl text-yellow-400">✦</div>
+              <p className="mt-3 text-sm font-bold text-slate-400">
+                Serviço AuraMeets
+              </p>
             </div>
-          )}
-        </div>
-
-        <div className="flex min-w-0 flex-col justify-center p-6 sm:p-7 md:p-8">
-          <p className="break-words text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
-            {service.category}
-          </p>
-
-          <h3 className="mt-3 break-words text-2xl font-black leading-tight text-white sm:text-3xl">
-            {service.name}
-          </h3>
-
-          <p className="mt-4 whitespace-pre-line break-words text-[15px] leading-7 text-slate-300 sm:text-base sm:leading-8">
-            {service.description}
-          </p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {service.online && (
-              <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
-                Online
-              </span>
-            )}
-
-            {service.in_person && (
-              <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
-                Presencial
-              </span>
-            )}
-
-            {service.duration_minutes > 0 && (
-              <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
-                {service.duration_minutes} min
-              </span>
-            )}
           </div>
-        </div>
+        )}
+      </div>
 
-        <div className="flex flex-col justify-center border-t border-slate-800 bg-[#0D1426]/55 p-6 sm:p-7 md:border-l md:border-t-0 md:p-8">
-          {hasPromotion && (
-            <p className="text-sm font-semibold text-slate-500 line-through">
-              {formatCurrency(regularPrice, service.currency)}
-            </p>
+      <div className="p-6 sm:p-8 lg:p-10">
+        <p className="break-words text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
+          {service.category}
+        </p>
+
+        <h3 className="mt-3 break-words text-2xl font-black leading-tight text-white sm:text-3xl">
+          {service.name}
+        </h3>
+
+        <p className="mt-5 whitespace-pre-line break-words text-[15px] leading-7 text-slate-300 sm:text-base sm:leading-8">
+          {service.description}
+        </p>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {service.online && (
+            <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
+              Online
+            </span>
           )}
 
-          <p className="mt-1 text-3xl font-black text-yellow-400">
-            {formatCurrency(finalPrice, service.currency)}
-          </p>
+          {service.in_person && (
+            <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
+              Presencial
+            </span>
+          )}
+
+          {service.duration_minutes > 0 && (
+            <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-bold text-slate-300">
+              {service.duration_minutes} min
+            </span>
+          )}
+        </div>
+
+        <div className="mt-8 flex flex-col gap-4 border-t border-slate-800 pt-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            {hasPromotion && (
+              <p className="text-sm font-semibold text-slate-500 line-through">
+                {formatCurrency(regularPrice, service.currency)}
+              </p>
+            )}
+
+            <p className="mt-1 text-3xl font-black text-yellow-400">
+              {formatCurrency(finalPrice, service.currency)}
+            </p>
+          </div>
 
           <Link
             href={`/comprar?servico=${encodeURIComponent(service.id)}`}
-            className="mt-6 block rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-6 py-4 text-center font-black text-white shadow-[0_12px_30px_rgba(147,51,234,0.28)] transition hover:-translate-y-0.5 hover:brightness-110"
+            className="inline-flex min-h-[54px] items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 px-7 py-4 text-center font-black text-white shadow-[0_12px_30px_rgba(147,51,234,0.28)] transition hover:-translate-y-0.5 hover:brightness-110"
           >
             QUERO COMPRAR
           </Link>
