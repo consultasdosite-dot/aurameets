@@ -364,9 +364,29 @@ export default function ServicosPage() {
         );
       }
 
-      setServicos(
-        (dadosServicos ?? []) as Servico[],
+      const ordemStatus: Record<Servico["status"], number> = {
+        active: 1,
+        under_review: 2,
+        inactive: 3,
+      };
+
+      const servicosOrdenados = ((dadosServicos ?? []) as Servico[]).sort(
+        (a, b) => {
+          const diferencaStatus =
+            ordemStatus[a.status] - ordemStatus[b.status];
+
+          if (diferencaStatus !== 0) {
+            return diferencaStatus;
+          }
+
+          return (
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+          );
+        },
       );
+
+      setServicos(servicosOrdenados);
 
       setTerapeutaSlug(
         terapeuta?.slug ?? null,
