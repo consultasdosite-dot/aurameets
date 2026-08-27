@@ -89,6 +89,15 @@ const EXPERIENCE_SELECT = `
   )
 `;
 
+const FEATURED_THERAPIST_WEIGHTS: Record<string, number> = {
+  cristina: 3,
+  mariangela: 2,
+  michele: 2,
+  alzira: 2,
+  andrea: 2,
+  veridiana: 2,
+};
+
 function normalizeTherapist(
   therapist: SupabaseExperienceRow["therapist"],
 ): HomeExperienceTherapist | null {
@@ -101,6 +110,33 @@ function normalizeTherapist(
 
 function normalizeText(value: string | null): string {
   return value?.trim() || "";
+}
+
+function normalizeName(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function getFeaturedTherapistWeight(
+  therapistName: string,
+): number {
+  const normalizedName = normalizeName(therapistName);
+
+  for (const [name, weight] of Object.entries(
+    FEATURED_THERAPIST_WEIGHTS,
+  )) {
+    if (
+      normalizedName === name ||
+      normalizedName.startsWith(`${name} `)
+    ) {
+      return weight;
+    }
+  }
+
+  return 0;
 }
 
 function createTherapistLocation(
@@ -190,12 +226,13 @@ function createPublicHref(
   )}`;
 }
 
-
 function createWhatsAppHref(
   experience: SupabaseExperienceRow,
   therapist: HomeExperienceTherapist | null,
 ): string | null {
-  const rawPhone = normalizeText(therapist?.phone ?? null);
+  const rawPhone = normalizeText(
+    therapist?.phone ?? null,
+  );
 
   if (!rawPhone) {
     return null;
@@ -208,17 +245,22 @@ function createWhatsAppHref(
   }
 
   const phoneWithCountryCode =
-    digitsOnly.length === 10 || digitsOnly.length === 11
+    digitsOnly.length === 10 ||
+    digitsOnly.length === 11
       ? `55${digitsOnly}`
       : digitsOnly;
 
-  const customMessage = normalizeText(experience.whatsapp_message);
+  const customMessage = normalizeText(
+    experience.whatsapp_message,
+  );
 
   const message =
     customMessage ||
     `Olá! Vi no AuraMeets a experiência presente "${experience.title}" e gostaria de receber meu presente.`;
 
-  return `https://wa.me/${phoneWithCountryCode}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${phoneWithCountryCode}?text=${encodeURIComponent(
+    message,
+  )}`;
 }
 
 function normalizeExperience(
@@ -240,7 +282,9 @@ function normalizeExperience(
     normalizeText(
       therapist?.profile_photo_url ?? null,
     ) ||
-    normalizeText(therapist?.photo_url ?? null) ||
+    normalizeText(
+      therapist?.photo_url ?? null,
+    ) ||
     null;
 
   const displayDuration =
@@ -249,7 +293,9 @@ function normalizeExperience(
 
   const displayServiceType =
     normalizeText(experience.service_type) ||
-    normalizeText(therapist?.service_type ?? null) ||
+    normalizeText(
+      therapist?.service_type ?? null,
+    ) ||
     "Atendimento online";
 
   const buttonText =
@@ -263,7 +309,8 @@ function normalizeExperience(
     therapist_speciality: therapistSpeciality,
     therapist_photo_url: therapistPhotoUrl,
     therapist_slug:
-      normalizeText(therapist?.slug ?? null) || null,
+      normalizeText(therapist?.slug ?? null) ||
+      null,
     therapist_location:
       createTherapistLocation(therapist),
     remaining_slots:
@@ -307,10 +354,97 @@ function shuffleExperiences<T>(items: T[]): T[] {
   return shuffledItems;
 }
 
+function weightedShuffleFeaturedExperiences(
+  experiences: FeaturedExperience[],
+): FeaturedExperience[] {
+  const remainingExperiences = [...experiences];
+  const result: FeaturedExperience[] = [];
+
+  while (remainingExperiences.length > 0) {
+    const weights = remainingExperiences.map(
+      (experience) =>
+        getFeaturedTherapistWeight(
+          experience.therapist_name,
+        ),
+    );
+
+    const totalWeight = weights.reduce(
+      (total, weight) => total + weight,
+      0,
+    );
+
+    if (totalWeight <= 0) {
+      return [
+        ...result,
+        ...shuffleExperiences(
+          remainingExperiences,
+        ),
+      ];
+    }
+
+    let randomValue =
+      Math.random() * totalWeight;
+
+    let selectedIndex = 0;
+
+    for (
+      let index = 0;
+      index < weights.length;
+      index += 1
+    ) {
+      randomValue -= weights[index];
+
+      if (randomValue <= 0) {
+        selectedIndex = index;
+        break;
+      }
+    }
+
+    const [selectedExperience] =
+      remainingExperiences.splice(
+        selectedIndex,
+        1,
+      );
+
+    result.push(selectedExperience);
+  }
+
+  return result;
+}
+
 function selectHomeExperiences(
   experiences: FeaturedExperience[],
 ): FeaturedExperience[] {
-  return shuffleExperiences(experiences);
+  const priorityExperiences =
+    experiences.filter(
+      (experience) =>
+        getFeaturedTherapistWeight(
+          experience.therapist_name,
+        ) > 0,
+    );
+
+  const regularExperiences =
+    experiences.filter(
+      (experience) =>
+        getFeaturedTherapistWeight(
+          experience.therapist_name,
+        ) === 0,
+    );
+
+  const orderedPriorityExperiences =
+    weightedShuffleFeaturedExperiences(
+      priorityExperiences,
+    );
+
+  const shuffledRegularExperiences =
+    shuffleExperiences(
+      regularExperiences,
+    );
+
+  return [
+    ...orderedPriorityExperiences,
+    ...shuffledRegularExperiences,
+  ];
 }
 
 export function getTherapistInitials(
@@ -326,7 +460,9 @@ export function getTherapistInitials(
   }
 
   if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase();
+    return parts[0]
+      .slice(0, 2)
+      .toUpperCase();
   }
 
   return `${parts[0][0]}${
@@ -340,7 +476,10 @@ export async function getFeaturedExperiences(): Promise<
   const { data, error } = await supabase
     .from("experiences")
     .select(EXPERIENCE_SELECT)
-    .eq("approval_status", "approved")
+    .eq(
+      "approval_status",
+      "approved",
+    )
     .eq("active", true)
     .order("display_order", {
       ascending: true,
@@ -367,12 +506,13 @@ export async function getFeaturedExperiences(): Promise<
   const experiences = (data ??
     []) as unknown as SupabaseExperienceRow[];
 
-  const normalizedExperiences = experiences
-    .map(normalizeExperience)
-    .filter(
-      (experience) =>
-        experience.remaining_slots > 0,
-    );
+  const normalizedExperiences =
+    experiences
+      .map(normalizeExperience)
+      .filter(
+        (experience) =>
+          experience.remaining_slots > 0,
+      );
 
   return selectHomeExperiences(
     normalizedExperiences,
@@ -382,7 +522,10 @@ export async function getFeaturedExperiences(): Promise<
 export async function getHomeExperienceById(
   id: number,
 ): Promise<FeaturedExperience | null> {
-  if (!Number.isInteger(id) || id <= 0) {
+  if (
+    !Number.isInteger(id) ||
+    id <= 0
+  ) {
     return null;
   }
 
@@ -390,7 +533,10 @@ export async function getHomeExperienceById(
     .from("experiences")
     .select(EXPERIENCE_SELECT)
     .eq("id", id)
-    .eq("approval_status", "approved")
+    .eq(
+      "approval_status",
+      "approved",
+    )
     .eq("active", true)
     .maybeSingle();
 
