@@ -137,10 +137,10 @@ export default function HomePage() {
             </Link>
 
             <Link
-              href="/cadastro-fundador"
+              href="/cadastro"
               className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gradient-to-r from-[#7e46b9] to-[#542c91] px-7 text-sm font-extrabold text-white shadow-[0_10px_24px_rgba(87,45,145,0.24)] transition hover:-translate-y-0.5"
             >
-              Cadastrar
+              SOU TERAPEUTA
             </Link>
           </div>
 
@@ -221,11 +221,11 @@ export default function HomePage() {
                 </Link>
 
                 <Link
-                  href="/cadastro-fundador"
+                  href="/cadastro"
                   onClick={fecharMenu}
                   className="rounded-xl bg-[#61339a] px-4 py-3 text-center font-extrabold text-white"
                 >
-                  Cadastrar
+                  SOU TERAPEUTA
                 </Link>
               </div>
             </nav>
@@ -287,10 +287,10 @@ export default function HomePage() {
 
             <Link
               href="/terapeutas"
-              className="inline-flex items-center gap-3 text-sm font-extrabold text-[#6e35a5] transition hover:text-[#50227f]"
+              className="inline-flex min-h-[58px] w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#7e46b9] to-[#542c91] px-8 py-4 text-center text-lg font-black text-white shadow-[0_14px_32px_rgba(87,45,145,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(87,45,145,0.32)] sm:w-auto"
             >
-              Conhecer todos os terapeutas
-              <ArrowIcon className="h-4 w-4" />
+              ENCONTRE SEU TERAPEUTA
+              <ArrowIcon className="h-5 w-5" />
             </Link>
           </div>
 
