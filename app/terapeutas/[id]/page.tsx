@@ -374,114 +374,55 @@ function ServiceCard({
 
 function AuraMeetsHeader() {
   return (
-    <header className="relative overflow-hidden border-b border-yellow-400/30 bg-[#071026]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(124,58,237,0.34),_transparent_42%),radial-gradient(circle_at_50%_100%,_rgba(250,204,21,0.10),_transparent_34%)]" />
+    <header className="relative overflow-hidden border-b border-yellow-400/30 bg-[#050B1C]">
+      <div className="absolute inset-0">
+        <img
+          src="/images/cabecalho-aurameets.png"
+          alt=""
+          aria-hidden="true"
+          className="h-full w-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#050B1C]/95 via-[#050B1C]/10 to-[#050B1C]/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#050B1C]/35" />
+      </div>
 
-      <div className="relative mx-auto flex min-h-[190px] max-w-7xl items-center justify-between gap-6 px-5 py-8 sm:px-8 lg:min-h-[220px]">
+      <div className="relative mx-auto flex min-h-[150px] max-w-7xl items-center justify-between gap-5 px-5 py-6 sm:min-h-[170px] sm:px-8 lg:min-h-[185px]">
         <Link href="/" className="relative z-10 shrink-0">
-          <div className="text-[30px] font-black tracking-[0.08em] text-white sm:text-[40px]">
+          <div className="text-[25px] font-black tracking-[0.06em] text-white sm:text-[34px] lg:text-[38px]">
             <span className="text-yellow-400">AURA</span>MEETS
           </div>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-300 sm:text-xs">
+          <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.24em] text-slate-200 sm:text-[10px] lg:text-xs">
             Conecta • Transforma • Realiza
           </p>
         </Link>
 
-        <div className="pointer-events-none absolute left-1/2 top-1/2 hidden w-[520px] -translate-x-1/2 -translate-y-1/2 opacity-95 md:block lg:w-[620px]">
-          <svg
-            viewBox="0 0 760 220"
-            role="img"
-            aria-label="Mãos AuraMeets envolvendo uma flor de lótus"
-            className="h-auto w-full"
-          >
-            <defs>
-              <linearGradient id="auraGold" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#FDE68A" />
-                <stop offset="48%" stopColor="#FACC15" />
-                <stop offset="100%" stopColor="#B7791F" />
-              </linearGradient>
-              <linearGradient id="auraSkin" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#FFE0BD" />
-                <stop offset="50%" stopColor="#C98B63" />
-                <stop offset="100%" stopColor="#7A4B36" />
-              </linearGradient>
-              <filter id="auraGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="7" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-
-            <g opacity="0.28" stroke="url(#auraGold)" fill="none">
-              <circle cx="380" cy="105" r="76" />
-              <circle cx="380" cy="105" r="52" />
-              <path d="M304 105h152M380 29v152M326 51l108 108M434 51L326 159" />
-            </g>
-
-            <g filter="url(#auraGlow)" fill="none" stroke="url(#auraGold)" strokeWidth="3">
-              <path d="M380 145c-30-18-43-45-35-75 21 9 34 27 35 54 1-27 14-45 35-54 8 30-5 57-35 75Z" />
-              <path d="M380 146c-20-6-42-1-59 15 8-26 28-44 59-47" />
-              <path d="M380 146c20-6 42-1 59 15-8-26-28-44-59-47" />
-              <path d="M380 151c-10 4-18 12-24 24 17-7 31-7 48 0-6-12-14-20-24-24Z" />
-            </g>
-
-            <g fill="none" stroke="url(#auraSkin)" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M66 74c36 4 61 18 84 39 18 17 39 31 63 41 31 13 57 18 92 19" strokeWidth="22" />
-              <path d="M102 49c22 3 42 12 60 25 11 8 20 18 29 29" strokeWidth="16" />
-              <path d="M145 43c20 5 38 15 53 29 8 7 15 15 21 24" strokeWidth="14" />
-              <path d="M189 48c18 7 34 18 47 33 5 6 10 12 14 19" strokeWidth="12" />
-              <path d="M694 74c-36 4-61 18-84 39-18 17-39 31-63 41-31 13-57 18-92 19" strokeWidth="22" />
-              <path d="M658 49c-22 3-42 12-60 25-11 8-20 18-29 29" strokeWidth="16" />
-              <path d="M615 43c-20 5-38 15-53 29-8 7-15 15-21 24" strokeWidth="14" />
-              <path d="M571 48c-18 7-34 18-47 33-5 6-10 12-14 19" strokeWidth="12" />
-            </g>
-
-            <circle cx="380" cy="34" r="4" fill="#FACC15" filter="url(#auraGlow)" />
-            <circle cx="338" cy="55" r="2.5" fill="#FDE68A" />
-            <circle cx="422" cy="55" r="2.5" fill="#FDE68A" />
-          </svg>
-        </div>
-
-        <nav className="relative z-10 hidden items-center gap-6 text-sm font-black text-slate-200 lg:flex">
+        <nav className="relative z-10 hidden items-center gap-5 text-xs font-black text-white lg:flex xl:gap-7">
           <Link href="/terapeutas" className="transition hover:text-yellow-400">
-            PROFISSIONAIS
+            TERAPEUTAS
           </Link>
           <a href="#servicos" className="transition hover:text-yellow-400">
             SERVIÇOS
           </a>
+          <Link href="/experiencias" className="transition hover:text-yellow-400">
+            EXPERIÊNCIAS
+          </Link>
+          <Link href="/sobre" className="transition hover:text-yellow-400">
+            SOBRE NÓS
+          </Link>
           <Link
-            href="/"
-            className="rounded-full border border-yellow-400/40 bg-yellow-400/5 px-5 py-3 text-yellow-300 transition hover:bg-yellow-400/10"
+            href="/presentear"
+            className="rounded-full border border-yellow-400/60 bg-[#071026]/65 px-5 py-3 text-yellow-300 shadow-lg backdrop-blur-sm transition hover:bg-yellow-400 hover:text-slate-950"
           >
-            AURAMEETS
+            QUERO PRESENTEAR
           </Link>
         </nav>
-      </div>
 
-      <div className="relative border-t border-white/5 px-5 pb-5 md:hidden">
-        <div className="mx-auto flex max-w-sm items-center justify-center">
-          <svg
-            viewBox="0 0 760 220"
-            aria-hidden="true"
-            className="h-auto w-full max-w-[340px] opacity-90"
-          >
-            <defs>
-              <linearGradient id="auraGoldMobile" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#FDE68A" />
-                <stop offset="50%" stopColor="#FACC15" />
-                <stop offset="100%" stopColor="#B7791F" />
-              </linearGradient>
-            </defs>
-            <g fill="none" stroke="url(#auraGoldMobile)" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M70 90c48 2 81 22 111 49 28 25 69 35 121 35" strokeWidth="15" opacity="0.7" />
-              <path d="M690 90c-48 2-81 22-111 49-28 25-69 35-121 35" strokeWidth="15" opacity="0.7" />
-              <path d="M380 145c-30-18-43-45-35-75 21 9 34 27 35 54 1-27 14-45 35-54 8 30-5 57-35 75Z" strokeWidth="4" />
-              <circle cx="380" cy="105" r="74" opacity="0.3" />
-            </g>
-          </svg>
-        </div>
+        <Link
+          href="/terapeutas"
+          className="relative z-10 rounded-full border border-yellow-400/50 bg-[#071026]/70 px-4 py-2 text-[10px] font-black text-yellow-300 backdrop-blur-sm transition hover:bg-yellow-400 hover:text-slate-950 lg:hidden"
+        >
+          TERAPEUTAS
+        </Link>
       </div>
     </header>
   );
