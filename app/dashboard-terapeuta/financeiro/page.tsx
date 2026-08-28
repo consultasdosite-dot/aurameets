@@ -90,6 +90,14 @@ const PAYMENT_METHODS = [
   { value: "outro", label: "Outro" },
 ];
 
+const AURAMEETS_PIX = {
+  keyType: "CPF",
+  key: "08677876863",
+  holder: "Oscar José Ahumada",
+  bank: "Wise",
+  role: "CEO da AuraMeets",
+};
+
 function parseCurrencyInput(value: string) {
   const normalized = value
     .replace(/\s/g, "")
@@ -143,6 +151,8 @@ function FinanceiroTerapeutaContent() {
 
   const [therapistId, setTherapistId] =
     useState<number | null>(null);
+  const [therapistDisplayName, setTherapistDisplayName] =
+    useState("Terapeuta");
 
   const [externalRecords, setExternalRecords] =
     useState<FinancialRecord[]>([]);
@@ -173,11 +183,29 @@ function FinanceiroTerapeutaContent() {
     useState("");
   const [pixError, setPixError] =
     useState("");
+  const [auraPixMessage, setAuraPixMessage] =
+    useState("");
 
   const [auraAberta, setAuraAberta] =
     useState(false);
   const [auraTopico, setAuraTopico] =
     useState<string | null>(null);
+
+  async function copiarPixAuraMeets() {
+    try {
+      await navigator.clipboard.writeText(
+        AURAMEETS_PIX.key,
+      );
+
+      setAuraPixMessage(
+        "Chave PIX copiada. Abra seu banco, escolha PIX e cole a chave CPF do AuraMeets.",
+      );
+    } catch {
+      setAuraPixMessage(
+        `Chave PIX AuraMeets: ${AURAMEETS_PIX.key}`,
+      );
+    }
+  }
 
   const auraFinanceiro: Record<
     string,
@@ -418,6 +446,20 @@ function FinanceiroTerapeutaContent() {
           return;
         }
 
+        const metadata = session.user.user_metadata ?? {};
+        const resolvedTherapistName = String(
+          metadata.full_name ||
+            metadata.name ||
+            metadata.display_name ||
+            metadata.nome ||
+            session.user.email ||
+            "Terapeuta",
+        ).trim();
+
+        setTherapistDisplayName(
+          resolvedTherapistName || "Terapeuta",
+        );
+
         const resolvedTherapistId =
           await getTherapistIdByProfileId(
             session.user.id,
@@ -654,6 +696,20 @@ function FinanceiroTerapeutaContent() {
     }
   }
 
+  const commissionOutstanding = useMemo(() => {
+    return externalRecords
+      .filter((record) =>
+        record.commission_status === "pendente" ||
+        record.commission_status === "informada",
+      )
+      .reduce(
+        (total, record) =>
+          total +
+          Number(record.platform_fee_amount ?? 0),
+        0,
+      );
+  }, [externalRecords]);
+
   const totals = useMemo(() => {
     const now = new Date();
     const currentMonth =
@@ -713,33 +769,19 @@ function FinanceiroTerapeutaContent() {
   return (
     <main className="min-h-screen bg-[#f6f7fb] text-slate-900">
       <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <section className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-sm font-bold text-purple-700">
-              Gestão dos seus recebimentos
-            </p>
+        <section>
+          <p className="text-sm font-bold text-purple-700">
+            Gestão dos seus recebimentos
+          </p>
 
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-              Centro Financeiro
-            </h1>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            Centro Financeiro
+          </h1>
 
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-              Organize seus recebimentos por PIX, InfinitePay ou outras formas
-              de pagamento e acompanhe a comissão do AuraMeets.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setErrorMessage("");
-              setSuccessMessage("");
-              setModalOpen(true);
-            }}
-            className="inline-flex min-h-12 items-center justify-center rounded-xl border border-purple-200 bg-white px-6 text-sm font-bold text-purple-700 shadow-sm transition hover:bg-purple-50"
-          >
-            Registrar recebimento
-          </button>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+            Organize seus recebimentos por PIX, InfinitePay ou outras formas
+            de pagamento e acompanhe a comissão do AuraMeets.
+          </p>
         </section>
 
         <section className="mt-7 rounded-3xl border border-yellow-300 bg-yellow-400 p-5 text-black shadow-sm sm:p-7">
@@ -767,6 +809,37 @@ function FinanceiroTerapeutaContent() {
               className="min-h-16 rounded-2xl bg-[#050816] px-8 py-4 text-lg font-black text-yellow-400 transition hover:bg-black"
             >
               PEÇA AJUDA
+            </button>
+          </div>
+        </section>
+
+        {/* REGISTRAR RECEBIMENTO - CTA GRANDE */}
+        <section className="mt-7 rounded-3xl border border-purple-200 bg-purple-50 p-5 shadow-sm sm:p-7">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-700">
+                Registrar recebimento
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">
+                Registre um novo recebimento
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-slate-600">
+                Informe um pagamento recebido e o AuraMeets calcula automaticamente a comissão de 3%.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMessage("");
+                setSuccessMessage("");
+                setModalOpen(true);
+              }}
+              className="min-h-24 w-full rounded-2xl bg-purple-700 px-8 py-5 text-lg font-black text-white shadow-lg transition hover:bg-purple-800 sm:w-auto sm:min-w-[320px]"
+            >
+              REGISTRAR RECEBIMENTO
             </button>
           </div>
         </section>
@@ -1079,13 +1152,104 @@ function FinanceiroTerapeutaContent() {
           />
         </section>
 
-        {successMessage && (
-          <section className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
-            <p className="text-sm font-semibold text-emerald-700">
-              {successMessage}
-            </p>
-          </section>
-        )}
+        {/* COMISSÃO AURAMEETS - CARD ÚNICO */}
+        <section
+          className={`mt-7 overflow-hidden rounded-3xl border shadow-xl ${
+            commissionOutstanding > 0
+              ? "border-emerald-300 bg-emerald-50"
+              : "border-slate-200 bg-white"
+          }`}
+        >
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+              <div className="max-w-3xl">
+                <p
+                  className={`text-xs font-black uppercase tracking-[0.2em] ${
+                    commissionOutstanding > 0
+                      ? "text-emerald-700"
+                      : "text-slate-500"
+                  }`}
+                >
+                  Comissão AuraMeets
+                </p>
+
+                <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-2">
+                  <h2 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+                    {formatCurrency(commissionOutstanding)}
+                  </h2>
+
+                  <span
+                    className={`mb-1 rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
+                      commissionOutstanding > 0
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {commissionOutstanding > 0 ? "Pendente" : "Em dia"}
+                  </span>
+                </div>
+
+                <p className="mt-3 text-base leading-7 text-slate-700">
+                  {commissionOutstanding > 0
+                    ? "Este valor corresponde aos 3% de comissão do AuraMeets sobre seus recebimentos registrados."
+                    : "Você não possui comissão pendente neste momento."}
+                </p>
+
+                {commissionOutstanding > 0 && (
+                  <div className="mt-5 text-sm leading-7 text-slate-700">
+                    <p>
+                      <strong>PIX:</strong> CPF {AURAMEETS_PIX.key}
+                    </p>
+                    <p>
+                      <strong>Favorecido:</strong> {AURAMEETS_PIX.holder}
+                    </p>
+                    <p>
+                      <strong>Banco:</strong> {AURAMEETS_PIX.bank}
+                    </p>
+                  </div>
+                )}
+
+                {successMessage && (
+                  <div className="mt-5 rounded-2xl border border-emerald-200 bg-white px-5 py-4">
+                    <p className="text-sm font-black text-emerald-800">
+                      ✓ {successMessage}
+                    </p>
+                  </div>
+                )}
+
+                {auraPixMessage && (
+                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-white px-5 py-4">
+                    <p className="text-sm font-black text-emerald-800">
+                      ✓ {auraPixMessage}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {commissionOutstanding > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => void copiarPixAuraMeets()}
+                  className="min-h-28 w-full shrink-0 rounded-3xl bg-emerald-600 px-8 py-6 text-xl font-black text-white shadow-xl transition hover:bg-emerald-700 xl:w-[430px]"
+                >
+                  PAGAR {formatCurrency(commissionOutstanding)} VIA PIX
+                  <span className="mt-2 block text-base font-bold text-white/90">
+                    COPIAR CHAVE PIX
+                  </span>
+                </button>
+              ) : (
+                <div className="w-full shrink-0 rounded-3xl border border-slate-200 bg-slate-50 px-8 py-6 text-center xl:w-[430px]">
+                  <p className="text-xl font-black text-slate-800">
+                    Tudo certo por aqui
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-slate-500">
+                    Suas comissões estão em dia.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
         {errorMessage && (
           <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
@@ -1434,6 +1598,20 @@ function FinanceiroTerapeutaContent() {
               }
               className="mt-7 space-y-5"
             >
+              <div>
+                <label className="text-sm font-bold text-slate-700">
+                  Terapeuta
+                </label>
+
+                <div className="mt-2 flex min-h-12 w-full items-center rounded-xl border border-purple-200 bg-purple-50 px-4 text-sm font-black text-purple-800">
+                  {therapistDisplayName}
+                </div>
+
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Identificação automática da conta. Este nome não pode ser alterado neste lançamento.
+                </p>
+              </div>
+
               <Field
                 label="Nome do cliente"
                 value={form.clientName}
