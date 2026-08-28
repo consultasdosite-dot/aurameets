@@ -122,7 +122,7 @@ function criarSlug(nome: string, authUserId: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-  return `${nomeNormalizado}-${authUserId.slice(0, 8)}`;
+  return nomeNormalizado;
 }
 
 function definirTipoDeAtendimento(
