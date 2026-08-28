@@ -415,8 +415,49 @@ function weightedShuffleFeaturedExperiences(
 function selectHomeExperiences(
   experiences: FeaturedExperience[],
 ): FeaturedExperience[] {
+  const uniqueByTherapist = new Map<
+    number,
+    FeaturedExperience[]
+  >();
+
+  for (const experience of experiences) {
+    const current =
+      uniqueByTherapist.get(experience.therapist_id) ?? [];
+
+    current.push(experience);
+    uniqueByTherapist.set(
+      experience.therapist_id,
+      current,
+    );
+  }
+
+  const oneExperiencePerTherapist =
+    Array.from(uniqueByTherapist.values()).map(
+      (therapistExperiences) => {
+        const ordered = [...therapistExperiences].sort(
+          (a, b) => {
+            const orderA =
+              a.display_order ?? Number.MAX_SAFE_INTEGER;
+            const orderB =
+              b.display_order ?? Number.MAX_SAFE_INTEGER;
+
+            if (orderA !== orderB) {
+              return orderA - orderB;
+            }
+
+            return (
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+            );
+          },
+        );
+
+        return ordered[0];
+      },
+    );
+
   const priorityExperiences =
-    experiences.filter(
+    oneExperiencePerTherapist.filter(
       (experience) =>
         getFeaturedTherapistWeight(
           experience.therapist_name,
@@ -424,7 +465,7 @@ function selectHomeExperiences(
     );
 
   const regularExperiences =
-    experiences.filter(
+    oneExperiencePerTherapist.filter(
       (experience) =>
         getFeaturedTherapistWeight(
           experience.therapist_name,
@@ -437,9 +478,7 @@ function selectHomeExperiences(
     );
 
   const shuffledRegularExperiences =
-    shuffleExperiences(
-      regularExperiences,
-    );
+    shuffleExperiences(regularExperiences);
 
   return [
     ...orderedPriorityExperiences,
