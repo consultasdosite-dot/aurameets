@@ -1,4 +1,4 @@
-"use client";
+
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -955,7 +955,7 @@ export default function ServicosPage() {
                       key={servico.id}
                       className="overflow-hidden rounded-3xl border border-slate-700 bg-[#111A33] shadow-xl"
                     >
-                      <div className="flex aspect-[2/1] w-full items-center justify-center overflow-hidden bg-[#1B2444]">
+                      <div className="flex aspect-video w-full items-center justify-center overflow-hidden bg-[#1B2444]">
                         {servico.cover_photo_url ? (
                           <img
                             src={
@@ -1263,7 +1263,7 @@ export default function ServicosPage() {
                         </p>
 
                         <div className="mt-3 overflow-hidden rounded-2xl border border-yellow-400/30 bg-slate-950">
-                          <div className="aspect-[2/1] w-full">
+                          <div className="aspect-video w-full">
                             <img
                               src={auraImagemUrl}
                               alt="Foto criada pela AURA para o serviço"
@@ -1480,12 +1480,12 @@ export default function ServicosPage() {
                   />
 
                   <p className="mt-2 text-sm leading-6 text-slate-400">
-                    Tamanho recomendado: 1200 × 600 px, proporção 2:1. Use uma imagem horizontal, nítida e sem textos próximos das bordas.
+                    TAMANHO RECOMENDADO: 1200 × 675 PX — FORMATO HORIZONTAL — 16:9. Use uma imagem horizontal, nítida e sem textos próximos das bordas.
                   </p>
 
                   {formEdicao.cover_photo_url.trim() && (
                     <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700 bg-[#1B2444]">
-                      <div className="aspect-[2/1] w-full">
+                      <div className="aspect-video w-full">
                         <img
                           src={formEdicao.cover_photo_url}
                           alt="Prévia da foto do serviço"
@@ -1493,7 +1493,7 @@ export default function ServicosPage() {
                         />
                       </div>
                       <p className="px-4 py-3 text-xs text-slate-400">
-                        Prévia no formato recomendado 2:1 (1200 × 600). A imagem é recortada proporcionalmente, sem ser esticada.
+                        Prévia no formato recomendado 16:9 (1200 × 675). A imagem é exibida proporcionalmente, sem ser esticada.
                       </p>
                     </div>
                   )}

@@ -431,7 +431,7 @@ export default function NovoServicoPage() {
                 type="button"
                 onClick={abrirSeletorDeFoto}
                 disabled={carregando}
-                className="group relative flex aspect-[2/1] w-full items-center justify-center overflow-hidden transition disabled:cursor-not-allowed disabled:opacity-60"
+                className="group relative flex aspect-video w-full items-center justify-center overflow-hidden transition disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {fotoPreview ? (
                   <>
@@ -459,6 +459,15 @@ export default function NovoServicoPage() {
                       Escolha uma imagem que represente claramente o
                       serviço oferecido.
                     </p>
+
+                    <div className="mx-auto mt-5 max-w-md rounded-xl border border-yellow-400/50 bg-yellow-400/10 px-4 py-3">
+                      <p className="text-sm font-black uppercase tracking-wide text-yellow-400">
+                        TAMANHO RECOMENDADO: 1200 × 675 PX
+                      </p>
+                      <p className="mt-1 text-xs font-bold uppercase tracking-wide text-yellow-200">
+                        FORMATO HORIZONTAL — 16:9
+                      </p>
+                    </div>
                   </div>
                 )}
               </button>

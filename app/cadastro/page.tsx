@@ -36,13 +36,13 @@ const specialties = [
 ];
 
 const professionalBenefits = [
-  "Perfil profissional próprio dentro do AuraMeets",
-  "Divulgação do seu trabalho e dos seus serviços",
-  "Cadastro de serviços e ofertas especiais",
-  "Recebimentos diretos por PIX e InfinitePay",
+  "Perfil profissional moderno que pode ser usado como seu site",
+  "Página própria para divulgar no WhatsApp, Instagram e para seus clientes",
+  "Apresentação das suas especialidades, serviços, experiências e ofertas",
+  "Presença nas vitrines e buscas da AuraMeets",
   "Mensalidade de R$ 35,00, sem fidelidade",
   "Taxa de 3% sobre serviços originados pela plataforma",
-  "Investimento em tráfego pago, redes sociais e divulgação nacional",
+  "Parte das mensalidades destinada à divulgação e ao tráfego pago da AuraMeets",
 ];
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
@@ -472,14 +472,13 @@ export default function CadastroPage() {
           </p>
 
           <h1 className="mt-5 max-w-2xl text-4xl font-black leading-[1.05] sm:text-5xl lg:text-5xl xl:text-6xl">
-            Transforme seu trabalho em um perfil profissional que vende por você.
+            Seu perfil AuraMeets pode ser o seu site profissional.
           </h1>
 
           <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
-            Tenha presença profissional dentro do AuraMeets, publique seus
-            serviços, crie ofertas especiais e receba novos clientes em uma
-            plataforma feita para profissionais do cuidado e do desenvolvimento
-            humano.
+            Tenha um espaço moderno para apresentar você, suas especialidades,
+            serviços, experiências e formas de contato — com um endereço próprio
+            para divulgar no WhatsApp, Instagram e para seus clientes.
           </p>
 
           <button
@@ -512,12 +511,12 @@ export default function CadastroPage() {
                   serviços e ofertas especiais.
                 </p>
                 <p>
-                  <strong className="text-white">4.</strong> Cadastre PIX e
-                  links InfinitePay para receber diretamente.
+                  <strong className="text-white">4.</strong> Divulgue seu perfil
+                  no WhatsApp, Instagram e para seus clientes.
                 </p>
                 <p>
-                  <strong className="text-white">5.</strong> Acompanhe seus
-                  recebimentos e a taxa de 3% no Centro Financeiro.
+                  <strong className="text-white">5.</strong> Receba contatos,
+                  pedidos e oportunidades geradas pela divulgação da plataforma.
                 </p>
               </div>
             </div>
@@ -540,8 +539,8 @@ export default function CadastroPage() {
             </p>
 
             <p className="mt-4 text-base font-bold leading-7 sm:text-lg">
-              Vencimento todo dia 1º. A taxa da plataforma é de 3% sobre os
-              serviços originados pelo AuraMeets.
+              Um investimento acessível para ter presença profissional, divulgação
+              contínua e uma estrutura pronta para apresentar seus serviços.
             </p>
 
             <ul className="mt-8 space-y-4 text-sm font-semibold sm:text-base">
@@ -559,31 +558,69 @@ export default function CadastroPage() {
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
-              <p className="text-xl font-black text-yellow-400">
-                DIVULGAÇÃO
-              </p>
-
+              <p className="text-xl font-black text-yellow-400">SEU SITE</p>
               <p className="mt-1 text-sm text-slate-300">
-                presença contínua da plataforma
+                perfil moderno e compartilhável
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
-              <p className="text-2xl font-black text-yellow-400">3%</p>
-
+              <p className="text-xl font-black text-yellow-400">TRÁFEGO PAGO</p>
               <p className="mt-1 text-sm text-slate-300">
-                sobre serviços originados
+                investimento contínuo em divulgação
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-[#0B1125] p-4">
               <p className="text-2xl font-black text-yellow-400">R$ 35,00</p>
-
               <p className="mt-1 text-sm text-slate-300">
                 por mês · sem fidelidade
               </p>
             </div>
           </div>
+
+          <section className="mt-6 overflow-hidden rounded-3xl border border-purple-400/30 bg-[#0B1125]">
+            <div className="border-b border-slate-800 p-5 sm:p-6">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-300">
+                Veja na prática
+              </p>
+              <h2 className="mt-2 text-2xl font-black text-white">
+                Seu perfil pode ficar assim
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                A AuraMeets reúne em uma única página sua apresentação,
+                especialidades, serviços, experiências e formas de contato.
+              </p>
+            </div>
+
+            <div className="p-5 sm:p-6">
+              <div className="rounded-2xl border border-slate-700 bg-[#111A33] p-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-xl font-black text-purple-200">
+                    AM
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-lg font-black text-white">Seu nome profissional</p>
+                    <p className="mt-1 text-sm text-slate-300">Sua especialidade principal</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-3 text-center text-xs font-black sm:grid-cols-4">
+                  <span className="rounded-xl bg-yellow-400 px-3 py-3 text-black">AGENDAR</span>
+                  <span className="rounded-xl border border-slate-600 px-3 py-3 text-white">SERVIÇOS</span>
+                  <span className="rounded-xl border border-slate-600 px-3 py-3 text-white">PROMOÇÕES</span>
+                  <span className="rounded-xl border border-slate-600 px-3 py-3 text-white">CONTATO</span>
+                </div>
+              </div>
+
+              <Link
+                href="/terapeutas"
+                className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-purple-400/50 bg-purple-400/10 px-5 text-sm font-black text-purple-200 transition hover:bg-purple-400/20"
+              >
+                VER PERFIS PUBLICADOS
+              </Link>
+            </div>
+          </section>
         </section>
 
         {/* COLUNA DIREITA */}
@@ -608,8 +645,8 @@ export default function CadastroPage() {
             </p>
 
             <p className="mt-2 text-sm leading-6 text-slate-300 sm:text-base">
-              Perfil próprio para divulgação, serviços, ofertas, PIX,
-              InfinitePay, avaliações, indicações e acesso ao Centro Financeiro.
+              Um perfil moderno e compartilhável para apresentar seu trabalho,
+              serviços, experiências, avaliações, ofertas e formas de contato.
             </p>
 
             <Link

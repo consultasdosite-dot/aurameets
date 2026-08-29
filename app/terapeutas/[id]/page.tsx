@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import ExpandableBio from "./ExpandableBio";
+
 import { getTherapistBySlug } from "@/lib/therapists";
 
 type PageProps = {
@@ -628,18 +630,7 @@ export default async function TherapistProfilePage({ params }: PageProps) {
           </div>
 
           {bioParagraphs.length > 0 && (
-            <div className="mx-auto mt-8 max-w-5xl text-center sm:mt-10 sm:text-left">
-              <div className="space-y-4">
-                {bioParagraphs.slice(0, 2).map((paragraph, index) => (
-                  <p
-                    key={index}
-                    className="text-[16px] leading-7 text-[#4f525b] sm:text-[18px] sm:leading-8"
-                  >
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
-            </div>
+            <ExpandableBio paragraphs={bioParagraphs} />
           )}
 
           <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:grid-cols-4 sm:gap-4">
