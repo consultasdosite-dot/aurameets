@@ -356,6 +356,9 @@ export default function CadastroPage() {
                       <p className="mt-1 font-bold text-white">
                         {AURAMEETS_PIX_TITULAR}
                       </p>
+                      <p className="mt-1 text-sm font-bold text-yellow-400">
+                        CEO DA AURAMEETS
+                      </p>
                     </div>
 
                     <div>
@@ -605,19 +608,18 @@ export default function CadastroPage() {
                   </div>
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3 text-center text-xs font-black sm:grid-cols-4">
+                <div className="mt-5 grid grid-cols-1 gap-3 text-center text-xs font-black sm:grid-cols-3">
                   <span className="rounded-xl bg-yellow-400 px-3 py-3 text-black">AGENDAR</span>
                   <span className="rounded-xl border border-slate-600 px-3 py-3 text-white">SERVIÇOS</span>
-                  <span className="rounded-xl border border-slate-600 px-3 py-3 text-white">PROMOÇÕES</span>
                   <span className="rounded-xl border border-slate-600 px-3 py-3 text-white">CONTATO</span>
                 </div>
               </div>
 
               <Link
-                href="/terapeutas"
+                href="/terapeutas/cristina-pacheco"
                 className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-purple-400/50 bg-purple-400/10 px-5 text-sm font-black text-purple-200 transition hover:bg-purple-400/20"
               >
-                VER PERFIS PUBLICADOS
+                VER PERFIL MODELO — CRISTINA PACHECO
               </Link>
             </div>
           </section>
@@ -655,6 +657,67 @@ export default function CadastroPage() {
             >
               VER DÚVIDAS FREQUENTES
             </Link>
+          </section>
+
+          <section className="mt-6 rounded-3xl border-2 border-emerald-400 bg-emerald-500/10 p-5 shadow-[0_0_35px_rgba(52,211,153,0.12)] sm:p-6">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
+              PAGAMENTO DA MENSALIDADE
+            </p>
+
+            <div className="mt-4 text-center">
+              <p className="text-sm font-bold text-slate-300">
+                Mensalidade AuraMeets
+              </p>
+              <p className="mt-1 text-4xl font-black text-emerald-400 sm:text-5xl">
+                R$ 35,00
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-300">
+                por mês
+              </p>
+            </div>
+
+            <div className="my-5 h-px bg-emerald-400/30" />
+
+            <p className="text-center text-sm font-black uppercase tracking-[0.16em] text-white">
+              PIX PARA CHAVE CPF
+            </p>
+
+            <div className="mt-3 rounded-2xl border-2 border-emerald-400 bg-emerald-400/10 px-4 py-4 text-center shadow-[0_0_22px_rgba(52,211,153,0.18)]">
+              <p className="break-all text-2xl font-black tracking-wide text-emerald-300 sm:text-3xl">
+                {AURAMEETS_PIX_FORMATADO}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void copiarPixAuraMeets()}
+              className="mt-4 min-h-12 w-full rounded-xl bg-emerald-400 px-5 font-black text-[#04130d] transition hover:bg-emerald-300"
+            >
+              {pixCopiado ? "CHAVE PIX COPIADA" : "COPIAR CHAVE PIX"}
+            </button>
+
+            <div className="mt-5 space-y-4 border-t border-emerald-400/30 pt-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Titular
+                </p>
+                <p className="mt-1 text-lg font-black text-emerald-300">
+                  {AURAMEETS_PIX_TITULAR}
+                </p>
+                <p className="mt-1 text-sm font-black uppercase tracking-wide text-white">
+                  CEO DA AURAMEETS
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Banco
+                </p>
+                <p className="mt-1 text-lg font-black text-emerald-300">
+                  {AURAMEETS_PIX_BANCO}
+                </p>
+              </div>
+            </div>
           </section>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6 sm:mt-10">
