@@ -473,9 +473,6 @@ export default async function TherapistProfilePage({ params }: PageProps) {
     therapist.photo_url?.trim() ||
     null;
 
-  const presentationVideoUrl =
-    profileExtra.presentation_video_url?.trim() || null;
-
   const location = [therapist.city, therapist.state]
     .filter(Boolean)
     .join(" - ");
@@ -717,24 +714,6 @@ export default async function TherapistProfilePage({ params }: PageProps) {
                 {speciality}
               </span>
             ))}
-          </div>
-        </section>
-      )}
-
-      {presentationVideoUrl && (
-        <section className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
-          <div className="rounded-[28px] border border-[#eee7ef] bg-white p-5 shadow-[0_12px_34px_rgba(76,42,87,0.07)] sm:p-7">
-            <h2 className="text-2xl font-black text-[#26272d]">
-              Apresentação profissional
-            </h2>
-            <video
-              controls
-              preload="metadata"
-              className="mt-5 w-full rounded-2xl bg-black"
-            >
-              <source src={presentationVideoUrl} />
-              Seu navegador não conseguiu reproduzir este vídeo.
-            </video>
           </div>
         </section>
       )}
