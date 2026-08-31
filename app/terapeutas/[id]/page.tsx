@@ -290,15 +290,6 @@ function LotusIcon() {
   );
 }
 
-function GiftIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M4 10h16v10H4zM3 7h18v3H3zM12 7v13" />
-      <path d="M12 7H8.5A2.5 2.5 0 1 1 11 4.5L12 7Zm0 0h3.5A2.5 2.5 0 1 0 13 4.5L12 7Z" />
-    </svg>
-  );
-}
-
 function CartIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -630,7 +621,7 @@ export default async function TherapistProfilePage({ params }: PageProps) {
             <ExpandableBio paragraphs={bioParagraphs} />
           )}
 
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:grid-cols-4 sm:gap-4">
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4">
             {scheduleHref ? (
               <a
                 href={scheduleHref}
@@ -655,14 +646,6 @@ export default async function TherapistProfilePage({ params }: PageProps) {
               <LotusIcon />
               <span className="text-xs font-black sm:text-sm">MAIS SERVIÇOS</span>
             </a>
-
-            <Link
-              href="/presentear"
-              className="flex min-h-[112px] flex-col items-center justify-center gap-3 rounded-[18px] border border-[#7b2f72] bg-white px-3 py-4 text-center text-[#7b2f72] transition hover:bg-[#faf5fb]"
-            >
-              <GiftIcon />
-              <span className="text-xs font-black sm:text-sm">QUERO PRESENTE</span>
-            </Link>
 
             <Link
               href={featuredPurchaseHref}
