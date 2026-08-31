@@ -290,15 +290,6 @@ function LotusIcon() {
   );
 }
 
-function CartIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M3 4h2l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6" />
-      <circle cx="9" cy="19" r="1.3" />
-      <circle cx="17" cy="19" r="1.3" />
-    </svg>
-  );
-}
 
 function LocationIcon() {
   return (
@@ -497,9 +488,6 @@ export default async function TherapistProfilePage({ params }: PageProps) {
     : null;
 
   const servicesHref = "#servicos";
-  const featuredPurchaseHref = featuredService
-    ? `/comprar?servico=${encodeURIComponent(featuredService.id)}`
-    : servicesHref;
 
   const now = new Date();
   const startsAt = profileExtra.promotion_starts_at
@@ -518,35 +506,19 @@ export default async function TherapistProfilePage({ params }: PageProps) {
   return (
     <main className="min-h-screen bg-[#fdfdfd] text-[#24262b]">
       <section className="mx-auto max-w-6xl px-4 pt-4 sm:px-8 sm:pt-6">
-        <header className="overflow-hidden rounded-[24px] bg-[#5B1F61] shadow-[0_10px_28px_rgba(66,31,72,0.14)]">
-          <div className="flex min-h-[96px] items-center justify-between gap-5 px-6 py-4 sm:min-h-[104px] sm:px-8 lg:px-10">
-            <Link href="/" className="shrink-0" aria-label="AuraMeets - início">
-              <div className="text-[24px] font-black tracking-[0.02em] text-white sm:text-[30px]">
-                AURA<span className="text-[#E0B24A]">MEETS</span>
-              </div>
-            </Link>
-
-            <nav className="hidden items-center gap-7 text-xs font-black uppercase tracking-[0.03em] text-white lg:flex">
-              <Link href="/terapeutas" className="transition hover:text-[#F1D58A]">
-                Terapeutas
-              </Link>
-              <a href="#servicos" className="transition hover:text-[#F1D58A]">
-                Serviços
-              </a>
-              <Link
-                href="/presentear"
-                className="rounded-full border border-white/75 px-6 py-3 text-white transition hover:bg-white hover:text-[#5B1F61]"
-              >
-                Presentear
-              </Link>
-            </nav>
-
-            <Link
-              href="/terapeutas"
-              className="rounded-full border border-white/70 px-4 py-2 text-[10px] font-black uppercase tracking-[0.04em] text-white lg:hidden"
-            >
-              Perfis
-            </Link>
+        <header
+          className="relative mx-auto h-[150px] w-full max-w-[1000px] overflow-hidden rounded-[24px] border border-[#eadfd3] bg-[#fffaf3] bg-cover bg-center bg-no-repeat shadow-[0_10px_28px_rgba(66,31,72,0.10)] sm:h-[185px] lg:h-[210px]"
+          style={{ backgroundImage: "url('/images/aurameets-header-maos.png')" }}
+          aria-label="AuraMeets"
+        >
+          <div className="absolute left-5 top-5 rounded-2xl bg-white/88 px-4 py-3 shadow-[0_6px_18px_rgba(66,31,72,0.08)] backdrop-blur-[2px] sm:left-7 sm:top-6 sm:px-5">
+            <div className="text-[22px] font-black tracking-[0.02em] sm:text-[27px]">
+              <span className="text-[#7e2f73]">AURA</span>
+              <span className="text-[#26324a]">MEETS</span>
+            </div>
+            <div className="mt-[-2px] text-[7px] font-bold uppercase tracking-[0.30em] text-[#be9138] sm:text-[8px]">
+              Conecta • Transforma • Realiza
+            </div>
           </div>
         </header>
       </section>
@@ -621,13 +593,13 @@ export default async function TherapistProfilePage({ params }: PageProps) {
             <ExpandableBio paragraphs={bioParagraphs} />
           )}
 
-          <div className="mt-8 grid grid-cols-1 gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4">
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4">
             {scheduleHref ? (
               <a
                 href={scheduleHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex min-h-[112px] flex-col items-center justify-center gap-3 rounded-[18px] bg-gradient-to-br from-[#682b67] to-[#8b3c79] px-3 py-4 text-center text-white shadow-[0_10px_24px_rgba(123,47,114,0.18)] transition hover:-translate-y-0.5"
+                className="flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#7b2f72] bg-[#7b2f72] px-4 py-4 text-center text-white transition hover:-translate-y-0.5 hover:brightness-105"
               >
                 <CalendarIcon />
                 <span className="text-xs font-black sm:text-sm">QUERO AGENDAR</span>
@@ -641,19 +613,12 @@ export default async function TherapistProfilePage({ params }: PageProps) {
 
             <a
               href={servicesHref}
-              className="flex min-h-[112px] flex-col items-center justify-center gap-3 rounded-[18px] border border-[#7b2f72] bg-white px-3 py-4 text-center text-[#7b2f72] transition hover:bg-[#faf5fb]"
+              className="flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[#7b2f72] bg-[#f8f2f8] px-4 py-4 text-center text-[#7b2f72] transition hover:-translate-y-0.5 hover:bg-[#f3e8f3]"
             >
               <LotusIcon />
               <span className="text-xs font-black sm:text-sm">MAIS SERVIÇOS</span>
             </a>
 
-            <Link
-              href={featuredPurchaseHref}
-              className="flex min-h-[112px] flex-col items-center justify-center gap-3 rounded-[18px] bg-gradient-to-br from-[#d6a134] to-[#e7b742] px-3 py-4 text-center text-white shadow-[0_10px_24px_rgba(214,161,52,0.2)] transition hover:-translate-y-0.5"
-            >
-              <CartIcon />
-              <span className="text-xs font-black sm:text-sm">QUERO COMPRAR</span>
-            </Link>
           </div>
 
           {hasActivePromotion && profileExtra.promotion_title && (
