@@ -318,7 +318,11 @@ export default function HomePage() {
                   badge={oferta.display_badge}
                   initials={getTherapistInitials(oferta.therapist_name)}
                   imageUrl={oferta.therapist_photo_url}
-                  href={oferta.whatsapp_href || oferta.public_href}
+                  href={
+                    oferta.therapist_slug
+                      ? `/agendar/${encodeURIComponent(oferta.therapist_slug)}?experiencia=${encodeURIComponent(String(oferta.id))}`
+                      : oferta.public_href
+                  }
                 />
               ))}
             </div>
@@ -602,9 +606,11 @@ function OfferCard({
   imageUrl,
   href,
 }: OfferCardProps) {
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const displayedSlots = Math.min(slots, 3);
   const slotsLabel =
     displayedSlots === 1 ? "Resta 1 vaga" : `Restam ${displayedSlots} vagas`;
+  const hasLongDescription = description.trim().length > 0;
 
   return (
     <article className="group grid h-full overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.09)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(65,39,94,0.14)] md:grid-cols-[42%_58%]">
@@ -673,9 +679,33 @@ function OfferCard({
           {title}
         </h3>
 
-        <p className="mt-3 break-words text-[13px] font-medium leading-6 text-[#5b6579]">
+        <p
+          className={`mt-3 break-words text-[13px] font-medium leading-6 text-[#5b6579] ${
+            descriptionExpanded ? "" : "overflow-hidden"
+          }`}
+          style={
+            descriptionExpanded
+              ? undefined
+              : {
+                  display: "-webkit-box",
+                  WebkitLineClamp: 6,
+                  WebkitBoxOrient: "vertical",
+                }
+          }
+        >
           {description}
         </p>
+
+        {hasLongDescription && (
+          <button
+            type="button"
+            onClick={() => setDescriptionExpanded((current) => !current)}
+            className="mt-2 self-start text-[12px] font-black text-[#7541ad] underline underline-offset-2 transition hover:text-[#542c91]"
+            aria-expanded={descriptionExpanded}
+          >
+            {descriptionExpanded ? "Ver menos" : "Ver mais"}
+          </button>
+        )}
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <OfferInfo

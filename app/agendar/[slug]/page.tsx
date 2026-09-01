@@ -214,6 +214,22 @@ export default function PublicAppointmentPage() {
     return rawServiceId?.trim() || null;
   }, [searchParams]);
 
+  const experienceId = useMemo(() => {
+    const rawExperienceId = searchParams.get("experiencia");
+
+    if (!rawExperienceId) {
+      return null;
+    }
+
+    const parsedExperienceId = Number(rawExperienceId);
+
+    if (!Number.isInteger(parsedExperienceId) || parsedExperienceId <= 0) {
+      return null;
+    }
+
+    return parsedExperienceId;
+  }, [searchParams]);
+
   const [therapist, setTherapist] = useState<Therapist | null>(null);
   const [experience, setExperience] = useState<Experience | null>(null);
   const [selectedService, setSelectedService] =
@@ -384,7 +400,7 @@ export default function PublicAppointmentPage() {
         setServiceAnswers({});
       }
 
-      const { data: experienceData, error: experienceError } = await supabase
+      let experienceQuery = supabase
         .from("experiences")
         .select(
           `
@@ -400,13 +416,20 @@ export default function PublicAppointmentPage() {
         )
         .eq("therapist_id", professional.id)
         .eq("active", true)
-        .eq("approval_status", "approved")
-        .order("display_order", {
-          ascending: true,
-          nullsFirst: false,
-        })
-        .order("created_at", { ascending: true })
-        .limit(1);
+        .eq("approval_status", "approved");
+
+      if (experienceId) {
+        experienceQuery = experienceQuery.eq("id", experienceId);
+      }
+
+      const { data: experienceData, error: experienceError } =
+        await experienceQuery
+          .order("display_order", {
+            ascending: true,
+            nullsFirst: false,
+          })
+          .order("created_at", { ascending: true })
+          .limit(1);
 
       if (!activeComponent) return;
 
@@ -416,6 +439,12 @@ export default function PublicAppointmentPage() {
       } else {
         const firstExperience = experienceData?.[0] as Experience | undefined;
         setExperience(firstExperience ?? null);
+
+        if (experienceId && !firstExperience) {
+          setErrorMessage(
+            "Esta Experiência Presente não está disponível no momento.",
+          );
+        }
       }
 
       setLoading(false);
@@ -426,15 +455,16 @@ export default function PublicAppointmentPage() {
     return () => {
       activeComponent = false;
     };
-  }, [slug, serviceId]);
+  }, [slug, serviceId, experienceId]);
 
   const selectedServicePrice = getServicePrice(selectedService);
   const deliveryService = isDeliveryService(selectedService);
 
-  const visitorIdentified =
-    Boolean(form.name.trim()) &&
-    Boolean(form.email.trim()) &&
-    Boolean(form.phone.trim());
+  const visitorIdentified = experienceId
+    ? Boolean(form.name.trim()) && Boolean(form.phone.trim())
+    : Boolean(form.name.trim()) &&
+      Boolean(form.email.trim()) &&
+      Boolean(form.phone.trim());
 
   function updateForm(field: keyof FormData, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -499,6 +529,13 @@ export default function PublicAppointmentPage() {
       return;
     }
 
+    if (experienceId && !experience) {
+      setErrorMessage(
+        "Esta Experiência Presente não está disponível no momento.",
+      );
+      return;
+    }
+
     for (const field of visibleServiceFields) {
       if (field.required && !getAnswer(field).trim()) {
         setErrorMessage(`Preencha o campo obrigatório: ${field.label}.`);
@@ -508,14 +545,20 @@ export default function PublicAppointmentPage() {
 
     if (!visitorIdentified) {
       setErrorMessage(
-        "Seus dados de visitante não foram encontrados nesta sessão. Volte à lista de terapeutas e ingresse novamente.",
+        experienceId
+          ? "Informe seu nome e WhatsApp para receber seu presente."
+          : "Seus dados de visitante não foram encontrados nesta sessão. Volte à lista de terapeutas e ingresse novamente.",
       );
       return;
     }
 
     setSaving(true);
 
-    const normalizedEmail = form.email.trim().toLowerCase();
+    const phoneDigits = form.phone.replace(/\D/g, "");
+    const normalizedEmail = form.email.trim().toLowerCase() ||
+      (experienceId && phoneDigits
+        ? `presente-${phoneDigits}@aurameets.local`
+        : "");
 
     const customAnswersText = visibleServiceFields.length
       ? visibleServiceFields
@@ -527,6 +570,12 @@ export default function PublicAppointmentPage() {
       : "";
 
     const requestParts = [
+      experienceId && experience
+        ? `Experiência Presente: ${experience.title}`
+        : "",
+      experienceId && experience
+        ? `Experiência ID: ${experience.id}`
+        : "",
       selectedService ? `Serviço selecionado: ${selectedService.name}` : "",
       selectedService ? `Serviço ID: ${selectedService.id}` : "",
       customAnswersText
@@ -540,7 +589,9 @@ export default function PublicAppointmentPage() {
     const appointmentMessage =
       requestParts.length > 0 ? requestParts.join("\n\n") : null;
 
-    const appointmentPrice = selectedServicePrice ?? therapist.price;
+    const appointmentPrice = experienceId
+      ? null
+      : selectedServicePrice ?? therapist.price;
 
     const { data: appointmentId, error: appointmentError } =
       await supabase.rpc("create_public_appointment", {
@@ -550,10 +601,15 @@ export default function PublicAppointmentPage() {
         p_client_phone: form.phone.trim(),
         p_preferred_date: dateToIso(new Date()),
         p_preferred_time: "00:00:00",
-        p_modality: deliveryService ? "Entrega personalizada" : "A combinar",
+        p_modality: experienceId
+          ? experience?.service_type || "Experiência Presente"
+          : deliveryService
+            ? "Entrega personalizada"
+            : "A combinar",
         p_message: appointmentMessage,
         p_price: appointmentPrice,
         p_offer_id: offerId,
+        p_experience_id: experienceId,
       });
 
     setSaving(false);
@@ -563,6 +619,11 @@ export default function PublicAppointmentPage() {
       setErrorMessage(
         "Não foi possível concluir sua solicitação. Tente novamente.",
       );
+      return;
+    }
+
+    if (experienceId && experienceWhatsappUrl) {
+      window.location.href = experienceWhatsappUrl;
       return;
     }
 
@@ -609,7 +670,11 @@ export default function PublicAppointmentPage() {
   const appointmentWhatsappMessage = `Olá, ${
     therapist.name || "profissional"
   }! Acabei de enviar uma solicitação pelo AuraMeets${
-    selectedService ? ` para o serviço ${selectedService.name}` : ""
+    experienceId && experience
+      ? ` para a Experiência Presente "${experience.title}"`
+      : selectedService
+        ? ` para o serviço ${selectedService.name}`
+        : ""
   }. Por favor, acesse seu painel para visualizar e responder ao meu pedido.`;
 
   const appointmentWhatsappUrl = whatsappNumber
@@ -624,8 +689,12 @@ export default function PublicAppointmentPage() {
     experience?.title || "Experiência especial"
   }.`;
 
-  const experienceWhatsappMessage =
+  const experienceWhatsappBaseMessage =
     experience?.whatsapp_message?.trim() || defaultWhatsappMessage;
+
+  const experienceWhatsappMessage = form.name.trim()
+    ? `${experienceWhatsappBaseMessage}\n\nMeu nome é ${form.name.trim()}. Minha solicitação já foi registrada no AuraMeets.`
+    : experienceWhatsappBaseMessage;
 
   const experienceWhatsappUrl =
     whatsappNumber && experience
@@ -746,7 +815,7 @@ export default function PublicAppointmentPage() {
                       </p>
                     )}
 
-                    {experienceWhatsappUrl && (
+                    {!experienceId && experienceWhatsappUrl && (
                       <a
                         href={experienceWhatsappUrl}
                         target="_blank"
@@ -755,6 +824,13 @@ export default function PublicAppointmentPage() {
                       >
                         {experience.button_text?.trim() || "QUERO CONHECER"}
                       </a>
+                    )}
+
+                    {experienceId && (
+                      <p className="mt-5 rounded-xl border border-yellow-400/20 bg-[#080D22] px-4 py-3 text-sm leading-6 text-slate-300">
+                        Envie a solicitação para o AuraMeets registrar seu pedido.
+                        Depois, você poderá avisar o terapeuta pelo WhatsApp.
+                      </p>
                     )}
                   </div>
                 )}
@@ -833,17 +909,19 @@ export default function PublicAppointmentPage() {
               <>
                 <div>
                   <p className="text-sm font-black uppercase tracking-[0.25em] text-yellow-400">
-                    Agendamento
+                    {experienceId ? "Experiência Presente" : "Agendamento"}
                   </p>
 
                   <h1 className="mt-4 text-3xl font-black sm:text-4xl">
-                    Agende com este profissional
+                    {experienceId
+                      ? "Solicite sua Experiência Presente"
+                      : "Agende com este profissional"}
                   </h1>
 
                   <p className="mt-4 leading-7 text-slate-300">
-                    Seus dados de contato já estão registrados. Confira o serviço,
-                    acrescente apenas as informações necessárias e envie sua
-                    solicitação ao profissional.
+                    {experienceId
+                      ? "Seus dados serão registrados no AuraMeets e, após o envio, você poderá avisar o terapeuta pelo WhatsApp."
+                      : "Seus dados de contato já estão registrados. Confira o serviço, acrescente apenas as informações necessárias e envie sua solicitação ao profissional."}
                   </p>
                 </div>
 
@@ -977,7 +1055,57 @@ export default function PublicAppointmentPage() {
                     </section>
                   )}
 
-                  {visitorIdentified ? (
+                  {experienceId ? (
+                    <div className="rounded-2xl border border-yellow-400/40 bg-yellow-400/10 p-5 sm:p-6">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+                        Seu presente está quase pronto
+                      </p>
+
+                      <h2 className="mt-3 text-2xl font-black text-white">
+                        Olá, sou Ana e estou aqui para guiar você até seu presente.
+                      </h2>
+
+                      <p className="mt-3 text-sm leading-6 text-slate-300">
+                        Informe apenas seu nome e WhatsApp. Ao tocar no botão abaixo,
+                        sua solicitação será registrada no AuraMeets e você seguirá
+                        diretamente para o WhatsApp do terapeuta.
+                      </p>
+
+                      <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                        <div>
+                          <label htmlFor="gift-name" className="mb-2 block font-bold">
+                            Nome
+                          </label>
+                          <input
+                            id="gift-name"
+                            type="text"
+                            value={form.name}
+                            onChange={(event) => updateForm("name", event.target.value)}
+                            placeholder="Seu nome"
+                            autoComplete="name"
+                            className={inputClassName}
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label htmlFor="gift-phone" className="mb-2 block font-bold">
+                            WhatsApp
+                          </label>
+                          <input
+                            id="gift-phone"
+                            type="tel"
+                            value={form.phone}
+                            onChange={(event) => updateForm("phone", event.target.value)}
+                            placeholder="(00) 00000-0000"
+                            autoComplete="tel"
+                            className={inputClassName}
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : visitorIdentified ? (
                     <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-5">
                       <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
                         Seus dados já estão registrados
@@ -1010,6 +1138,7 @@ export default function PublicAppointmentPage() {
                     </div>
                   )}
 
+                  {!experienceId && (
                   <div className="mt-6">
                     <label htmlFor="message" className="mb-2 block font-bold">
                       Mensagem ao profissional
@@ -1030,6 +1159,8 @@ export default function PublicAppointmentPage() {
                     />
                   </div>
 
+                  )}
+
                   {errorMessage && (
                     <div
                       role="alert"
@@ -1044,12 +1175,17 @@ export default function PublicAppointmentPage() {
                     disabled={saving || !visitorIdentified}
                     className="mt-7 w-full rounded-xl bg-yellow-400 px-7 py-4 text-lg font-black text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {saving ? "ENVIANDO SOLICITAÇÃO..." : "SOLICITAR AGENDAMENTO"}
+                    {saving
+                      ? "ENVIANDO SOLICITAÇÃO..."
+                      : experienceId
+                        ? "RECEBER MEU PRESENTE"
+                        : "SOLICITAR AGENDAMENTO"}
                   </button>
 
                   <p className="mt-4 text-center text-sm leading-6 text-slate-500">
-                    Depois do envio, você poderá avisar o profissional pelo
-                    WhatsApp.
+                    {experienceId
+                      ? "Ao continuar, sua solicitação será registrada e o WhatsApp do terapeuta será aberto automaticamente."
+                      : "Depois do envio, você poderá avisar o profissional pelo WhatsApp."}
                   </p>
                 </form>
               </>

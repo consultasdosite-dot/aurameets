@@ -323,167 +323,170 @@ function normalizeExperience(
       experience,
       therapist,
     ),
-    whatsapp_href: createWhatsAppHref(
-      experience,
-      therapist,
-    ),
+    whatsapp_href:
+  therapist?.slug?.trim()
+    ? `/agendar/${encodeURIComponent(
+        therapist.slug.trim(),
+      )}?experiencia=${encodeURIComponent(
+        String(experience.id),
+      )}`
+    : null,
   };
 }
 
-function shuffleExperiences<T>(items: T[]): T[] {
-  const shuffledItems = [...items];
+const MIN_SAME_THERAPIST_DISTANCE = 5;
 
-  for (
-    let index = shuffledItems.length - 1;
-    index > 0;
-    index -= 1
-  ) {
-    const randomIndex = Math.floor(
-      Math.random() * (index + 1),
-    );
-
-    [
-      shuffledItems[index],
-      shuffledItems[randomIndex],
-    ] = [
-      shuffledItems[randomIndex],
-      shuffledItems[index],
-    ];
-  }
-
-  return shuffledItems;
-}
-
-function weightedShuffleFeaturedExperiences(
+function sortByPriorityAndRecency(
   experiences: FeaturedExperience[],
 ): FeaturedExperience[] {
-  const remainingExperiences = [...experiences];
-  const result: FeaturedExperience[] = [];
+  return [...experiences].sort((a, b) => {
+    const priorityDifference =
+      getFeaturedTherapistWeight(b.therapist_name) -
+      getFeaturedTherapistWeight(a.therapist_name);
 
-  while (remainingExperiences.length > 0) {
-    const weights = remainingExperiences.map(
-      (experience) =>
-        getFeaturedTherapistWeight(
-          experience.therapist_name,
-        ),
-    );
-
-    const totalWeight = weights.reduce(
-      (total, weight) => total + weight,
-      0,
-    );
-
-    if (totalWeight <= 0) {
-      return [
-        ...result,
-        ...shuffleExperiences(
-          remainingExperiences,
-        ),
-      ];
+    if (priorityDifference !== 0) {
+      return priorityDifference;
     }
 
-    let randomValue =
-      Math.random() * totalWeight;
+    return (
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime()
+    );
+  });
+}
 
-    let selectedIndex = 0;
+function sortByRecency(
+  experiences: FeaturedExperience[],
+): FeaturedExperience[] {
+  return [...experiences].sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() -
+      new Date(a.created_at).getTime(),
+  );
+}
 
-    for (
-      let index = 0;
-      index < weights.length;
-      index += 1
-    ) {
-      randomValue -= weights[index];
+function canPlaceExperience(
+  result: FeaturedExperience[],
+  experience: FeaturedExperience,
+): boolean {
+  const lastIndex = result.findLastIndex(
+    (item) =>
+      item.therapist_id === experience.therapist_id,
+  );
 
-      if (randomValue <= 0) {
-        selectedIndex = index;
-        break;
-      }
-    }
-
-    const [selectedExperience] =
-      remainingExperiences.splice(
-        selectedIndex,
-        1,
-      );
-
-    result.push(selectedExperience);
+  if (lastIndex === -1) {
+    return true;
   }
 
-  return result;
+  return (
+    result.length - lastIndex >=
+    MIN_SAME_THERAPIST_DISTANCE
+  );
+}
+
+function takeNextAllowedExperience(
+  pool: FeaturedExperience[],
+  result: FeaturedExperience[],
+): FeaturedExperience | null {
+  const allowedIndex = pool.findIndex(
+    (experience) =>
+      canPlaceExperience(result, experience),
+  );
+
+  if (allowedIndex === -1) {
+    return null;
+  }
+
+  const [selected] = pool.splice(allowedIndex, 1);
+  return selected ?? null;
 }
 
 function selectHomeExperiences(
   experiences: FeaturedExperience[],
 ): FeaturedExperience[] {
-  const uniqueByTherapist = new Map<
-    number,
-    FeaturedExperience[]
-  >();
-
-  for (const experience of experiences) {
-    const current =
-      uniqueByTherapist.get(experience.therapist_id) ?? [];
-
-    current.push(experience);
-    uniqueByTherapist.set(
-      experience.therapist_id,
-      current,
-    );
-  }
-
-  const oneExperiencePerTherapist =
-    Array.from(uniqueByTherapist.values()).map(
-      (therapistExperiences) => {
-        const ordered = [...therapistExperiences].sort(
-          (a, b) => {
-            const orderA =
-              a.display_order ?? Number.MAX_SAFE_INTEGER;
-            const orderB =
-              b.display_order ?? Number.MAX_SAFE_INTEGER;
-
-            if (orderA !== orderB) {
-              return orderA - orderB;
-            }
-
-            return (
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
-            );
-          },
-        );
-
-        return ordered[0];
-      },
-    );
-
-  const priorityExperiences =
-    oneExperiencePerTherapist.filter(
+  const priorityExperiences = sortByPriorityAndRecency(
+    experiences.filter(
       (experience) =>
         getFeaturedTherapistWeight(
           experience.therapist_name,
         ) > 0,
-    );
+    ),
+  );
 
-  const regularExperiences =
-    oneExperiencePerTherapist.filter(
+  const regularExperiences = sortByRecency(
+    experiences.filter(
       (experience) =>
         getFeaturedTherapistWeight(
           experience.therapist_name,
         ) === 0,
+    ),
+  );
+
+  const result: FeaturedExperience[] = [];
+  let preferPriority = true;
+
+  while (
+    priorityExperiences.length > 0 ||
+    regularExperiences.length > 0
+  ) {
+    const preferredPool = preferPriority
+      ? priorityExperiences
+      : regularExperiences;
+    const alternatePool = preferPriority
+      ? regularExperiences
+      : priorityExperiences;
+
+    let selected = takeNextAllowedExperience(
+      preferredPool,
+      result,
     );
 
-  const orderedPriorityExperiences =
-    weightedShuffleFeaturedExperiences(
-      priorityExperiences,
-    );
+    if (!selected) {
+      selected = takeNextAllowedExperience(
+        alternatePool,
+        result,
+      );
+    }
 
-  const shuffledRegularExperiences =
-    shuffleExperiences(regularExperiences);
+    if (!selected) {
+      const remaining = [
+        ...priorityExperiences,
+        ...regularExperiences,
+      ];
 
-  return [
-    ...orderedPriorityExperiences,
-    ...shuffledRegularExperiences,
-  ];
+      if (remaining.length === 0) {
+        break;
+      }
+
+      remaining.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime(),
+      );
+
+      selected = remaining[0];
+
+      const sourcePool =
+        getFeaturedTherapistWeight(
+          selected.therapist_name,
+        ) > 0
+          ? priorityExperiences
+          : regularExperiences;
+
+      const selectedIndex = sourcePool.findIndex(
+        (item) => item.id === selected?.id,
+      );
+
+      if (selectedIndex >= 0) {
+        sourcePool.splice(selectedIndex, 1);
+      }
+    }
+
+    result.push(selected);
+    preferPriority = !preferPriority;
+  }
+
+  return result;
 }
 
 export function getTherapistInitials(

@@ -51,7 +51,7 @@ type FiltroAprovacao = "todos" | "pendente" | "aprovado" | "reprovado";
 type FiltroSituacao = "todos" | "ativos" | "inativos";
 type FiltroPlano = "todos" | "Free" | "Premium" | "Destaque";
 
-const ITENS_POR_PAGINA = 10;
+const ITENS_POR_PAGINA = 100;
 
 export default function AdminTerapeutasPage() {
   const router = useRouter();
