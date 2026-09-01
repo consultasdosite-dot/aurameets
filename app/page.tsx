@@ -18,6 +18,7 @@ type AccessCardProps = {
   description: string;
   buttonText: string;
   href: string;
+  external?: boolean;
   tone: "gold" | "purple" | "blue" | "green";
   icon: ReactNode;
 };
@@ -414,10 +415,39 @@ export default function HomePage() {
               title="Preciso de Acolhimento"
               description="Quero conversar com um terapeuta voluntário agora."
               buttonText="Receber Acolhimento"
-              href="/acolhimento"
+              href="https://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
+              external
               tone="green"
               icon={<HandshakeIcon className="h-10 w-10" />}
             />
+          </div>
+
+          <div className="mt-6">
+            <Link
+              href="/fala-sistemica"
+              className="group block overflow-hidden rounded-[26px] border border-[#dcc8ef] bg-gradient-to-br from-[#f7f0fd] via-[#efe2fa] to-[#e4d0f4] p-7 shadow-[0_14px_36px_rgba(94,52,143,0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(94,52,143,0.18)] sm:p-9"
+            >
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="max-w-4xl">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#7541ad]">
+                    Fala Sistêmica
+                  </p>
+
+                  <h3 className="mt-3 text-[28px] font-black tracking-[-0.03em] text-[#101d3b] sm:text-[32px]">
+                    Um espaço de escuta e orientação para compreender melhor o momento que você está vivendo.
+                  </h3>
+
+                  <p className="mt-4 text-[15px] font-medium leading-7 text-[#4d5870]">
+                    A Fala Sistêmica ajuda você a olhar para sua situação por uma perspectiva mais ampla, percebendo relações, padrões e questões que podem estar influenciando seu momento atual.
+                  </p>
+                </div>
+
+                <span className="inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7e46b9] to-[#542c91] px-6 text-sm font-black text-white shadow-md transition group-hover:-translate-y-0.5">
+                  CONHECER A FALA SISTÊMICA
+                  <ArrowIcon className="h-4 w-4" />
+                </span>
+              </div>
+            </Link>
           </div>
         </div>
       </section>
@@ -513,13 +543,15 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <Link
-                href="/acolhimento"
+              <a
+                href="https://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6835a2] to-[#4e2286] px-5 py-3 text-sm font-extrabold text-white shadow-md transition hover:-translate-y-0.5"
               >
                 <HeartIcon className="h-5 w-5" />
                 Receber acolhimento agora
-              </Link>
+              </a>
 
               <p className="mt-3 flex items-center justify-center gap-2 text-[11px] text-[#697188]">
                 <LockIcon className="h-3.5 w-3.5" />
@@ -786,6 +818,7 @@ function AccessCard({
   description,
   buttonText,
   href,
+  external = false,
   tone,
   icon,
 }: AccessCardProps) {
@@ -831,13 +864,25 @@ function AccessCard({
         {description}
       </p>
 
-      <Link
-        href={href}
-        className={`mt-5 inline-flex items-center gap-3 rounded-xl border bg-white/55 px-5 py-3 text-sm font-extrabold shadow-sm transition hover:-translate-y-0.5 ${tones[tone].button}`}
-      >
-        {buttonText}
-        <ArrowIcon className="h-4 w-4" />
-      </Link>
+      {external ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`mt-5 inline-flex items-center gap-3 rounded-xl border bg-white/55 px-5 py-3 text-sm font-extrabold shadow-sm transition hover:-translate-y-0.5 ${tones[tone].button}`}
+        >
+          {buttonText}
+          <ArrowIcon className="h-4 w-4" />
+        </a>
+      ) : (
+        <Link
+          href={href}
+          className={`mt-5 inline-flex items-center gap-3 rounded-xl border bg-white/55 px-5 py-3 text-sm font-extrabold shadow-sm transition hover:-translate-y-0.5 ${tones[tone].button}`}
+        >
+          {buttonText}
+          <ArrowIcon className="h-4 w-4" />
+        </Link>
+      )}
 
       <LotusWatermark className="absolute -bottom-5 -right-4 h-28 w-28 opacity-[0.10]" />
     </article>
