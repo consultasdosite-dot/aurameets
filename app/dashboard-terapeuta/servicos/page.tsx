@@ -1,4 +1,4 @@
-"use client";
+
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -20,6 +20,7 @@ type Servico = {
   currency: string;
   status: "active" | "inactive" | "under_review";
   created_at: string;
+  display_order: number | null;
 };
 
 type FormEdicao = {
@@ -332,11 +333,13 @@ export default function ServicosPage() {
               payment_url,
               currency,
               status,
-              created_at
+              created_at,
+              display_order
             `,
           )
           .eq("therapist_id", user.id)
-          .order("created_at", { ascending: false }),
+          .order("display_order", { ascending: true, nullsFirst: false })
+          .order("created_at", { ascending: true }),
 
         supabase
           .from("therapists")
@@ -364,29 +367,7 @@ export default function ServicosPage() {
         );
       }
 
-      const ordemStatus: Record<Servico["status"], number> = {
-        active: 1,
-        under_review: 2,
-        inactive: 3,
-      };
-
-      const servicosOrdenados = ((dadosServicos ?? []) as Servico[]).sort(
-        (a, b) => {
-          const diferencaStatus =
-            ordemStatus[a.status] - ordemStatus[b.status];
-
-          if (diferencaStatus !== 0) {
-            return diferencaStatus;
-          }
-
-          return (
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
-          );
-        },
-      );
-
-      setServicos(servicosOrdenados);
+      setServicos((dadosServicos ?? []) as Servico[]);
 
       setTerapeutaSlug(
         terapeuta?.slug ?? null,
@@ -688,6 +669,89 @@ export default function ServicosPage() {
     }
   }
 
+  async function moverServico(
+    index: number,
+    direcao: -1 | 1,
+  ) {
+    const novoIndex = index + direcao;
+
+    if (novoIndex < 0 || novoIndex >= servicos.length) {
+      return;
+    }
+
+    const servicoAtual = servicos[index];
+    const servicoDestino = servicos[novoIndex];
+
+    const ordemAtual = servicoAtual.display_order ?? index + 1;
+    const ordemDestino = servicoDestino.display_order ?? novoIndex + 1;
+
+    setAcaoId(servicoAtual.id);
+    setErro("");
+    setMensagem("");
+
+    try {
+      const {
+        data: { user },
+        error: erroUsuario,
+      } = await supabase.auth.getUser();
+
+      if (erroUsuario || !user) {
+        setErro("Sua sessão expirou. Entre novamente.");
+        return;
+      }
+
+      const [resultadoAtual, resultadoDestino] = await Promise.all([
+        supabase
+          .from("services")
+          .update({ display_order: ordemDestino })
+          .eq("id", servicoAtual.id)
+          .eq("therapist_id", user.id),
+
+        supabase
+          .from("services")
+          .update({ display_order: ordemAtual })
+          .eq("id", servicoDestino.id)
+          .eq("therapist_id", user.id),
+      ]);
+
+      if (resultadoAtual.error || resultadoDestino.error) {
+        const mensagemErro =
+          resultadoAtual.error?.message ||
+          resultadoDestino.error?.message ||
+          "Erro ao alterar a ordem.";
+
+        throw new Error(mensagemErro);
+      }
+
+      const novaLista = [...servicos];
+
+      novaLista[index] = {
+        ...servicoDestino,
+        display_order: ordemAtual,
+      };
+
+      novaLista[novoIndex] = {
+        ...servicoAtual,
+        display_order: ordemDestino,
+      };
+
+      setServicos(novaLista);
+      setMensagem("Ordem dos serviços atualizada com sucesso.");
+    } catch (error) {
+      console.error("Erro ao alterar ordem dos serviços:", error);
+
+      setErro(
+        error instanceof Error
+          ? `Não foi possível alterar a ordem: ${error.message}`
+          : "Não foi possível alterar a ordem dos serviços.",
+      );
+
+      await carregarServicos();
+    } finally {
+      setAcaoId(null);
+    }
+  }
+
   async function excluirServico(
     servico: Servico,
   ) {
@@ -934,14 +998,13 @@ export default function ServicosPage() {
                 </h2>
 
                 <p className="mt-2 text-slate-400">
-                  Edite, publique, oculte ou
-                  exclua os serviços do seu
-                  perfil.
+                  Use Subir e Descer para escolher a ordem dos serviços.
+                  Você também pode editar, publicar, ocultar ou excluir.
                 </p>
               </div>
 
               <div className="grid gap-6">
-                {servicos.map((servico) => {
+                {servicos.map((servico, index) => {
                   const status =
                     obterStatus(
                       servico.status,
@@ -1065,6 +1128,28 @@ export default function ServicosPage() {
                         )}
 
                         <div className="mt-6 grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void moverServico(index, -1)
+                            }
+                            disabled={index === 0 || acaoId !== null}
+                            className="rounded-xl border border-yellow-400/40 px-4 py-3 font-bold text-yellow-300 transition hover:bg-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            ↑ Subir
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void moverServico(index, 1)
+                            }
+                            disabled={index === servicos.length - 1 || acaoId !== null}
+                            className="rounded-xl border border-yellow-400/40 px-4 py-3 font-bold text-yellow-300 transition hover:bg-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            ↓ Descer
+                          </button>
+
                           <button
                             type="button"
                             onClick={() =>
