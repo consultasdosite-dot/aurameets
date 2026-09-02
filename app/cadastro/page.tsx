@@ -85,6 +85,11 @@ export default function CadastroPage() {
   const [usuarioCriadoId, setUsuarioCriadoId] = useState<string | null>(null);
   const [pixCopiado, setPixCopiado] = useState(false);
 
+  const mensagemComprovante = encodeURIComponent(
+    `Olá, equipe AuraMeets! Sou ${nome || "um novo terapeuta"} (${email || "e-mail não informado"}) e estou enviando o comprovante do PIX da mensalidade de R$ 35,00 para concluir meu cadastro.`,
+  );
+  const whatsappComprovanteUrl = `https://wa.me/5551980339532?text=${mensagemComprovante}`;
+
   useEffect(() => {
     return () => {
       if (fotoPreview) {
@@ -380,6 +385,36 @@ export default function CadastroPage() {
                       ? "CHAVE PIX COPIADA"
                       : "COPIAR CHAVE PIX"}
                   </button>
+
+                  <div
+                    role="alert"
+                    aria-live="assertive"
+                    className="mt-6 rounded-2xl border-4 border-violet-300 bg-violet-700 px-5 py-7 text-center shadow-[0_0_40px_rgba(167,139,250,0.45)]"
+                  >
+                    <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-200">
+                      Atenção — etapa obrigatória
+                    </p>
+                    <p className="mt-3 text-2xl font-black uppercase leading-tight text-white sm:text-3xl">
+                      Envie seu comprovante para seguir com o cadastro
+                    </p>
+                    <p className="mt-3 text-sm font-bold leading-6 text-white sm:text-base">
+                      Seu perfil somente será liberado após a confirmação do
+                      pagamento e a aprovação da equipe AuraMeets.
+                    </p>
+
+                    <a
+                      href={whatsappComprovanteUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-6 inline-flex min-h-14 w-full items-center justify-center rounded-xl bg-white px-5 py-4 text-center text-base font-black uppercase text-violet-800 transition hover:bg-yellow-200 sm:text-lg"
+                    >
+                      Enviar comprovante pelo WhatsApp
+                    </a>
+
+                    <p className="mt-3 text-xs font-bold text-violet-100 sm:text-sm">
+                      WhatsApp AuraMeets: (51) 98033-9532
+                    </p>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-purple-400/30 bg-purple-400/10 p-5 sm:p-6">
@@ -429,17 +464,50 @@ export default function CadastroPage() {
                 </div>
               )}
 
-              <Link
-                href="/login"
-                className="mt-7 inline-flex min-h-14 w-full items-center justify-center rounded-2xl border border-slate-600 px-6 text-center font-black text-white transition hover:border-yellow-400 hover:text-yellow-400"
-              >
-                IR PARA O LOGIN
-              </Link>
+              <details className="group mt-7 overflow-hidden rounded-2xl border-2 border-yellow-400 bg-yellow-400/10">
+                <summary className="flex min-h-16 cursor-pointer list-none items-center justify-center px-5 py-4 text-center text-base font-black uppercase text-yellow-300 transition hover:bg-yellow-400/10 sm:text-lg">
+                  Como completar seu cadastro
+                </summary>
 
-              <p className="mt-4 text-center text-xs leading-5 text-slate-400">
-                Se o seu acesso ainda estiver aguardando liberação, tente
-                novamente depois da conferência do pagamento.
-              </p>
+                <div className="border-t border-yellow-400/30 p-5 sm:p-7">
+                  <ol className="space-y-5 text-sm leading-6 text-slate-300 sm:text-base">
+                    <li>
+                      <strong className="text-yellow-300">1. Faça o PIX:</strong>{" "}
+                      pague a mensalidade de R$ 35,00 usando a chave informada
+                      nesta página.
+                    </li>
+                    <li>
+                      <strong className="text-yellow-300">2. Envie o comprovante:</strong>{" "}
+                      use o botão desta página para encaminhar o comprovante ao
+                      WhatsApp administrativo do AuraMeets.
+                    </li>
+                    <li>
+                      <strong className="text-yellow-300">3. Aguarde a conferência:</strong>{" "}
+                      nossa equipe verificará o pagamento e os dados enviados.
+                    </li>
+                    <li>
+                      <strong className="text-yellow-300">4. Aguarde a aprovação:</strong>{" "}
+                      seu cadastro profissional passará pela aprovação do
+                      AuraMeets antes da liberação.
+                    </li>
+                    <li>
+                      <strong className="text-yellow-300">5. Complete seu perfil:</strong>{" "}
+                      após a aprovação, você receberá as orientações para entrar
+                      no painel, cadastrar seus serviços e completar seu perfil.
+                    </li>
+                  </ol>
+                </div>
+              </details>
+
+              <div className="mt-6 rounded-2xl border border-slate-600 bg-[#080D22] px-5 py-5 text-center">
+                <p className="font-black uppercase tracking-wide text-white">
+                  Acesso liberado após pagamento e aprovação
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Você receberá as orientações de acesso assim que a equipe
+                  AuraMeets concluir a conferência.
+                </p>
+              </div>
             </div>
           </section>
         </div>
