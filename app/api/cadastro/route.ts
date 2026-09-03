@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { sendAdminPushNotification } from "@/lib/push-notifications";
 
 interface CadastroProfissionalBody {
   nome?: string;
@@ -937,6 +938,13 @@ export async function POST(request: Request) {
           state: estado,
           phone: telefone,
           email,
+      });
+
+      await sendAdminPushNotification(supabaseAdmin, {
+        title: "Novo terapeuta cadastrado",
+        message: `${nome} — ${especialidade} — ${cidade}/${estado}. WhatsApp: ${telefone}. E-mail: ${email}. Pagamento PIX aguardando confirmação.`,
+        url: "/admin/terapeutas",
+        tag: `novo-terapeuta-${therapistId}`,
       });
     } catch (erroNotificacao) {
       console.error(

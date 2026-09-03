@@ -442,15 +442,17 @@ export default async function TherapistPage({ params }: Props) {
                     </div>
                   )}
 
-                  <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-slate-500">
-                      Avaliação
-                    </p>
+                  {therapist.rating !== null && therapist.rating > 0 && (
+                    <div className="flex items-start justify-between gap-4">
+                      <p className="text-sm text-slate-500">
+                        Avaliação
+                      </p>
 
-                    <p className="text-right font-black text-yellow-400">
-                      ★ {formatarAvaliacao(therapist.rating)}
-                    </p>
-                  </div>
+                      <p className="text-right font-black text-yellow-400">
+                        ★ {formatarAvaliacao(therapist.rating)}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <button

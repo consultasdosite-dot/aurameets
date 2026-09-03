@@ -12,6 +12,7 @@ export type HomeExperienceTherapist = {
   service_type: string | null;
   verified: boolean | null;
   phone: string | null;
+  created_at: string;
 };
 
 export type SupabaseHomeExperience = {
@@ -85,18 +86,10 @@ const EXPERIENCE_SELECT = `
     state,
     service_type,
     verified,
-    phone
+    phone,
+    created_at
   )
 `;
-
-const FEATURED_THERAPIST_WEIGHTS: Record<string, number> = {
-  cristina: 3,
-  mariangela: 2,
-  michele: 2,
-  alzira: 2,
-  andrea: 2,
-  veridiana: 2,
-};
 
 function normalizeTherapist(
   therapist: SupabaseExperienceRow["therapist"],
@@ -110,33 +103,6 @@ function normalizeTherapist(
 
 function normalizeText(value: string | null): string {
   return value?.trim() || "";
-}
-
-function normalizeName(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-}
-
-function getFeaturedTherapistWeight(
-  therapistName: string,
-): number {
-  const normalizedName = normalizeName(therapistName);
-
-  for (const [name, weight] of Object.entries(
-    FEATURED_THERAPIST_WEIGHTS,
-  )) {
-    if (
-      normalizedName === name ||
-      normalizedName.startsWith(`${name} `)
-    ) {
-      return weight;
-    }
-  }
-
-  return 0;
 }
 
 function createTherapistLocation(
@@ -336,23 +302,21 @@ function normalizeExperience(
 
 const MIN_SAME_THERAPIST_DISTANCE = 5;
 
-function sortByPriorityAndRecency(
-  experiences: FeaturedExperience[],
-): FeaturedExperience[] {
-  return [...experiences].sort((a, b) => {
-    const priorityDifference =
-      getFeaturedTherapistWeight(b.therapist_name) -
-      getFeaturedTherapistWeight(a.therapist_name);
+function getRecencyTimestamp(
+  experience: FeaturedExperience,
+): number {
+  const therapistCreatedAt =
+    experience.therapist?.created_at;
 
-    if (priorityDifference !== 0) {
-      return priorityDifference;
-    }
+  const therapistTimestamp = therapistCreatedAt
+    ? new Date(therapistCreatedAt).getTime()
+    : Number.NaN;
 
-    return (
-      new Date(b.created_at).getTime() -
-      new Date(a.created_at).getTime()
-    );
-  });
+  if (!Number.isNaN(therapistTimestamp)) {
+    return therapistTimestamp;
+  }
+
+  return new Date(experience.created_at).getTime();
 }
 
 function sortByRecency(
@@ -360,8 +324,8 @@ function sortByRecency(
 ): FeaturedExperience[] {
   return [...experiences].sort(
     (a, b) =>
-      new Date(b.created_at).getTime() -
-      new Date(a.created_at).getTime(),
+      getRecencyTimestamp(b) -
+      getRecencyTimestamp(a),
   );
 }
 
@@ -404,86 +368,20 @@ function takeNextAllowedExperience(
 function selectHomeExperiences(
   experiences: FeaturedExperience[],
 ): FeaturedExperience[] {
-  const priorityExperiences = sortByPriorityAndRecency(
-    experiences.filter(
-      (experience) =>
-        getFeaturedTherapistWeight(
-          experience.therapist_name,
-        ) > 0,
-    ),
-  );
-
-  const regularExperiences = sortByRecency(
-    experiences.filter(
-      (experience) =>
-        getFeaturedTherapistWeight(
-          experience.therapist_name,
-        ) === 0,
-    ),
-  );
-
+  const pool = sortByRecency(experiences);
   const result: FeaturedExperience[] = [];
-  let preferPriority = true;
 
-  while (
-    priorityExperiences.length > 0 ||
-    regularExperiences.length > 0
-  ) {
-    const preferredPool = preferPriority
-      ? priorityExperiences
-      : regularExperiences;
-    const alternatePool = preferPriority
-      ? regularExperiences
-      : priorityExperiences;
-
-    let selected = takeNextAllowedExperience(
-      preferredPool,
-      result,
-    );
+  while (pool.length > 0) {
+    const selected =
+      takeNextAllowedExperience(pool, result) ??
+      pool.shift() ??
+      null;
 
     if (!selected) {
-      selected = takeNextAllowedExperience(
-        alternatePool,
-        result,
-      );
-    }
-
-    if (!selected) {
-      const remaining = [
-        ...priorityExperiences,
-        ...regularExperiences,
-      ];
-
-      if (remaining.length === 0) {
-        break;
-      }
-
-      remaining.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime(),
-      );
-
-      selected = remaining[0];
-
-      const sourcePool =
-        getFeaturedTherapistWeight(
-          selected.therapist_name,
-        ) > 0
-          ? priorityExperiences
-          : regularExperiences;
-
-      const selectedIndex = sourcePool.findIndex(
-        (item) => item.id === selected?.id,
-      );
-
-      if (selectedIndex >= 0) {
-        sourcePool.splice(selectedIndex, 1);
-      }
+      break;
     }
 
     result.push(selected);
-    preferPriority = !preferPriority;
   }
 
   return result;
