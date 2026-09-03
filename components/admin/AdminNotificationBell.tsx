@@ -56,6 +56,7 @@ export default function AdminNotificationBell() {
   const [carregando, setCarregando] = useState(true);
   const [pushStatus, setPushStatus] = useState<PushStatus>("checking");
   const [pushMensagem, setPushMensagem] = useState("");
+  const [testandoPush, setTestandoPush] = useState(false);
 
   const carregarNotificacoes = useCallback(async () => {
     try {
@@ -232,6 +233,61 @@ export default function AdminNotificationBell() {
     }
   }
 
+  async function testarNotificacaoNoCelular() {
+    try {
+      setTestandoPush(true);
+      setPushMensagem("");
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Entre novamente no Painel Administrativo para testar.");
+      }
+
+      const resposta = await fetch("/api/admin/test-push", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      const resultado = (await resposta.json()) as {
+        success?: boolean;
+        sent?: number;
+        failed?: number;
+        error?: string;
+      };
+
+      if (!resposta.ok || !resultado.success) {
+        throw new Error(
+          resultado.error || "Não foi possível enviar o teste.",
+        );
+      }
+
+      if ((resultado.sent ?? 0) === 0) {
+        setPushMensagem("Nenhum celular ativo foi encontrado para o teste.");
+        return;
+      }
+
+      setPushMensagem(
+        `Notificação de teste enviada para ${resultado.sent} celular${
+          resultado.sent === 1 ? "" : "es"
+        }.`,
+      );
+    } catch (error) {
+      console.error("Erro ao testar notificação no celular:", error);
+      setPushMensagem(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível enviar o teste.",
+      );
+    } finally {
+      setTestandoPush(false);
+    }
+  }
+
   async function abrirNotificacao(notificacao: NotificationRecord) {
     try {
       const {
@@ -336,10 +392,23 @@ export default function AdminNotificationBell() {
 
             <div className="border-b border-white/10 px-5 py-4">
               {pushStatus === "active" ? (
-                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3">
-                  <p className="text-sm font-bold text-emerald-300">
-                    Notificações ativas neste celular
-                  </p>
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3">
+                    <p className="text-sm font-bold text-emerald-300">
+                      Notificações ativas neste celular
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => void testarNotificacaoNoCelular()}
+                    disabled={testandoPush}
+                    className="min-h-11 w-full rounded-xl border border-amber-300/40 px-4 text-sm font-black text-amber-300 transition hover:bg-amber-300/10 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {testandoPush
+                      ? "ENVIANDO TESTE..."
+                      : "ENVIAR NOTIFICAÇÃO DE TESTE"}
+                  </button>
                 </div>
               ) : pushStatus === "unsupported" ? (
                 <p className="text-sm text-slate-500">
