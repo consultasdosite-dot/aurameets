@@ -258,7 +258,7 @@ export default function CadastroPage() {
         formData.append("foto", foto);
       }
 
-      const resposta = await fetch("/api/cadastro-fundador", {
+      const resposta = await fetch("/api/cadastro", {
         method: "POST",
         body: formData,
       });

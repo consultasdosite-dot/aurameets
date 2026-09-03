@@ -1,10 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import {
-  notifyNewTherapistCreated,
-  notifyTherapistPixConfigured,
-  notifyTherapistServiceCreated,
-} from "@/lib/whatsapp-notifications";
 
 interface CadastroProfissionalBody {
   nome?: string;
@@ -269,6 +264,56 @@ async function enviarFotoParaStorage(
     caminhoDaFoto,
     urlPublica: data.publicUrl,
   };
+}
+
+async function criarNotificacaoInternaParaAdmins(
+  supabaseAdmin: SupabaseClient,
+  dados: {
+    therapistId: number;
+    name: string;
+    specialty: string;
+    city: string;
+    state: string;
+    phone: string;
+    email: string;
+  },
+) {
+  const { data: administradores, error: erroAdministradores } =
+    await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("user_type", "admin");
+
+  if (erroAdministradores) {
+    throw new Error(
+      `Não foi possível localizar os administradores: ${erroAdministradores.message}`,
+    );
+  }
+
+  if (!administradores || administradores.length === 0) {
+    throw new Error("Nenhum perfil administrador foi encontrado.");
+  }
+
+  const notificacoes = administradores.map((administrador) => ({
+    recipient_profile_id: administrador.id,
+    recipient_type: "admin",
+    title: "Novo terapeuta cadastrado",
+    message: `${dados.name} — ${dados.specialty} — ${dados.city}/${dados.state}. WhatsApp: ${dados.phone}. E-mail: ${dados.email}. Pagamento PIX aguardando confirmação.`,
+    notification_type: "new_therapist_created",
+    reference_id: String(dados.therapistId),
+    reference_url: "/admin/terapeutas",
+    is_read: false,
+  }));
+
+  const { error: erroNotificacao } = await supabaseAdmin
+    .from("notifications")
+    .insert(notificacoes);
+
+  if (erroNotificacao) {
+    throw new Error(
+      `Não foi possível criar a notificação interna: ${erroNotificacao.message}`,
+    );
+  }
 }
 
 export async function POST(request: Request) {
@@ -880,43 +925,25 @@ export async function POST(request: Request) {
     /*
      * 8. NOTIFICAÇÕES ADMINISTRATIVAS
      *
-     * As notificações não podem bloquear nem desfazer o cadastro.
-     * Se a API do WhatsApp ainda não estiver configurada, as funções
-     * apenas registram aviso no servidor e o cadastro segue normalmente.
+     * A notificação interna não pode bloquear nem desfazer o cadastro.
      */
 
-    const resultadosNotificacoes =
-      await Promise.allSettled([
-        notifyNewTherapistCreated({
+    try {
+      await criarNotificacaoInternaParaAdmins(supabaseAdmin, {
+          therapistId,
           name: nome,
           specialty: especialidade,
           city: cidade,
           state: estado,
           phone: telefone,
           email,
-        }),
-
-        notifyTherapistServiceCreated({
-          therapistName: nome,
-          serviceName: servicoNome,
-          price: servicoPreco,
-        }),
-
-        notifyTherapistPixConfigured({
-          therapistName: nome,
-        }),
-      ]);
-
-    resultadosNotificacoes.forEach(
-      (resultado, index) => {
-        if (resultado.status === "rejected") {
-          console.error(
-            `Falha na notificação administrativa ${index + 1}:`,
-            resultado.reason,
-          );
-        }
-      },
-    );
+      });
+    } catch (erroNotificacao) {
+      console.error(
+        "Falha ao criar a notificação interna do administrador:",
+        erroNotificacao,
+      );
+    }
 
     /*
      * CADASTRO COMPLETO
