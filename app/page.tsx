@@ -591,7 +591,7 @@ export default function HomePage() {
           </div>
 
           <Link
-            href="/seja-terapeuta"
+            href="/cadastro"
             className="inline-flex min-h-[58px] items-center justify-center gap-3 rounded-xl bg-[#ffd12f] px-8 text-sm font-black text-[#101426] shadow-[0_16px_35px_rgba(255,209,47,0.18)] transition hover:-translate-y-0.5 hover:bg-[#ffda58]"
           >
             Quero fazer parte
