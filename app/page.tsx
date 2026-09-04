@@ -291,7 +291,7 @@ export default function HomePage() {
               </div>
 
               <h2 className="mt-5 text-[34px] font-black leading-tight tracking-[-0.035em] text-[#101d3b] sm:text-[42px]">
-                Receba um presente e conheça um terapeuta
+                Conheça nossos terapeutas e receba um presente muito especial
               </h2>
 
               <p className="mt-4 max-w-2xl text-[16px] font-medium leading-7 text-[#4d5870]">
@@ -301,14 +301,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <Link
-              href="/terapeutas"
-              className="inline-flex min-h-[58px] w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#7e46b9] to-[#542c91] px-8 py-4 text-center text-lg font-black text-white shadow-[0_14px_32px_rgba(87,45,145,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(87,45,145,0.32)] sm:w-auto"
-            >
-              VER TODOS OS TERAPEUTAS
-              <ArrowIcon className="h-5 w-5" />
-            </Link>
-          </div>
+            </div>
 
           {carregandoOfertas ? (
             <div className="mt-9 grid gap-5 xl:grid-cols-2">
