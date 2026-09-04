@@ -42,6 +42,7 @@ type OfferCardProps = {
   initials: string;
   imageUrl?: string | null;
   href: string;
+  profileHref: string;
 };
 
 function embaralharOfertas<T>(itens: T[]): T[] {
@@ -304,7 +305,7 @@ export default function HomePage() {
               href="/terapeutas"
               className="inline-flex min-h-[58px] w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#7e46b9] to-[#542c91] px-8 py-4 text-center text-lg font-black text-white shadow-[0_14px_32px_rgba(87,45,145,0.25)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_38px_rgba(87,45,145,0.32)] sm:w-auto"
             >
-              ENCONTRE SEU TERAPEUTA
+              VER TODOS OS TERAPEUTAS
               <ArrowIcon className="h-5 w-5" />
             </Link>
           </div>
@@ -334,6 +335,11 @@ export default function HomePage() {
                   initials={getTherapistInitials(oferta.therapist_name)}
                   imageUrl={oferta.therapist_photo_url}
                   href={oferta.whatsapp_href || oferta.public_href}
+                  profileHref={
+                    oferta.therapist_slug
+                      ? `/terapeuta/${oferta.therapist_slug}`
+                      : "/terapeutas"
+                  }
                 />
               ))}
             </div>
@@ -647,6 +653,7 @@ function OfferCard({
   initials,
   imageUrl,
   href,
+  profileHref,
 }: OfferCardProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const displayedSlots = Math.min(slots, 3);
@@ -761,12 +768,20 @@ function OfferCard({
           />
         </div>
 
-        <div className="mt-auto pt-5">
+        <div className="mt-auto grid gap-2 pt-5 sm:grid-cols-2">
           <Link
             href={href}
             className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7d45b5] to-[#57298f] px-4 text-center text-[13px] font-extrabold text-white shadow-md transition duration-300 hover:-translate-y-0.5 hover:shadow-lg"
           >
             Receber meu presente
+            <ArrowIcon className="h-4 w-4 shrink-0" />
+          </Link>
+
+          <Link
+            href={profileHref}
+            className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl border-2 border-[#7541ad] bg-white px-4 text-center text-[13px] font-extrabold text-[#63339a] transition duration-300 hover:-translate-y-0.5 hover:bg-[#f7f0fb]"
+          >
+            Ver perfil
             <ArrowIcon className="h-4 w-4 shrink-0" />
           </Link>
         </div>
