@@ -856,7 +856,7 @@ export default function ServicosPage() {
           <div className="flex flex-wrap gap-3">
             {terapeutaSlug && (
               <Link
-                href={`/terapeutas/${terapeutaSlug}`}
+                href={`/terapeuta/${terapeutaSlug}`}
                 target="_blank"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-6 py-4 font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400"
               >
@@ -1190,7 +1190,7 @@ export default function ServicosPage() {
 
                           {terapeutaSlug && (
                             <Link
-                              href={`/terapeutas/${terapeutaSlug}`}
+                              href={`/terapeuta/${terapeutaSlug}`}
                               target="_blank"
                               className="rounded-xl border border-purple-400/40 px-4 py-3 text-center font-bold text-purple-200 transition hover:bg-purple-400/10"
                             >
