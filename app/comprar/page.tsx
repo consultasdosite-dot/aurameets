@@ -11,6 +11,7 @@ type CompraResponse = {
   service?: {
     id: string;
     name: string;
+    category: string;
     description: string;
     coverPhotoUrl: string | null;
     price: number;
@@ -49,6 +50,14 @@ function formatarPreco(valor: number, moeda: string) {
   }).format(valor);
 }
 
+function normalizarCategoria(valor: string | null | undefined) {
+  return (valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 function ComprarContent() {
   const searchParams = useSearchParams();
 
@@ -63,6 +72,21 @@ function ComprarContent() {
   const [nome, setNome] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
+  const [cep, setCep] = useState("");
+  const [endereco, setEndereco] = useState("");
+  const [numero, setNumero] = useState("");
+  const [complemento, setComplemento] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [estado, setEstado] = useState("");
+
+  const categoriaNormalizada = normalizarCategoria(
+    dados?.service?.category,
+  );
+  const produtoFisico = categoriaNormalizada.includes("produto fisico");
+  const conteudoDigital = ["curso", "video", "conteudo digital"].some(
+    (tipo) => categoriaNormalizada.includes(tipo),
+  );
 
   useEffect(() => {
     let ativo = true;
@@ -124,7 +148,7 @@ function ComprarContent() {
     const slug = dados?.therapist?.slug?.trim();
 
     return slug
-      ? `/terapeutas/${encodeURIComponent(slug)}`
+      ? `/terapeuta/${encodeURIComponent(slug)}`
       : "/terapeutas";
   }, [dados]);
 
@@ -145,10 +169,34 @@ function ComprarContent() {
       return null;
     }
 
+    if (
+      produtoFisico &&
+      (!cep.trim() ||
+        !endereco.trim() ||
+        !numero.trim() ||
+        !bairro.trim() ||
+        !cidade.trim() ||
+        !estado.trim())
+    ) {
+      setErro("Preencha o endereço completo para receber o produto.");
+      return null;
+    }
+
     return {
       buyerName,
       buyerPhone,
       buyerEmail,
+      shippingAddress: produtoFisico
+        ? {
+            cep: cep.trim(),
+            endereco: endereco.trim(),
+            numero: numero.trim(),
+            complemento: complemento.trim(),
+            bairro: bairro.trim(),
+            cidade: cidade.trim(),
+            estado: estado.trim(),
+          }
+        : null,
     };
   }
 
@@ -401,6 +449,42 @@ function ComprarContent() {
                   autoComplete="email"
                   className="min-h-[56px] w-full rounded-2xl border border-slate-300 px-4 font-semibold outline-none focus:border-purple-500"
                 />
+
+                {produtoFisico && (
+                  <div className="space-y-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                    <div>
+                      <p className="font-black text-slate-950">
+                        Endereço para entrega
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Preencha onde deseja receber o produto.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <input type="text" value={cep} onChange={(event) => setCep(event.target.value)} placeholder="CEP" autoComplete="postal-code" className="min-h-[56px] w-full rounded-2xl border border-slate-300 bg-white px-4 font-semibold outline-none focus:border-purple-500" />
+                      <input type="text" value={estado} onChange={(event) => setEstado(event.target.value)} placeholder="Estado" autoComplete="address-level1" maxLength={2} className="min-h-[56px] w-full rounded-2xl border border-slate-300 bg-white px-4 font-semibold uppercase outline-none focus:border-purple-500" />
+                    </div>
+
+                    <input type="text" value={endereco} onChange={(event) => setEndereco(event.target.value)} placeholder="Rua ou avenida" autoComplete="address-line1" className="min-h-[56px] w-full rounded-2xl border border-slate-300 bg-white px-4 font-semibold outline-none focus:border-purple-500" />
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <input type="text" value={numero} onChange={(event) => setNumero(event.target.value)} placeholder="Número" className="min-h-[56px] w-full rounded-2xl border border-slate-300 bg-white px-4 font-semibold outline-none focus:border-purple-500" />
+                      <input type="text" value={complemento} onChange={(event) => setComplemento(event.target.value)} placeholder="Complemento (opcional)" autoComplete="address-line2" className="min-h-[56px] w-full rounded-2xl border border-slate-300 bg-white px-4 font-semibold outline-none focus:border-purple-500" />
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <input type="text" value={bairro} onChange={(event) => setBairro(event.target.value)} placeholder="Bairro" className="min-h-[56px] w-full rounded-2xl border border-slate-300 bg-white px-4 font-semibold outline-none focus:border-purple-500" />
+                      <input type="text" value={cidade} onChange={(event) => setCidade(event.target.value)} placeholder="Cidade" autoComplete="address-level2" className="min-h-[56px] w-full rounded-2xl border border-slate-300 bg-white px-4 font-semibold outline-none focus:border-purple-500" />
+                    </div>
+                  </div>
+                )}
+
+                {conteudoDigital && (
+                  <div className="rounded-2xl border border-purple-200 bg-purple-50 px-5 py-4 text-sm font-semibold leading-6 text-purple-800">
+                    Após a confirmação do pagamento, o acesso será vinculado ao e-mail informado acima.
+                  </div>
+                )}
               </div>
 
               {erro && (

@@ -8,6 +8,7 @@ type ServiceData = {
   id: string;
   therapist_id: string;
   name: string;
+  category: string | null;
   description: string | null;
   cover_photo_url: string | null;
   price: number | string | null;
@@ -96,41 +97,36 @@ export async function GET(request: NextRequest) {
 
     if (!serviceId) {
       return NextResponse.json(
-        {
-          error: "O serviço não foi identificado.",
-        },
-        {
-          status: 400,
-        },
+        { error: "O serviço não foi identificado." },
+        { status: 400 },
       );
     }
 
-    const {
-      data: serviceResult,
-      error: serviceError,
-    } = await supabaseAdmin
-      .from("services")
-      .select(
-        `
-          id,
-          therapist_id,
-          name,
-          description,
-          cover_photo_url,
-          price,
-          promotional_price,
-          currency,
-          duration_minutes,
-          online,
-          in_person,
-          status,
-          payment_url,
-          pix_key
-        `,
-      )
-      .eq("id", serviceId)
-      .eq("status", "active")
-      .maybeSingle();
+    const { data: serviceResult, error: serviceError } =
+      await supabaseAdmin
+        .from("services")
+        .select(
+          `
+            id,
+            therapist_id,
+            name,
+            category,
+            description,
+            cover_photo_url,
+            price,
+            promotional_price,
+            currency,
+            duration_minutes,
+            online,
+            in_person,
+            status,
+            payment_url,
+            pix_key
+          `,
+        )
+        .eq("id", serviceId)
+        .eq("status", "active")
+        .maybeSingle();
 
     if (serviceError) {
       console.error(
@@ -139,45 +135,34 @@ export async function GET(request: NextRequest) {
       );
 
       return NextResponse.json(
-        {
-          error:
-            "Não foi possível carregar os dados deste serviço.",
-        },
-        {
-          status: 500,
-        },
+        { error: "Não foi possível carregar os dados deste serviço." },
+        { status: 500 },
       );
     }
 
     if (!serviceResult) {
       return NextResponse.json(
-        {
-          error: "Serviço não encontrado ou indisponível.",
-        },
-        {
-          status: 404,
-        },
+        { error: "Serviço não encontrado ou indisponível." },
+        { status: 404 },
       );
     }
 
     const service = serviceResult as ServiceData;
 
-    const {
-      data: therapistResult,
-      error: therapistError,
-    } = await supabaseAdmin
-      .from("therapists")
-      .select(
-        `
-          id,
-          name,
-          slug,
-          profile_photo_url,
-          photo_url
-        `,
-      )
-      .eq("profile_id", service.therapist_id)
-      .maybeSingle();
+    const { data: therapistResult, error: therapistError } =
+      await supabaseAdmin
+        .from("therapists")
+        .select(
+          `
+            id,
+            name,
+            slug,
+            profile_photo_url,
+            photo_url
+          `,
+        )
+        .eq("profile_id", service.therapist_id)
+        .maybeSingle();
 
     if (therapistError) {
       console.error(
@@ -186,111 +171,63 @@ export async function GET(request: NextRequest) {
       );
 
       return NextResponse.json(
-        {
-          error:
-            "Não foi possível carregar os dados do terapeuta.",
-        },
-        {
-          status: 500,
-        },
+        { error: "Não foi possível carregar os dados do terapeuta." },
+        { status: 500 },
       );
     }
 
     if (!therapistResult) {
       return NextResponse.json(
-        {
-          error:
-            "O terapeuta deste serviço não foi localizado.",
-        },
-        {
-          status: 404,
-        },
+        { error: "O terapeuta deste serviço não foi localizado." },
+        { status: 404 },
       );
     }
 
     const therapist = therapistResult as TherapistData;
-
     const price = obterPrecoFinal(service);
 
     if (price === null) {
       return NextResponse.json(
-        {
-          error:
-            "Este serviço não possui um preço válido.",
-        },
-        {
-          status: 400,
-        },
+        { error: "Este serviço não possui um preço válido." },
+        { status: 400 },
       );
     }
 
-    const infinitePayUrl = obterLinkInfinitePay(
-      service.payment_url,
-    );
-
+    const infinitePayUrl = obterLinkInfinitePay(service.payment_url);
     const pixKey = service.pix_key?.trim() || null;
-
     const infinitePayAvailable = Boolean(infinitePayUrl);
     const pixAvailable = Boolean(pixKey);
 
     return NextResponse.json({
       success: true,
-
       service: {
         id: service.id,
         name: service.name,
+        category: service.category?.trim() || "Outro",
         description: service.description ?? "",
-        coverPhotoUrl:
-          service.cover_photo_url?.trim() || null,
-
+        coverPhotoUrl: service.cover_photo_url?.trim() || null,
         price,
-
-        originalPrice:
-          converterValor(service.price),
-
-        promotionalPrice:
-          converterValor(service.promotional_price),
-
-        currency:
-          service.currency || "BRL",
-
-        durationMinutes:
-          service.duration_minutes ?? null,
-
-        online:
-          service.online === true,
-
-        inPerson:
-          service.in_person === true,
+        originalPrice: converterValor(service.price),
+        promotionalPrice: converterValor(service.promotional_price),
+        currency: service.currency || "BRL",
+        durationMinutes: service.duration_minutes ?? null,
+        online: service.online === true,
+        inPerson: service.in_person === true,
       },
-
       therapist: {
         id: therapist.id,
-
-        name:
-          therapist.name?.trim() ||
-          "Terapeuta AuraMeets",
-
-        slug:
-          therapist.slug?.trim() || null,
-
+        name: therapist.name?.trim() || "Terapeuta AuraMeets",
+        slug: therapist.slug?.trim() || null,
         photoUrl:
           therapist.profile_photo_url?.trim() ||
           therapist.photo_url?.trim() ||
           null,
       },
-
       payment: {
         infinitePayAvailable,
         infinitePayUrl,
-
         pixAvailable,
-
-        pix: pixAvailable
-          ? {
-              key: pixKey,
-            }
-          : null,
+        pix: pixAvailable ? { key: pixKey } : null,
       },
     });
   } catch (error) {
@@ -300,13 +237,8 @@ export async function GET(request: NextRequest) {
     );
 
     return NextResponse.json(
-      {
-        error:
-          "Não foi possível preparar esta compra.",
-      },
-      {
-        status: 500,
-      },
+      { error: "Não foi possível preparar esta compra." },
+      { status: 500 },
     );
   }
 }

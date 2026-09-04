@@ -44,6 +44,20 @@ type OfferCardProps = {
   href: string;
 };
 
+function embaralharOfertas<T>(itens: T[]): T[] {
+  const resultado = [...itens];
+
+  for (let indice = resultado.length - 1; indice > 0; indice -= 1) {
+    const indiceAleatorio = Math.floor(Math.random() * (indice + 1));
+    [resultado[indice], resultado[indiceAleatorio]] = [
+      resultado[indiceAleatorio],
+      resultado[indice],
+    ];
+  }
+
+  return resultado;
+}
+
 
 export default function HomePage() {
   const [menuAberto, setMenuAberto] = useState(false);
@@ -60,7 +74,7 @@ export default function HomePage() {
         const ofertas = await getFeaturedExperiences();
 
         if (componenteAtivo) {
-          setOfertasEspeciais(ofertas);
+          setOfertasEspeciais(embaralharOfertas(ofertas));
         }
       } catch (error) {
         console.error("Erro ao carregar experiências AuraMeets:", error);
@@ -319,11 +333,7 @@ export default function HomePage() {
                   badge={oferta.display_badge}
                   initials={getTherapistInitials(oferta.therapist_name)}
                   imageUrl={oferta.therapist_photo_url}
-                  href={
-                    oferta.therapist_slug
-                      ? `/agendar/${encodeURIComponent(oferta.therapist_slug)}?experiencia=${encodeURIComponent(String(oferta.id))}`
-                      : oferta.public_href
-                  }
+                  href={oferta.whatsapp_href || oferta.public_href}
                 />
               ))}
             </div>

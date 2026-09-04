@@ -1,533 +1,289 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
 import { supabase } from "@/lib/supabase";
-import { formatCurrency, formatPhone } from "@/lib/utils";
+import { getTherapistBySlug } from "@/lib/therapists";
 
-type Props = {
-  params: Promise<{
-    id: string;
-  }>;
+type IconName = "calendar" | "bag" | "gift" | "ticket" | "share" | "check";
+
+type PageProps = {
+  params: Promise<{ id: string }>;
 };
 
-type Therapist = {
-  id: number;
-  name: string | null;
-  phone: string | null;
-  speciality: string | null;
-  city: string | null;
-  state: string | null;
-  bio: string | null;
-  photo_url: string | null;
-  verified: boolean | null;
-  rating: number | null;
-  price: number | null;
-  active: boolean | null;
-  service_type: string | null;
-  instagram: string | null;
-  website: string | null;
-  plan: string | null;
-  duration: string | null;
-  experience: string | null;
-  slug: string | null;
+type Service = {
+  id: string;
+  name: string;
+  category: string | null;
+  description: string | null;
+  cover_photo_url: string | null;
+  online: boolean | null;
+  in_person: boolean | null;
+  duration_minutes: number | null;
+  price: number | string | null;
+  promotional_price: number | string | null;
+  currency: string | null;
 };
 
-function formatarAvaliacao(valor: number | null) {
-  if (valor === null || valor === undefined) {
-    return "0,0";
-  }
+function formatCurrency(value: number | string | null, currency = "BRL") {
+  const amount = Number(value ?? 0);
 
-  return valor.toLocaleString("pt-BR", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
+  if (!Number.isFinite(amount)) return "Consultar";
+
+  return amount.toLocaleString("pt-BR", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
 }
 
-function criarLinkWhatsApp(telefone: string | null, nome: string) {
-  if (!telefone) {
-    return null;
-  }
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase();
+}
 
-  let numeros = telefone.replace(/\D/g, "");
+function getFinalPrice(service: Service) {
+  const promotional = Number(service.promotional_price);
+  return service.promotional_price !== null && Number.isFinite(promotional)
+    ? promotional
+    : service.price;
+}
 
-  if (!numeros.startsWith("55")) {
-    numeros = `55${numeros}`;
-  }
+function getModality(service: Service) {
+  if (service.online && service.in_person) return "Online ou presencial";
+  if (service.online) return "Online";
+  if (service.in_person) return "Presencial";
+  return "Consulte a modalidade";
+}
 
-  const mensagem = encodeURIComponent(
-    `Olá! Encontrei o perfil de ${nome} no AuraMeets e gostaria de saber mais sobre o atendimento.`,
+function ExpandableText({
+  text,
+  className = "",
+}: {
+  text: string;
+  className?: string;
+}) {
+  return (
+    <details className="group">
+      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+        <span className="block group-open:hidden">
+          <span
+            className={`overflow-hidden whitespace-pre-line ${className}`}
+            style={{
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 6,
+            }}
+          >
+            {text}
+          </span>
+
+          <span className="mt-2 inline-flex text-xs font-extrabold uppercase tracking-[0.12em] text-[#d9bd66] transition hover:text-[#f1dc92]">
+            Ver mais
+          </span>
+        </span>
+
+        <span className="mt-2 hidden text-xs font-extrabold uppercase tracking-[0.12em] text-[#d9bd66] transition hover:text-[#f1dc92] group-open:inline-flex">
+          Ver menos
+        </span>
+      </summary>
+
+      <p className={`mt-2 whitespace-pre-line ${className}`}>
+        {text}
+      </p>
+    </details>
   );
-
-  return `https://wa.me/${numeros}?text=${mensagem}`;
 }
 
-function normalizarInstagram(instagram: string | null) {
-  if (!instagram) {
-    return null;
-  }
+function Icon({ name, className = "h-6 w-6" }: { name: IconName; className?: string }) {
+  const paths: Record<IconName, React.ReactNode> = {
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></>,
+    bag: <><path d="M6 8h12l1 13H5L6 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></>,
+    gift: <><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8H8.5a2.5 2.5 0 1 1 2.2-3.7L12 8Zm0 0h3.5a2.5 2.5 0 1 0-2.2-3.7L12 8Z"/></>,
+    ticket: <><path d="M3 7a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4V7Z"/><path d="M13 5v2M13 10v2M13 15v4"/></>,
+    share: <><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/></>,
+    check: <path d="m5 12 4 4L19 6"/>,
+  };
 
-  if (
-    instagram.startsWith("http://") ||
-    instagram.startsWith("https://")
-  ) {
-    return instagram;
-  }
-
-  const usuario = instagram.replace("@", "").trim();
-
-  if (!usuario) {
-    return null;
-  }
-
-  return `https://instagram.com/${usuario}`;
+  return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
 
-function normalizarWebsite(website: string | null) {
-  if (!website) {
-    return null;
-  }
-
-  if (
-    website.startsWith("http://") ||
-    website.startsWith("https://")
-  ) {
-    return website;
-  }
-
-  return `https://${website}`;
-}
-
-export default async function TherapistPage({ params }: Props) {
+export default async function TherapistPage({ params }: PageProps) {
   const { id } = await params;
+  const therapist = await getTherapistBySlug(id);
 
-  const { data, error } = await supabase
-    .from("therapists")
-    .select(
-      `
-        id,
-        name,
-        phone,
-        speciality,
-        city,
-        state,
-        bio,
-        photo_url,
-        verified,
-        rating,
-        price,
-        active,
-        service_type,
-        instagram,
-        website,
-        plan,
-        duration,
-        experience,
-        slug
-      `,
-    )
-    .eq("slug", id)
-    .eq("active", true)
-    .maybeSingle();
+  if (!therapist) notFound();
 
-  if (error) {
-    console.error("Erro ao carregar terapeuta:", error);
-    notFound();
+  let services: Service[] = [];
+
+  if (therapist.profile_id) {
+    const { data, error } = await supabase
+      .from("services")
+      .select(
+        "id,name,category,description,cover_photo_url,online,in_person,duration_minutes,price,promotional_price,currency",
+      )
+      .eq("therapist_id", therapist.profile_id)
+      .eq("status", "active")
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Erro ao carregar serviços públicos:", error);
+    } else {
+      services = (data ?? []) as Service[];
+    }
   }
 
-  if (!data) {
-    notFound();
-  }
-
-  const therapist = data as Therapist;
-
-  const nome = therapist.name || "Profissional AuraMeets";
-
-  const especialidade =
-    therapist.speciality || "Especialidade não informada";
-
-  const localizacao =
-    [therapist.city, therapist.state]
-      .filter(Boolean)
-      .join(" • ") || "Atendimento online";
-
-  const whatsappUrl = criarLinkWhatsApp(
-    therapist.phone,
-    nome,
+  const name = therapist.name || "Profissional AuraMeets";
+  const headline = therapist.speciality || "Terapeuta AuraMeets";
+  const location = [therapist.city, therapist.state].filter(Boolean).join(", ");
+  const photo = therapist.profile_photo_url || therapist.photo_url;
+  const whatsapp = (therapist.phone ?? "").replace(/\D/g, "");
+  const whatsappNumber = whatsapp && !whatsapp.startsWith("55") ? `55${whatsapp}` : whatsapp;
+  const scheduleMessage = encodeURIComponent(
+    `Olá, ${name}! Vi seu perfil no AuraMeets e quero agendar um atendimento.`,
   );
+  const scheduleHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${scheduleMessage}`
+    : "#servicos";
+  const profileUrl = `https://www.aurameets.com.br/terapeuta/${therapist.slug}`;
+  const shareHref = `https://wa.me/?text=${encodeURIComponent(`Conheça o perfil profissional de ${name} no AuraMeets: ${profileUrl}`)}`;
 
-  const instagramUrl = normalizarInstagram(
-    therapist.instagram,
-  );
-
-  const websiteUrl = normalizarWebsite(
-    therapist.website,
-  );
+  const actions: { label: string; icon: IconName; href: string; featured?: boolean }[] = [
+    { label: "Quero agendar", icon: "calendar", href: scheduleHref, featured: true },
+    { label: "Quero comprar", icon: "bag", href: "#servicos" },
+  ];
 
   return (
-    <main className="min-h-screen bg-[#050816] pb-24 text-white lg:pb-0">
-      <header className="sticky top-0 z-50 border-b border-slate-800 bg-[#050816]/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
-          <Link
-            href="/"
-            className="text-2xl font-black tracking-tight text-yellow-400"
-          >
-            AuraMeets
-          </Link>
+    <main className="min-h-screen bg-[#080709] text-white selection:bg-[#d3b35a] selection:text-[#130d16]">
+      <section className="relative overflow-hidden border-b border-white/10">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(145,63,156,0.38),transparent_34%),radial-gradient(circle_at_82%_18%,rgba(212,178,79,0.18),transparent_27%),linear-gradient(145deg,#080709_10%,#171019_55%,#09070a_100%)]" />
+        <div className="absolute -left-28 top-24 h-72 w-72 rounded-full border border-[#d6b85a]/10" />
+        <div className="absolute -left-16 top-36 h-52 w-52 rounded-full border border-[#d6b85a]/10" />
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="hidden px-4 py-3 font-bold text-slate-300 transition hover:text-yellow-400 sm:block"
-            >
-              Página inicial
-            </Link>
+        <div className="relative mx-auto max-w-6xl px-5 pb-12 pt-6 sm:px-8 lg:pb-16">
+          <div className="mb-10 flex items-center justify-between">
+            <a href="#" className="flex items-center gap-3" aria-label="AuraMeets">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl border border-[#d7ba61]/40 bg-[#702a78]/60 text-[#e5cc78] shadow-[0_0_30px_rgba(140,51,151,0.25)]">
+                <span className="text-xl">◇</span>
+              </span>
+              <span>
+                <strong className="block font-serif text-2xl tracking-wide text-[#e2c66e]">AuraMeets</strong>
+                <small className="block text-[8px] uppercase tracking-[0.3em] text-white/55">Conexões que transformam</small>
+              </span>
+            </a>
 
-            <Link
-              href="/planos"
-              className="rounded-xl border border-slate-700 px-4 py-3 text-sm font-bold transition hover:border-yellow-400 hover:text-yellow-400 sm:px-5 sm:text-base"
-            >
-              Conhecer o AuraMeets
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <section className="relative overflow-hidden border-b border-slate-800">
-        <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-yellow-400/10 blur-3xl" />
-
-        <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:py-20">
-          <div>
-            <div className="flex flex-col gap-8 md:flex-row md:items-center">
-              <div className="shrink-0">
-                {therapist.photo_url ? (
-                  <img
-                    src={therapist.photo_url}
-                    alt={`Foto profissional de ${nome}`}
-                    className="h-48 w-48 rounded-[2rem] border-2 border-yellow-400/30 object-cover shadow-2xl sm:h-56 sm:w-56"
-                  />
-                ) : (
-                  <div className="flex h-48 w-48 items-center justify-center rounded-[2rem] border-2 border-yellow-400/30 bg-[#111A33] text-7xl font-black text-yellow-400 shadow-2xl sm:h-56 sm:w-56">
-                    {nome.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-xs font-black uppercase tracking-[0.3em] text-yellow-400 sm:text-sm">
-                    Perfil profissional
-                  </p>
-
-                  {therapist.verified && (
-                    <span className="rounded-full border border-yellow-400/40 bg-yellow-400/10 px-3 py-1.5 text-xs font-black text-yellow-400">
-                      ✓ Perfil verificado
-                    </span>
-                  )}
-
-                  {therapist.plan && (
-                    <span className="rounded-full border border-purple-400/30 bg-purple-400/10 px-3 py-1.5 text-xs font-black capitalize text-purple-300">
-                      Plano {therapist.plan}
-                    </span>
-                  )}
-                </div>
-
-                <h1 className="mt-5 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                  {nome}
-                </h1>
-
-                <p className="mt-4 text-xl font-black text-slate-100 sm:text-2xl">
-                  {especialidade}
-                </p>
-
-                <p className="mt-3 text-lg text-slate-400">
-                  {localizacao}
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <span className="rounded-full border border-slate-700 bg-[#111A33] px-4 py-2 font-black text-yellow-400">
-                    ★ {formatarAvaliacao(therapist.rating)}
-                  </span>
-
-                  <span className="rounded-full border border-slate-700 bg-[#111A33] px-4 py-2 font-semibold text-slate-300">
-                    {therapist.service_type ||
-                      "Modalidade não informada"}
-                  </span>
-
-                  {therapist.experience && (
-                    <span className="rounded-full border border-slate-700 bg-[#111A33] px-4 py-2 font-semibold text-slate-300">
-                      {therapist.experience}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <article className="mt-10 rounded-3xl border border-slate-800 bg-[#111A33] p-6 shadow-xl sm:p-8">
-              <p className="text-sm font-black uppercase tracking-[0.25em] text-yellow-400">
-                Sobre o profissional
-              </p>
-
-              <p className="mt-5 whitespace-pre-line text-base leading-8 text-slate-300 sm:text-lg">
-                {therapist.bio ||
-                  "Este profissional ainda não adicionou sua apresentação."}
-              </p>
-            </article>
-
-            <section className="mt-8">
-              <p className="text-sm font-black uppercase tracking-[0.25em] text-yellow-400">
-                Informações do atendimento
-              </p>
-
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                <article className="rounded-2xl border border-slate-800 bg-[#111A33] p-6">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-400 text-xl text-black">
-                    ◉
-                  </div>
-
-                  <p className="mt-5 text-sm font-semibold text-slate-500">
-                    Modalidade
-                  </p>
-
-                  <p className="mt-2 text-xl font-black">
-                    {therapist.service_type || "Não informada"}
-                  </p>
-                </article>
-
-                <article className="rounded-2xl border border-slate-800 bg-[#111A33] p-6">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-400 text-xl text-black">
-                    ⏱
-                  </div>
-
-                  <p className="mt-5 text-sm font-semibold text-slate-500">
-                    Duração da consulta
-                  </p>
-
-                  <p className="mt-2 text-xl font-black">
-                    {therapist.duration || "Não informada"}
-                  </p>
-                </article>
-
-                <article className="rounded-2xl border border-slate-800 bg-[#111A33] p-6">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-400 text-xl text-black">
-                    ★
-                  </div>
-
-                  <p className="mt-5 text-sm font-semibold text-slate-500">
-                    Avaliação
-                  </p>
-
-                  <p className="mt-2 text-xl font-black text-yellow-400">
-                    {formatarAvaliacao(therapist.rating)}
-                  </p>
-                </article>
-
-                <article className="rounded-2xl border border-slate-800 bg-[#111A33] p-6">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-400 text-xl text-black">
-                    ◈
-                  </div>
-
-                  <p className="mt-5 text-sm font-semibold text-slate-500">
-                    Experiência profissional
-                  </p>
-
-                  <p className="mt-2 text-xl font-black">
-                    {therapist.experience || "Não informada"}
-                  </p>
-                </article>
-              </div>
-            </section>
-
-            {(instagramUrl || websiteUrl) && (
-              <article className="mt-8 rounded-3xl border border-slate-800 bg-[#111A33] p-6 sm:p-8">
-                <p className="text-sm font-black uppercase tracking-[0.25em] text-yellow-400">
-                  Presença digital
-                </p>
-
-                <p className="mt-3 text-slate-400">
-                  Conheça mais sobre o trabalho deste profissional.
-                </p>
-
-                <div className="mt-6 flex flex-col gap-4 sm:flex-row">
-                  {instagramUrl && (
-                    <a
-                      href={instagramUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-xl border border-slate-700 px-6 py-4 text-center font-black transition hover:border-yellow-400 hover:text-yellow-400"
-                    >
-                      Instagram
-                    </a>
-                  )}
-
-                  {websiteUrl && (
-                    <a
-                      href={websiteUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-xl border border-slate-700 px-6 py-4 text-center font-black transition hover:border-yellow-400 hover:text-yellow-400"
-                    >
-                      Site profissional
-                    </a>
-                  )}
-                </div>
-              </article>
-            )}
-
-            <article className="mt-8 rounded-3xl border border-yellow-400/20 bg-yellow-400/5 p-6 sm:p-8">
-              <p className="text-lg font-black text-yellow-400">
-                Encontre clareza para o seu momento.
-              </p>
-
-              <p className="mt-3 max-w-3xl leading-7 text-slate-300">
-                Entre em contato com o profissional para esclarecer suas
-                dúvidas, conhecer a metodologia de atendimento e verificar os
-                horários disponíveis.
-              </p>
-            </article>
+            <a href={shareHref} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white/80 backdrop-blur transition hover:border-[#d7ba61]/60 hover:text-[#e5cc78]">
+              <Icon name="share" className="h-4 w-4" />
+              <span className="hidden sm:inline">Compartilhar perfil</span>
+            </a>
           </div>
 
-          <aside className="lg:sticky lg:top-24">
-            <div className="overflow-hidden rounded-3xl border border-yellow-400/30 bg-[#111A33] shadow-2xl">
-              <div className="bg-yellow-400 px-6 py-4 text-black">
-                <p className="text-xs font-black uppercase tracking-[0.25em]">
-                  Consulta particular
-                </p>
-              </div>
-
-              <div className="p-6 sm:p-8">
-                <p className="text-sm font-semibold text-slate-500">
-                  Valor da consulta
-                </p>
-
-                <p className="mt-2 text-4xl font-black text-white">
-                  {therapist.price !== null
-                    ? formatCurrency(therapist.price)
-                    : "Sob consulta"}
-                </p>
-
-                <p className="mt-2 text-sm text-slate-500">
-                  Confirme diretamente com o profissional as condições de
-                  pagamento.
-                </p>
-
-                <div className="mt-7 space-y-5 border-t border-slate-800 pt-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-slate-500">
-                      Duração
-                    </p>
-
-                    <p className="text-right font-bold">
-                      {therapist.duration || "Não informada"}
-                    </p>
+          <div className="grid items-center gap-8 md:grid-cols-[260px_1fr] lg:gap-14">
+            <div className="mx-auto md:mx-0">
+              <div className="relative h-52 w-52 sm:h-60 sm:w-60">
+                <div className="absolute inset-0 rounded-[2.4rem] bg-gradient-to-br from-[#e2c66e] via-[#7f327f] to-[#251129] p-[2px] shadow-[0_25px_70px_rgba(0,0,0,0.5)]">
+                  <div className="grid h-full w-full place-items-center overflow-hidden rounded-[2.3rem] bg-gradient-to-br from-[#2a172d] to-[#0e0a10]">
+                    {photo ? (
+                      <img src={photo} alt={`Foto profissional de ${name}`} className="h-full w-full object-cover object-top" />
+                    ) : (
+                      <span className="font-serif text-6xl text-[#e4ca78]">{getInitials(name)}</span>
+                    )}
                   </div>
-
-                  <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-slate-500">
-                      Atendimento
-                    </p>
-
-                    <p className="text-right font-bold">
-                      {therapist.service_type || "Não informado"}
-                    </p>
-                  </div>
-
-                  {therapist.phone && (
-                    <div className="flex items-start justify-between gap-4">
-                      <p className="text-sm text-slate-500">
-                        WhatsApp
-                      </p>
-
-                      <p className="text-right font-bold">
-                        {formatPhone(therapist.phone)}
-                      </p>
-                    </div>
-                  )}
-
-                  {therapist.rating !== null && therapist.rating > 0 && (
-                    <div className="flex items-start justify-between gap-4">
-                      <p className="text-sm text-slate-500">
-                        Avaliação
-                      </p>
-
-                      <p className="text-right font-black text-yellow-400">
-                        ★ {formatarAvaliacao(therapist.rating)}
-                      </p>
-                    </div>
-                  )}
                 </div>
-
-                <button
-                  type="button"
-                  className="mt-8 w-full rounded-xl bg-yellow-400 px-6 py-4 text-lg font-black text-black transition hover:-translate-y-0.5 hover:bg-yellow-300"
-                >
-                  Agendar consulta
-                </button>
-
-                {whatsappUrl && (
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 block w-full rounded-xl border border-emerald-400/50 bg-emerald-400/10 px-6 py-4 text-center font-black text-emerald-300 transition hover:bg-emerald-400 hover:text-black"
-                  >
-                    Conversar pelo WhatsApp
-                  </a>
-                )}
-
-                <p className="mt-5 text-center text-xs leading-5 text-slate-500">
-                  O agendamento online será disponibilizado em uma próxima
-                  etapa.
-                </p>
+                <span className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d9bd66]/40 bg-[#171019] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#e2c66e] shadow-xl">
+                  <Icon name="check" className="h-3.5 w-3.5" /> Profissional verificada
+                </span>
               </div>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-slate-800 bg-[#080D22] p-5">
-              <p className="text-sm font-black text-yellow-400">
-                Rede AuraMeets
-              </p>
-
-              <p className="mt-2 text-sm leading-6 text-slate-400">
-                Este profissional faz parte da rede AuraMeets. Verifique
-                diretamente as condições e informações do atendimento.
-              </p>
+            <div className="text-center md:text-left">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.3em] text-[#d6b85e]">Perfil profissional AuraMeets</p>
+              <h1 className="font-serif text-4xl font-medium leading-[1.05] sm:text-5xl lg:text-6xl">{name}</h1>
+              <p className="mt-4 text-base font-semibold text-[#c78dcc] sm:text-lg">{headline}</p>
+              <div className="mx-auto mt-4 max-w-2xl md:mx-0">
+                <ExpandableText
+                  text={therapist.bio || "Conheça este profissional e encontre a experiência ideal para o seu momento."}
+                  className="text-sm leading-7 text-white/58 sm:text-base"
+                />
+              </div>
+              <div className="mt-5 flex flex-wrap justify-center gap-2 md:justify-start">
+                {[therapist.service_type, location].filter(Boolean).map((item) => <span key={String(item)} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/60">{item}</span>)}
+              </div>
             </div>
-          </aside>
+          </div>
         </div>
       </section>
 
-      <footer className="border-t border-slate-800 px-5 py-8 sm:px-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 text-center text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:text-left">
-          <p>© 2026 AuraMeets. Todos os direitos reservados.</p>
-
-          <Link
-            href="/"
-            className="font-bold text-yellow-400 hover:underline"
-          >
-            Conheça o AuraMeets
-          </Link>
+      <section className="relative z-10 mx-auto -mt-1 max-w-6xl px-5 sm:px-8">
+        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 rounded-[2rem] border border-white/10 bg-[#100d12]/90 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:grid-cols-2">
+          {actions.map((action) => (
+            <Link key={action.label} href={action.href} target={action.href.startsWith("http") ? "_blank" : undefined} className={`group flex min-h-32 flex-col items-center justify-center gap-4 rounded-[1.5rem] border px-5 text-center transition duration-300 hover:-translate-y-1 sm:min-h-36 ${action.featured ? "border-[#d4b452]/60 bg-gradient-to-br from-[#813587] to-[#542058] shadow-[0_12px_30px_rgba(108,38,116,0.3)]" : "border-[#d4b452]/35 bg-gradient-to-br from-[#261529] to-[#151017] shadow-[0_12px_30px_rgba(0,0,0,0.25)] hover:border-[#d4b452]/65"}`}>
+              <Icon name={action.icon} className={`h-8 w-8 ${action.featured ? "text-[#f0da92]" : "text-[#d9bc62]"}`} />
+              <span className="text-sm font-extrabold uppercase tracking-[0.11em] sm:text-base">{action.label}</span>
+            </Link>
+          ))}
         </div>
-      </footer>
+      </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-700 bg-[#111A33]/95 p-3 backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-xl gap-3">
-          {whatsappUrl && (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex-1 rounded-xl border border-emerald-400/50 bg-emerald-400/10 px-4 py-3 text-center text-sm font-black text-emerald-300"
-            >
-              WhatsApp
-            </a>
-          )}
-
-          <button
-            type="button"
-            className="flex-1 rounded-xl bg-yellow-400 px-4 py-3 text-sm font-black text-black"
-          >
-            Agendar
-          </button>
+      <section id="servicos" className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+        <div className="mb-9 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#cfae52]">Atendimentos e experiências</p>
+            <h2 className="mt-2 font-serif text-3xl sm:text-4xl">Serviços disponíveis</h2>
+          </div>
+          <p className="max-w-md text-sm leading-6 text-white/50">Escolha a experiência ideal para o seu momento e fale diretamente com a profissional.</p>
         </div>
-      </div>
+
+        {services.length > 0 ? (
+        <div className="grid gap-6">
+          {services.map((service, index) => (
+            <article key={service.id} className="group overflow-hidden rounded-[1.7rem] border border-white/10 bg-[#111014] transition duration-300 hover:-translate-y-1 hover:border-[#d1ae50]/35 lg:grid lg:grid-cols-5">
+              <div className={`relative min-h-80 overflow-hidden bg-gradient-to-br lg:col-span-2 lg:min-h-full ${index % 3 === 0 ? "from-[#8d6a24] via-[#d8b95d] to-[#75500e]" : index % 3 === 1 ? "from-[#5d2469] via-[#a95bb2] to-[#33113c]" : "from-[#19394d] via-[#3f8191] to-[#10232d]"}`}>
+                {service.cover_photo_url && (
+                  <img
+                    src={service.cover_photo_url}
+                    alt={`Imagem de ${service.name}`}
+                    className="absolute inset-0 h-full w-full object-cover object-center"
+                  />
+                )}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_25%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(0deg,rgba(5,5,7,0.45),transparent)]" />
+                <div className="absolute bottom-4 left-5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur">{service.category || "Serviço AuraMeets"}</div>
+              </div>
+              <div className="flex flex-col justify-between p-6 lg:col-span-3 lg:p-8">
+                <h3 className="font-serif text-2xl text-white">{service.name}</h3>
+                <div className="mt-3 min-h-[96px]">
+                  <ExpandableText
+                    text={service.description || "Conheça esta experiência oferecida pelo profissional."}
+                    className="text-sm leading-6 text-white/55"
+                  />
+                </div>
+                <div className="mt-5 flex flex-wrap gap-2 text-[11px] text-white/50">
+                  {service.duration_minutes && <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{service.duration_minutes} minutos</span>}
+                  <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{getModality(service)}</span>
+                </div>
+                <div className="mt-6 flex items-center justify-between gap-4 border-t border-white/10 pt-5">
+                  <div>
+                    <span className="block text-[10px] uppercase tracking-widest text-white/35">Investimento</span>
+                    <strong className="mt-1 block text-xl text-[#e1c56d]">{formatCurrency(getFinalPrice(service), service.currency || "BRL")}</strong>
+                  </div>
+                  <Link href={`/comprar?servico=${encodeURIComponent(service.id)}`} className="rounded-full bg-[#7e327f] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white transition hover:bg-[#a24ba5]">Quero comprar</Link>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+        ) : (
+          <div className="rounded-[1.7rem] border border-dashed border-white/15 bg-white/[0.03] p-8 text-center text-white/50">Este profissional ainda não publicou serviços.</div>
+        )}
+      </section>
+
+      <footer className="border-t border-white/10 px-5 py-8 text-center text-xs text-white/35">AuraMeets · Conecta · Transforma · Realiza</footer>
     </main>
   );
 }

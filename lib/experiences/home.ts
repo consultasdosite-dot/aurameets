@@ -289,102 +289,28 @@ function normalizeExperience(
       experience,
       therapist,
     ),
-    whatsapp_href:
-  therapist?.slug?.trim()
-    ? `/agendar/${encodeURIComponent(
-        therapist.slug.trim(),
-      )}?experiencia=${encodeURIComponent(
-        String(experience.id),
-      )}`
-    : null,
+    whatsapp_href: createWhatsAppHref(
+      experience,
+      therapist,
+    ),
   };
-}
-
-const MIN_SAME_THERAPIST_DISTANCE = 5;
-
-function getRecencyTimestamp(
-  experience: FeaturedExperience,
-): number {
-  const therapistCreatedAt =
-    experience.therapist?.created_at;
-
-  const therapistTimestamp = therapistCreatedAt
-    ? new Date(therapistCreatedAt).getTime()
-    : Number.NaN;
-
-  if (!Number.isNaN(therapistTimestamp)) {
-    return therapistTimestamp;
-  }
-
-  return new Date(experience.created_at).getTime();
-}
-
-function sortByRecency(
-  experiences: FeaturedExperience[],
-): FeaturedExperience[] {
-  return [...experiences].sort(
-    (a, b) =>
-      getRecencyTimestamp(b) -
-      getRecencyTimestamp(a),
-  );
-}
-
-function canPlaceExperience(
-  result: FeaturedExperience[],
-  experience: FeaturedExperience,
-): boolean {
-  const lastIndex = result.findLastIndex(
-    (item) =>
-      item.therapist_id === experience.therapist_id,
-  );
-
-  if (lastIndex === -1) {
-    return true;
-  }
-
-  return (
-    result.length - lastIndex >=
-    MIN_SAME_THERAPIST_DISTANCE
-  );
-}
-
-function takeNextAllowedExperience(
-  pool: FeaturedExperience[],
-  result: FeaturedExperience[],
-): FeaturedExperience | null {
-  const allowedIndex = pool.findIndex(
-    (experience) =>
-      canPlaceExperience(result, experience),
-  );
-
-  if (allowedIndex === -1) {
-    return null;
-  }
-
-  const [selected] = pool.splice(allowedIndex, 1);
-  return selected ?? null;
 }
 
 function selectHomeExperiences(
   experiences: FeaturedExperience[],
 ): FeaturedExperience[] {
-  const pool = sortByRecency(experiences);
-  const result: FeaturedExperience[] = [];
+  const shuffled = [...experiences];
 
-  while (pool.length > 0) {
-    const selected =
-      takeNextAllowedExperience(pool, result) ??
-      pool.shift() ??
-      null;
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
 
-    if (!selected) {
-      break;
-    }
-
-    result.push(selected);
+    [shuffled[index], shuffled[randomIndex]] = [
+      shuffled[randomIndex],
+      shuffled[index],
+    ];
   }
 
-  return result;
+  return shuffled;
 }
 
 export function getTherapistInitials(
