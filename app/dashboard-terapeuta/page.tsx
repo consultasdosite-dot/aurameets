@@ -21,6 +21,7 @@ import { supabase } from "@/lib/supabase";
 import ApprovalCard from "./components/ApprovalCard";
 import DashboardHeader from "./components/DashboardHeader";
 import DashboardStats from "./components/DashboardStats";
+import RegistrarAtendimentoPresente from "./components/RegistrarAtendimentoPresente";
 import Sidebar from "./components/Sidebar";
 import SolicitacoesList, {
   type SolicitacaoAtendimento,
@@ -733,6 +734,15 @@ export default function DashboardTerapeutaPage() {
                 totalPendentes={totalPendentes}
                 totalAceitas={totalAceitas}
               />
+
+              {therapistId !== null && (
+                <RegistrarAtendimentoPresente
+                  therapistId={therapistId}
+                  onRegistrado={() =>
+                    void carregarSolicitacoes()
+                  }
+                />
+              )}
 
               <section className="rounded-3xl border border-purple-200 bg-white p-5 shadow-sm sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

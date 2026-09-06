@@ -289,31 +289,24 @@ function ComprarContent() {
   return (
     <main className="min-h-screen bg-[#F8F8FB] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
-        {/* LOGO */}
-        <div className="mb-8 flex flex-col items-center text-center">
-          <AuraLogo className="h-16 w-16" />
-
-          <div className="mt-1 text-[30px] font-extrabold tracking-[-0.05em]">
-            <span className="text-[#7342ad]">Aura</span>
-            <span className="text-[#101d3b]">Meets</span>
+        {/* CABEÇALHO INSTITUCIONAL DA COMPRA */}
+        <div className="mb-6">
+          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-[#07142f] shadow-xl">
+            <img
+              src="/images/cabecalho-compra-aurameets.png"
+              alt="AuraMeets — Finalize sua compra com segurança"
+              className="block h-auto w-full"
+            />
           </div>
 
-          <p className="mt-3 max-w-xl text-base font-semibold leading-7 text-slate-600">
-            Seu momento de cuidado começa aqui.
-          </p>
-        </div>
-
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <Link
-            href={voltarHref}
-            className="text-sm font-bold text-slate-500 transition hover:text-purple-700"
-          >
-            ← Voltar ao perfil
-          </Link>
-
-          <span className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white">
-            Área segura
-          </span>
+          <div className="mt-4">
+            <Link
+              href={voltarHref}
+              className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-purple-700"
+            >
+              ← Voltar ao perfil
+            </Link>
+          </div>
         </div>
 
         <section className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-2xl">

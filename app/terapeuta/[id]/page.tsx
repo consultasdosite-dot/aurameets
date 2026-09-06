@@ -243,8 +243,8 @@ export default async function TherapistPage({ params }: PageProps) {
         {services.length > 0 ? (
         <div className="grid gap-6">
           {services.map((service, index) => (
-            <article key={service.id} className="group overflow-hidden rounded-[1.7rem] border border-white/10 bg-[#111014] transition duration-300 hover:-translate-y-1 hover:border-[#d1ae50]/35 lg:grid lg:grid-cols-5">
-              <div className={`relative min-h-80 overflow-hidden bg-gradient-to-br lg:col-span-2 lg:min-h-full ${index % 3 === 0 ? "from-[#8d6a24] via-[#d8b95d] to-[#75500e]" : index % 3 === 1 ? "from-[#5d2469] via-[#a95bb2] to-[#33113c]" : "from-[#19394d] via-[#3f8191] to-[#10232d]"}`}>
+            <article key={service.id} className="group overflow-hidden rounded-[1.7rem] border border-white/10 bg-[#111014] transition duration-300 hover:-translate-y-1 hover:border-[#d1ae50]/35 lg:grid lg:grid-cols-5 lg:items-start">
+              <div className={`relative aspect-video w-full self-start overflow-hidden bg-gradient-to-br lg:col-span-2 ${index % 3 === 0 ? "from-[#8d6a24] via-[#d8b95d] to-[#75500e]" : index % 3 === 1 ? "from-[#5d2469] via-[#a95bb2] to-[#33113c]" : "from-[#19394d] via-[#3f8191] to-[#10232d]"}`}>
                 {service.cover_photo_url && (
                   <img
                     src={service.cover_photo_url}
