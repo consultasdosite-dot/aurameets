@@ -85,6 +85,9 @@ export default function NovoServicoPage() {
   const [descricao, setDescricao] = useState("");
   const [atendeOnline, setAtendeOnline] = useState(true);
   const [atendePresencial, setAtendePresencial] = useState(false);
+  const [entregaPdf, setEntregaPdf] = useState(false);
+  const [entregaVideo, setEntregaVideo] = useState(false);
+  const [entregaAudio, setEntregaAudio] = useState(false);
   const [duracao, setDuracao] = useState("60");
   const [preco, setPreco] = useState("");
   const [precoPromocional, setPrecoPromocional] = useState("");
@@ -188,15 +191,33 @@ export default function NovoServicoPage() {
       return;
     }
 
-    if (!atendeOnline && !atendePresencial) {
-      setErro("Selecione pelo menos uma modalidade de atendimento.");
+    if (
+      !atendeOnline &&
+      !atendePresencial &&
+      !entregaPdf &&
+      !entregaVideo &&
+      !entregaAudio
+    ) {
+      setErro("Selecione pelo menos uma forma de entrega.");
       return;
     }
 
-    const duracaoEmMinutos = Number(duracao);
+    const formatosEntrega = [
+      atendeOnline ? "online" : null,
+      atendePresencial ? "presencial" : null,
+      entregaPdf ? "pdf_documento" : null,
+      entregaVideo ? "video" : null,
+      entregaAudio ? "audio" : null,
+    ].filter((item): item is string => item !== null);
 
-    if (!duracao || duracaoEmMinutos <= 0) {
-      setErro("Informe uma duração válida para o serviço.");
+    const exigeDuracao = atendeOnline || atendePresencial;
+    const duracaoEmMinutos = exigeDuracao ? Number(duracao) : null;
+
+    if (
+      exigeDuracao &&
+      (!duracao || duracaoEmMinutos === null || duracaoEmMinutos <= 0)
+    ) {
+      setErro("Informe uma duração válida para o atendimento.");
       return;
     }
 
@@ -336,6 +357,7 @@ export default function NovoServicoPage() {
           cover_photo_url: fotoPublicaUrl,
           online: atendeOnline,
           in_person: atendePresencial,
+          delivery_formats: formatosEntrega,
           duration_minutes: duracaoEmMinutos,
           price: precoConvertido,
           promotional_price: precoPromocionalConvertido,
@@ -612,10 +634,10 @@ export default function NovoServicoPage() {
 
           <section>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
-              Modalidade e duração
+              Forma de entrega
             </p>
 
-            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               <label
                 className={`flex items-center gap-3 rounded-xl border p-5 transition ${
                   atendeOnline
@@ -667,34 +689,102 @@ export default function NovoServicoPage() {
                   Atendimento presencial
                 </span>
               </label>
-            </div>
 
-            <div className="mt-6">
               <label
-                htmlFor="duracao"
-                className="mb-2 block font-bold"
+                className={`flex items-center gap-3 rounded-xl border p-5 transition ${
+                  entregaPdf
+                    ? "border-yellow-400 bg-yellow-400/10"
+                    : "border-slate-700 bg-[#080D22]"
+                } ${
+                  carregando
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer"
+                }`}
               >
-                Duração
-              </label>
-
-              <div className="flex items-center gap-3">
                 <input
-                  id="duracao"
-                  type="number"
-                  min="1"
-                  value={duracao}
-                  onChange={(event) =>
-                    setDuracao(event.target.value)
-                  }
+                  type="checkbox"
+                  checked={entregaPdf}
+                  onChange={(event) => setEntregaPdf(event.target.checked)}
                   disabled={carregando}
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60 sm:max-w-xs"
+                  className="h-5 w-5 accent-yellow-400"
                 />
 
-                <span className="font-semibold text-slate-300">
-                  minutos
-                </span>
-              </div>
+                <span className="font-bold">PDF / Documento</span>
+              </label>
+
+              <label
+                className={`flex items-center gap-3 rounded-xl border p-5 transition ${
+                  entregaVideo
+                    ? "border-yellow-400 bg-yellow-400/10"
+                    : "border-slate-700 bg-[#080D22]"
+                } ${
+                  carregando
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={entregaVideo}
+                  onChange={(event) => setEntregaVideo(event.target.checked)}
+                  disabled={carregando}
+                  className="h-5 w-5 accent-yellow-400"
+                />
+
+                <span className="font-bold">Vídeo</span>
+              </label>
+
+              <label
+                className={`flex items-center gap-3 rounded-xl border p-5 transition ${
+                  entregaAudio
+                    ? "border-yellow-400 bg-yellow-400/10"
+                    : "border-slate-700 bg-[#080D22]"
+                } ${
+                  carregando
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={entregaAudio}
+                  onChange={(event) => setEntregaAudio(event.target.checked)}
+                  disabled={carregando}
+                  className="h-5 w-5 accent-yellow-400"
+                />
+
+                <span className="font-bold">Áudio</span>
+              </label>
             </div>
+
+            {(atendeOnline || atendePresencial) && (
+              <div className="mt-6">
+                <label
+                  htmlFor="duracao"
+                  className="mb-2 block font-bold"
+                >
+                  Duração do atendimento
+                </label>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    id="duracao"
+                    type="number"
+                    min="1"
+                    value={duracao}
+                    onChange={(event) =>
+                      setDuracao(event.target.value)
+                    }
+                    disabled={carregando}
+                    className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60 sm:max-w-xs"
+                  />
+
+                  <span className="font-semibold text-slate-300">
+                    minutos
+                  </span>
+                </div>
+              </div>
+            )}
           </section>
 
           <div className="h-px bg-slate-800" />
