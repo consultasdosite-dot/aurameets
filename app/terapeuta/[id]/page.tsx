@@ -241,10 +241,21 @@ export default async function TherapistPage({ params }: PageProps) {
         </div>
 
         {services.length > 0 ? (
-        <div className="grid gap-6">
+        <div className="grid gap-4 sm:gap-6">
           {services.map((service, index) => (
-            <article key={service.id} className="group overflow-hidden rounded-[1.7rem] border border-white/10 bg-[#111014] transition duration-300 hover:-translate-y-1 hover:border-[#d1ae50]/35 lg:grid lg:grid-cols-5 lg:items-start">
-              <div className={`relative aspect-video w-full self-start overflow-hidden bg-gradient-to-br lg:col-span-2 ${index % 3 === 0 ? "from-[#8d6a24] via-[#d8b95d] to-[#75500e]" : index % 3 === 1 ? "from-[#5d2469] via-[#a95bb2] to-[#33113c]" : "from-[#19394d] via-[#3f8191] to-[#10232d]"}`}>
+            <article
+              key={service.id}
+              className="group overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#111014] transition duration-300 hover:-translate-y-1 hover:border-[#d1ae50]/35 sm:rounded-[1.7rem] lg:grid lg:grid-cols-5 lg:items-start"
+            >
+              <div
+                className={`relative aspect-[16/9] w-full self-start overflow-hidden bg-gradient-to-br sm:aspect-video lg:col-span-2 ${
+                  index % 3 === 0
+                    ? "from-[#8d6a24] via-[#d8b95d] to-[#75500e]"
+                    : index % 3 === 1
+                      ? "from-[#5d2469] via-[#a95bb2] to-[#33113c]"
+                      : "from-[#19394d] via-[#3f8191] to-[#10232d]"
+                }`}
+              >
                 {service.cover_photo_url && (
                   <img
                     src={service.cover_photo_url}
@@ -252,27 +263,61 @@ export default async function TherapistPage({ params }: PageProps) {
                     className="absolute inset-0 h-full w-full object-cover object-center"
                   />
                 )}
+
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_25%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(0deg,rgba(5,5,7,0.45),transparent)]" />
-                <div className="absolute bottom-4 left-5 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur">{service.category || "Serviço AuraMeets"}</div>
+
+                <div className="absolute bottom-3 left-3 rounded-full border border-white/20 bg-black/40 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur sm:bottom-4 sm:left-5 sm:px-3 sm:py-1.5 sm:text-[10px] sm:tracking-[0.18em]">
+                  {service.category || "Serviço AuraMeets"}
+                </div>
               </div>
-              <div className="flex flex-col justify-between p-6 lg:col-span-3 lg:p-8">
-                <h3 className="font-serif text-2xl text-white">{service.name}</h3>
-                <div className="mt-3 min-h-[96px]">
+
+              <div className="flex flex-col justify-between p-4 sm:p-6 lg:col-span-3 lg:p-8">
+                <h3 className="font-serif text-[1.55rem] leading-tight text-white sm:text-2xl">
+                  {service.name}
+                </h3>
+
+                <div className="mt-2 sm:mt-3 sm:min-h-[96px]">
                   <ExpandableText
-                    text={service.description || "Conheça esta experiência oferecida pelo profissional."}
-                    className="text-sm leading-6 text-white/55"
+                    text={
+                      service.description ||
+                      "Conheça esta experiência oferecida pelo profissional."
+                    }
+                    className="text-[13px] leading-5 text-white/55 sm:text-sm sm:leading-6"
                   />
                 </div>
-                <div className="mt-5 flex flex-wrap gap-2 text-[11px] text-white/50">
-                  {service.duration_minutes && <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{service.duration_minutes} minutos</span>}
-                  <span className="rounded-full bg-white/[0.05] px-3 py-1.5">{getModality(service)}</span>
+
+                <div className="mt-4 flex flex-wrap gap-2 text-[10px] text-white/50 sm:mt-5 sm:text-[11px]">
+                  {service.duration_minutes && (
+                    <span className="rounded-full bg-white/[0.05] px-2.5 py-1.5 sm:px-3">
+                      {service.duration_minutes} minutos
+                    </span>
+                  )}
+
+                  <span className="rounded-full bg-white/[0.05] px-2.5 py-1.5 sm:px-3">
+                    {getModality(service)}
+                  </span>
                 </div>
-                <div className="mt-6 flex items-center justify-between gap-4 border-t border-white/10 pt-5">
-                  <div>
-                    <span className="block text-[10px] uppercase tracking-widest text-white/35">Investimento</span>
-                    <strong className="mt-1 block text-xl text-[#e1c56d]">{formatCurrency(getFinalPrice(service), service.currency || "BRL")}</strong>
+
+                <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4 sm:mt-6 sm:gap-4 sm:pt-5">
+                  <div className="min-w-0">
+                    <span className="block text-[9px] uppercase tracking-widest text-white/35 sm:text-[10px]">
+                      Investimento
+                    </span>
+
+                    <strong className="mt-1 block whitespace-nowrap text-lg text-[#e1c56d] sm:text-xl">
+                      {formatCurrency(
+                        getFinalPrice(service),
+                        service.currency || "BRL",
+                      )}
+                    </strong>
                   </div>
-                  <Link href={`/comprar?servico=${encodeURIComponent(service.id)}`} className="rounded-full bg-[#7e327f] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white transition hover:bg-[#a24ba5]">Quero comprar</Link>
+
+                  <Link
+                    href={`/comprar?servico=${encodeURIComponent(service.id)}`}
+                    className="shrink-0 rounded-full bg-[#7e327f] px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#a24ba5] sm:px-5 sm:py-3 sm:text-xs sm:tracking-wider"
+                  >
+                    Quero comprar
+                  </Link>
                 </div>
               </div>
             </article>
