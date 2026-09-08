@@ -45,6 +45,26 @@ const professionalBenefits = [
   "Parte das mensalidades destinada à divulgação e ao tráfego pago da AuraMeets",
 ];
 
+const paises = [
+  { codigo: "BR", nome: "Brasil", ddi: "+55" },
+  { codigo: "JP", nome: "Japão", ddi: "+81" },
+  { codigo: "PT", nome: "Portugal", ddi: "+351" },
+  { codigo: "US", nome: "Estados Unidos", ddi: "+1" },
+  { codigo: "CA", nome: "Canadá", ddi: "+1" },
+  { codigo: "AR", nome: "Argentina", ddi: "+54" },
+  { codigo: "UY", nome: "Uruguai", ddi: "+598" },
+  { codigo: "PY", nome: "Paraguai", ddi: "+595" },
+  { codigo: "CL", nome: "Chile", ddi: "+56" },
+  { codigo: "ES", nome: "Espanha", ddi: "+34" },
+  { codigo: "FR", nome: "França", ddi: "+33" },
+  { codigo: "DE", nome: "Alemanha", ddi: "+49" },
+  { codigo: "IT", nome: "Itália", ddi: "+39" },
+  { codigo: "GB", nome: "Reino Unido", ddi: "+44" },
+  { codigo: "CH", nome: "Suíça", ddi: "+41" },
+  { codigo: "AU", nome: "Austrália", ddi: "+61" },
+  { codigo: "OTHER", nome: "Outro país", ddi: "" },
+];
+
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 
 const ALLOWED_PHOTO_TYPES = [
@@ -64,6 +84,8 @@ export default function CadastroPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [pais, setPais] = useState("BR");
+  const [ddi, setDdi] = useState("+55");
   const [especialidade, setEspecialidade] = useState("");
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
@@ -163,6 +185,8 @@ export default function CadastroPage() {
     }
   }
 
+  const telefoneInternacional = `${ddi}${telefone.replace(/\D/g, "").replace(/^0+/, "")}`;
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -176,6 +200,11 @@ export default function CadastroPage() {
 
     if (!email.trim()) {
       setErro("Informe seu e-mail.");
+      return;
+    }
+
+    if (!/^\+[1-9]\d{0,3}$/.test(ddi) || !/^\d{6,14}$/.test(telefone.replace(/\D/g, "").replace(/^0+/, "")) || telefoneInternacional.length > 16) {
+      setErro("Informe um DDI válido e um número de WhatsApp internacional.");
       return;
     }
 
@@ -194,7 +223,7 @@ export default function CadastroPage() {
       return;
     }
 
-    if (estado.trim().length !== 2) {
+    if (pais === "BR" && estado.trim().length !== 2) {
       setErro("Informe a sigla do estado com 2 letras.");
       return;
     }
@@ -238,7 +267,8 @@ export default function CadastroPage() {
 
       formData.append("nome", nome.trim());
       formData.append("email", email.trim().toLowerCase());
-      formData.append("telefone", telefone.trim());
+      formData.append("telefone", telefoneInternacional);
+      formData.append("pais", pais);
       formData.append("especialidade", especialidade);
       formData.append("cidade", cidade.trim());
       formData.append("estado", estado.trim().toUpperCase());
@@ -982,21 +1012,27 @@ export default function CadastroPage() {
               </div>
 
               <div className="min-w-0">
-                <label htmlFor="telefone" className="mb-2 block font-bold">
-                  WhatsApp
-                </label>
-
-                <input
-                  id="telefone"
-                  type="tel"
-                  value={telefone}
-                  onChange={(event) => setTelefone(event.target.value)}
-                  placeholder="(31) 99999-9999"
-                  autoComplete="tel"
-                  required
-                  disabled={carregando}
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
-                />
+                <label htmlFor="pais" className="mb-2 block font-bold">País do WhatsApp</label>
+                <select id="pais" value={pais} disabled={carregando}
+                  onChange={(event) => {
+                    const selecionado = paises.find((item) => item.codigo === event.target.value);
+                    setPais(event.target.value);
+                    setDdi(selecionado?.ddi || "");
+                    setTelefone("");
+                    setEstado("");
+                  }}
+                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none focus:border-yellow-400">
+                  {paises.map((item) => <option key={item.codigo} value={item.codigo}>{item.nome} {item.ddi}</option>)}
+                </select>
+                <label htmlFor="telefone" className="mb-2 mt-4 block font-bold">WhatsApp</label>
+                <div className="flex gap-2">
+                  <input aria-label="DDI" type="tel" value={ddi} onChange={(event) => setDdi(event.target.value.replace(/[^+\d]/g, ""))}
+                    placeholder="+81" required disabled={carregando} className="w-24 shrink-0 rounded-xl border border-slate-700 bg-[#080D22] px-3 py-4 outline-none focus:border-yellow-400" />
+                  <input id="telefone" type="tel" value={telefone} onChange={(event) => setTelefone(event.target.value)}
+                    placeholder={pais === "JP" ? "90 1234 5678" : "Número com DDD"} autoComplete="tel-national" required disabled={carregando}
+                    className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none focus:border-yellow-400" />
+                </div>
+                <p className="mt-2 text-xs text-slate-400">Selecione o país e informe o número sem o zero inicial. O DDI será salvo junto ao telefone.</p>
               </div>
             </div>
 
@@ -1026,7 +1062,7 @@ export default function CadastroPage() {
               </select>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_120px]">
+            <div className="grid gap-6 sm:grid-cols-2">
               <div className="min-w-0">
                 <label htmlFor="cidade" className="mb-2 block font-bold">
                   Cidade
@@ -1047,7 +1083,7 @@ export default function CadastroPage() {
 
               <div>
                 <label htmlFor="estado" className="mb-2 block font-bold">
-                  Estado
+                  {pais === "BR" ? "Estado (UF)" : "Estado / Província / Região"}
                 </label>
 
                 <input
@@ -1055,19 +1091,14 @@ export default function CadastroPage() {
                   type="text"
                   value={estado}
                   onChange={(event) =>
-                    setEstado(
-                      event.target.value
-                        .replace(/[^a-zA-Z]/g, "")
-                        .slice(0, 2)
-                        .toUpperCase(),
-                    )
+                    setEstado(pais === "BR" ? event.target.value.replace(/[^a-zA-Z]/g, "").slice(0, 2).toUpperCase() : event.target.value)
                   }
-                  placeholder="MG"
+                  placeholder={pais === "BR" ? "MG" : "Ex.: Tóquio"}
                   autoComplete="address-level1"
-                  maxLength={2}
-                  required
+                  maxLength={pais === "BR" ? 2 : 100}
+                  required={pais === "BR"}
                   disabled={carregando}
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 uppercase outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
+                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5"
                 />
               </div>
             </div>

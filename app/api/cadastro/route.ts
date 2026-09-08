@@ -6,6 +6,7 @@ interface CadastroProfissionalBody {
   nome?: string;
   email?: string;
   telefone?: string;
+  pais?: string;
   especialidade?: string;
   cidade?: string;
   estado?: string;
@@ -118,6 +119,7 @@ async function lerDadosDaRequisicao(
       nome: formData.get("nome")?.toString(),
       email: formData.get("email")?.toString(),
       telefone: formData.get("telefone")?.toString(),
+      pais: formData.get("pais")?.toString(),
       especialidade: formData.get("especialidade")?.toString(),
       cidade: formData.get("cidade")?.toString(),
       estado: formData.get("estado")?.toString(),
@@ -328,9 +330,13 @@ export async function POST(request: Request) {
     const nome = body.nome?.trim();
     const email = body.email?.trim().toLowerCase();
     const telefone = body.telefone?.trim();
+    const pais = body.pais?.trim().toUpperCase() || "BR";
     const especialidade = body.especialidade?.trim();
     const cidade = body.cidade?.trim();
-    const estado = body.estado?.trim().toUpperCase();
+    const estado =
+      pais === "BR"
+        ? body.estado?.trim().toUpperCase()
+        : body.estado?.trim();
     const senha = body.senha;
     const foto = body.foto;
 
@@ -406,6 +412,18 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!/^\+[1-9]\d{6,14}$/.test(telefone)) {
+      return NextResponse.json(
+        {
+          error:
+            "Informe o WhatsApp no formato internacional, incluindo o DDI. Ex.: +819012345678.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
     if (!especialidade) {
       return NextResponse.json(
         {
@@ -428,10 +446,21 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!estado || estado.length !== 2) {
+    if (pais === "BR" && (!estado || estado.length !== 2)) {
       return NextResponse.json(
         {
           error: "Informe corretamente a sigla do estado.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (pais !== "BR" && estado && estado.length > 100) {
+      return NextResponse.json(
+        {
+          error: "Informe corretamente o estado, província ou região.",
         },
         {
           status: 400,
@@ -630,6 +659,7 @@ export async function POST(request: Request) {
       user_metadata: {
         nome,
         telefone,
+        pais,
         especialidade,
         cidade,
         estado,

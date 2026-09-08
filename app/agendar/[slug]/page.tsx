@@ -93,6 +93,60 @@ type VisitorSessionData = {
 
 const VISITOR_DATA_KEY = "aurameets_visitor_data";
 
+type PhoneCountry = {
+  code: string;
+  label: string;
+  dialCode: string;
+  stripLeadingZero?: boolean;
+};
+
+const PHONE_COUNTRIES: PhoneCountry[] = [
+  { code: "BR", label: "Brasil", dialCode: "+55" },
+  { code: "JP", label: "Japão", dialCode: "+81", stripLeadingZero: true },
+  { code: "US", label: "Estados Unidos", dialCode: "+1" },
+  { code: "CA", label: "Canadá", dialCode: "+1" },
+  { code: "PT", label: "Portugal", dialCode: "+351" },
+  { code: "ES", label: "Espanha", dialCode: "+34" },
+  { code: "IT", label: "Itália", dialCode: "+39" },
+  { code: "FR", label: "França", dialCode: "+33", stripLeadingZero: true },
+  { code: "DE", label: "Alemanha", dialCode: "+49", stripLeadingZero: true },
+  { code: "GB", label: "Reino Unido", dialCode: "+44", stripLeadingZero: true },
+  { code: "AR", label: "Argentina", dialCode: "+54" },
+  { code: "UY", label: "Uruguai", dialCode: "+598" },
+  { code: "PY", label: "Paraguai", dialCode: "+595" },
+  { code: "CL", label: "Chile", dialCode: "+56" },
+  { code: "MX", label: "México", dialCode: "+52" },
+];
+
+function normalizePhoneWithCountry(rawPhone: string, countryCode: string) {
+  const trimmed = rawPhone.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.startsWith("+")) {
+    const digits = trimmed.replace(/\D/g, "");
+    return digits ? `+${digits}` : "";
+  }
+
+  const country =
+    PHONE_COUNTRIES.find((item) => item.code === countryCode) ??
+    PHONE_COUNTRIES[0];
+
+  let digits = trimmed.replace(/\D/g, "");
+
+  if (country.stripLeadingZero) {
+    digits = digits.replace(/^0+/, "");
+  }
+
+  return digits ? `${country.dialCode}${digits}` : "";
+}
+
+function isValidInternationalPhone(phone: string) {
+  return /^\+[1-9]\d{6,14}$/.test(phone);
+}
+
 const initialForm: FormData = {
   name: "",
   email: "",
@@ -242,6 +296,7 @@ export default function PublicAppointmentPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [visitorDataLoaded, setVisitorDataLoaded] = useState(false);
+  const [phoneCountry, setPhoneCountry] = useState("BR");
 
   useEffect(() => {
     try {
@@ -554,8 +609,22 @@ export default function PublicAppointmentPage() {
 
     setSaving(true);
 
-    const phoneDigits = form.phone.replace(/\D/g, "");
-    const normalizedEmail = form.email.trim().toLowerCase() ||
+    const normalizedPhone = normalizePhoneWithCountry(
+      form.phone,
+      phoneCountry,
+    );
+
+    if (!isValidInternationalPhone(normalizedPhone)) {
+      setSaving(false);
+      setErrorMessage(
+        "Informe um WhatsApp válido com DDI internacional. Ex.: +819012345678.",
+      );
+      return;
+    }
+
+    const phoneDigits = normalizedPhone.replace(/\D/g, "");
+    const normalizedEmail =
+      form.email.trim().toLowerCase() ||
       (experienceId && phoneDigits
         ? `presente-${phoneDigits}@aurameets.local`
         : "");
@@ -598,7 +667,7 @@ export default function PublicAppointmentPage() {
         p_therapist_id: therapist.id,
         p_client_name: form.name.trim(),
         p_client_email: normalizedEmail,
-        p_client_phone: form.phone.trim(),
+        p_client_phone: normalizedPhone,
         p_preferred_date: dateToIso(new Date()),
         p_preferred_time: "00:00:00",
         p_modality: experienceId
@@ -1092,16 +1161,50 @@ export default function PublicAppointmentPage() {
                           <label htmlFor="gift-phone" className="mb-2 block font-bold">
                             WhatsApp
                           </label>
-                          <input
-                            id="gift-phone"
-                            type="tel"
-                            value={form.phone}
-                            onChange={(event) => updateForm("phone", event.target.value)}
-                            placeholder="(00) 00000-0000"
-                            autoComplete="tel"
-                            className={inputClassName}
-                            required
-                          />
+
+                          <div className="grid grid-cols-[minmax(120px,0.8fr)_minmax(0,1.6fr)] gap-3">
+                            <select
+                              id="gift-phone-country"
+                              value={phoneCountry}
+                              onChange={(event) => {
+                                setPhoneCountry(event.target.value);
+                                setErrorMessage("");
+                              }}
+                              className={inputClassName}
+                              aria-label="País do WhatsApp"
+                            >
+                              {PHONE_COUNTRIES.map((country) => (
+                                <option key={country.code} value={country.code}>
+                                  {country.label} ({country.dialCode})
+                                </option>
+                              ))}
+                            </select>
+
+                            <input
+                              id="gift-phone"
+                              type="tel"
+                              value={form.phone}
+                              onChange={(event) =>
+                                updateForm("phone", event.target.value)
+                              }
+                              placeholder={
+                                phoneCountry === "JP"
+                                  ? "090 1234 5678"
+                                  : phoneCountry === "BR"
+                                    ? "(31) 99999-9999"
+                                    : "Número com DDD/local"
+                              }
+                              autoComplete="tel"
+                              inputMode="tel"
+                              className={inputClassName}
+                              required
+                            />
+                          </div>
+
+                          <p className="mt-2 text-xs leading-5 text-slate-500">
+                            O AuraMeets adiciona o DDI do país selecionado. Se você
+                            já informar o número com +DDI, ele será mantido.
+                          </p>
                         </div>
                       </div>
                     </div>
