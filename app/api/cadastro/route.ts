@@ -334,9 +334,9 @@ export async function POST(request: Request) {
     const especialidade = body.especialidade?.trim();
     const cidade = body.cidade?.trim();
     const estado =
-      pais === "BR"
+      (pais === "BR"
         ? body.estado?.trim().toUpperCase()
-        : body.estado?.trim();
+        : body.estado?.trim()) || "";
     const senha = body.senha;
     const foto = body.foto;
 
