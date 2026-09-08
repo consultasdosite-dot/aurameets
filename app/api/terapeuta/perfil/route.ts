@@ -53,6 +53,24 @@ function urlValidaOuNull(valor: unknown) {
   }
 }
 
+function telefoneInternacionalOuNull(valor: unknown) {
+  const telefone = textoOuNull(valor);
+
+  if (!telefone) {
+    return null;
+  }
+
+  const normalizado = telefone.startsWith("+")
+    ? `+${telefone.replace(/\D/g, "")}`
+    : telefone.replace(/\D/g, "");
+
+  if (!/^\+[1-9]\d{6,14}$/.test(normalizado)) {
+    return null;
+  }
+
+  return normalizado;
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const authorization =
@@ -119,6 +137,19 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const telefoneInformado = textoOuNull(body.phone);
+    const telefone = telefoneInternacionalOuNull(body.phone);
+
+    if (telefoneInformado && !telefone) {
+      return NextResponse.json(
+        {
+          error:
+            "Informe um WhatsApp válido com DDI internacional.",
+        },
+        { status: 400 },
+      );
+    }
+
     const foto = textoOuNull(body.profile_photo_url);
     const videoInformado = textoOuNull(
       body.presentation_video_url,
@@ -148,7 +179,7 @@ export async function PUT(request: NextRequest) {
           textoOuNull(body.email) ??
           user.email ??
           null,
-        phone: textoOuNull(body.phone),
+        phone: telefone,
         speciality,
         city: textoOuNull(body.city),
         state:

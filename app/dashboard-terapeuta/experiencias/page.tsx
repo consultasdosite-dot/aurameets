@@ -29,7 +29,6 @@ type Experience = {
   description: string | null;
   duration: string | null;
   service_type: string | null;
-  quantity_available: number | null;
   rules: string | null;
   active: boolean;
   approval_status: ExperienceStatus;
@@ -45,7 +44,6 @@ type ExperienceForm = {
   description: string;
   duration: string;
   service_type: string;
-  quantity_available: string;
   rules: string;
   whatsapp_message: string;
   button_text: string;
@@ -56,7 +54,6 @@ const initialForm: ExperienceForm = {
   description: "",
   duration: "",
   service_type: "Online",
-  quantity_available: "",
   rules: "",
   whatsapp_message: "",
   button_text: "QUERO MEU PRESENTE",
@@ -145,7 +142,7 @@ export default function TherapistExperiencesPage() {
       passos: [
         "A experiência é uma forma simples de apresentar seu trabalho a uma pessoa nova.",
         "Escolha algo que você realmente possa entregar com qualidade.",
-        "Informe o que a pessoa vai receber, o formato, o tempo de entrega e a quantidade disponível.",
+        "Informe o que a pessoa vai receber, o formato, e o tempo ou a forma de entrega.",
         "Depois toque em ENVIAR PARA APROVAÇÃO. Ela só irá para a Home depois da aprovação.",
       ],
       acao: "nova",
@@ -156,7 +153,7 @@ export default function TherapistExperiencesPage() {
         "Escolha uma pequena experiência que mostre o valor do seu trabalho.",
         "Pode ser online, presencial, uma entrega digital ou outra forma que você consiga cumprir.",
         "Explique claramente o que a pessoa receberá. Evite prometer cura ou resultado garantido.",
-        "Defina uma quantidade que você consiga atender sem dificuldade.",
+        "Ofereça uma experiência que você consiga entregar com qualidade.",
       ],
       acao: "nova",
     },
@@ -260,7 +257,6 @@ export default function TherapistExperiencesPage() {
           description,
           duration,
           service_type,
-          quantity_available,
           rules,
           active,
           approval_status,
@@ -426,12 +422,6 @@ export default function TherapistExperiencesPage() {
       duration: experience.duration || "",
       service_type:
         experience.service_type || "Online",
-      quantity_available:
-        experience.quantity_available !== null
-          ? String(
-              experience.quantity_available,
-            )
-          : "",
       rules: experience.rules || "",
       whatsapp_message:
         experience.whatsapp_message || "",
@@ -490,21 +480,6 @@ export default function TherapistExperiencesPage() {
       return;
     }
 
-    const quantity =
-      form.quantity_available.trim() === ""
-        ? null
-        : Number(form.quantity_available);
-
-    if (
-      quantity !== null &&
-      (!Number.isInteger(quantity) || quantity < 0)
-    ) {
-      setErrorMessage(
-        "A quantidade disponível deve ser um número inteiro igual ou maior que zero.",
-      );
-      return;
-    }
-
     setSaving(true);
     setErrorMessage("");
     setSuccessMessage("");
@@ -515,7 +490,6 @@ export default function TherapistExperiencesPage() {
       description: form.description.trim(),
       duration: form.duration.trim(),
       service_type: form.service_type,
-      quantity_available: quantity,
       rules: form.rules.trim() || null,
       whatsapp_message:
         form.whatsapp_message.trim() || null,
@@ -921,32 +895,6 @@ export default function TherapistExperiencesPage() {
                     />
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor="quantity"
-                      className="mb-2 block font-bold text-slate-800"
-                    >
-                      Quantidade disponível
-                    </label>
-
-                    <input
-                      id="quantity"
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={
-                        form.quantity_available
-                      }
-                      onChange={(event) =>
-                        updateForm(
-                          "quantity_available",
-                          event.target.value,
-                        )
-                      }
-                      placeholder="Deixe vazio para ilimitado"
-                      className={inputClassName}
-                    />
-                  </div>
 
                   <div>
                     <label
@@ -1183,18 +1131,6 @@ export default function TherapistExperiencesPage() {
                         </p>
                       </div>
 
-                      <div>
-                        <p className="text-slate-400">
-                          Quantidade
-                        </p>
-
-                        <p className="mt-1 font-bold text-slate-800">
-                          {experience.quantity_available ===
-                          null
-                            ? "Ilimitada"
-                            : experience.quantity_available}
-                        </p>
-                      </div>
 
                       <div>
                         <p className="text-slate-400">
