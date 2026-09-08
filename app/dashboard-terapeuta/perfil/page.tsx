@@ -150,6 +150,46 @@ function obterYoutubeEmbedUrl(valor: string) {
     : null;
 }
 
+type PhoneCountry = { code: string; label: string; dialCode: string; stripZero?: boolean };
+const phoneCountries: PhoneCountry[] = [
+  {code:"BR",label:"Brasil",dialCode:"+55"},
+  {code:"JP",label:"Japão",dialCode:"+81",stripZero:true},
+  {code:"PT",label:"Portugal",dialCode:"+351"},
+  {code:"US",label:"Estados Unidos",dialCode:"+1"},
+  {code:"CA",label:"Canadá",dialCode:"+1"},
+  {code:"AR",label:"Argentina",dialCode:"+54"},
+  {code:"UY",label:"Uruguai",dialCode:"+598"},
+  {code:"PY",label:"Paraguai",dialCode:"+595"},
+  {code:"CL",label:"Chile",dialCode:"+56"},
+  {code:"ES",label:"Espanha",dialCode:"+34"},
+  {code:"FR",label:"França",dialCode:"+33",stripZero:true},
+  {code:"DE",label:"Alemanha",dialCode:"+49",stripZero:true},
+  {code:"IT",label:"Itália",dialCode:"+39"},
+  {code:"GB",label:"Reino Unido",dialCode:"+44",stripZero:true},
+  {code:"CH",label:"Suíça",dialCode:"+41"},
+  {code:"AU",label:"Austrália",dialCode:"+61"},
+  {code:"OTHER",label:"Outro país",dialCode:""},
+];
+function separarTelefone(valor: string) {
+  const digits = valor.replace(/\D/g, "");
+  if (valor.trim().startsWith("+")) {
+    const country = [...phoneCountries].filter(c => c.dialCode).sort((a,b) => b.dialCode.length-a.dialCode.length).find(c => digits.startsWith(c.dialCode.slice(1)));
+    if (country) return {country:country.code,ddi:country.dialCode,local:digits.slice(country.dialCode.length-1)};
+    return {country:"OTHER",ddi:"",local:valor.trim()};
+  }
+  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) return {country:"BR",ddi:"+55",local:digits.slice(2)};
+  return {country:"BR",ddi:"+55",local:valor};
+}
+function normalizarTelefone(valor: string, ddi: string, countryCode: string) {
+  const raw = valor.trim();
+  if (!raw) return null;
+  if (raw.startsWith("+")) return "+" + raw.replace(/\D/g, "");
+  const prefix = ddi.replace(/\D/g, "");
+  let local = raw.replace(/\D/g, "");
+  if (phoneCountries.find(c => c.code === countryCode)?.stripZero) local = local.replace(/^0+/, "");
+  return "+" + prefix + local;
+}
+
 export default function PerfilTerapeutaPage() {
   const router = useRouter();
 
@@ -170,6 +210,9 @@ export default function PerfilTerapeutaPage() {
 
   const [sucesso, setSucesso] =
     useState<string | null>(null);
+
+  const [phoneCountry, setPhoneCountry] = useState("BR");
+  const [phoneDdi, setPhoneDdi] = useState("+55");
 
   const carregarPerfil = useCallback(async () => {
     setCarregando(true);
@@ -230,6 +273,10 @@ export default function PerfilTerapeutaPage() {
         );
       }
 
+      const telefoneCarregado = separarTelefone(normalizarTexto(data.phone));
+      setPhoneCountry(telefoneCarregado.country);
+      setPhoneDdi(telefoneCarregado.ddi);
+
       setPerfil({
         id: data.id,
         profile_id: data.profile_id ?? session.user.id,
@@ -237,7 +284,7 @@ export default function PerfilTerapeutaPage() {
         email: normalizarTexto(
           data.email ?? session.user.email,
         ),
-        phone: normalizarTexto(data.phone),
+        phone: telefoneCarregado.local,
         speciality: normalizarTexto(
           data.speciality,
         ),
@@ -480,6 +527,11 @@ export default function PerfilTerapeutaPage() {
       return;
     }
 
+    const telefoneInternacional = normalizarTelefone(perfil.phone, phoneDdi, phoneCountry);
+    if (telefoneInternacional && !/^\+[1-9]\d{6,14}$/.test(telefoneInternacional)) {
+      setErro("Informe um WhatsApp válido com DDI internacional.");
+      return;
+    }
     setSalvando(true);
 
     try {
@@ -507,7 +559,7 @@ export default function PerfilTerapeutaPage() {
               perfil.email.trim() ||
               session.user.email ||
               null,
-            phone: perfil.phone.trim() || null,
+            phone: telefoneInternacional,
             speciality:
               perfil.speciality.trim() || null,
             city: perfil.city.trim() || null,
@@ -921,22 +973,25 @@ export default function PerfilTerapeutaPage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="phone"
-                  className="mb-2 block text-sm font-semibold text-slate-800"
-                >
-                  Telefone ou WhatsApp
-                </label>
-
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={perfil.phone}
-                  onChange={atualizarCampo}
-                  placeholder="(31) 99999-9999"
-                  className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
-                />
+                <label htmlFor="phone_country" className="mb-2 block text-sm font-semibold text-slate-800">País do WhatsApp</label>
+                <select id="phone_country" value={phoneCountry} onChange={(event) => {
+                  const country = phoneCountries.find(item => item.code === event.target.value);
+                  setPhoneCountry(event.target.value);
+                  setPhoneDdi(country?.dialCode ?? "");
+                  setErro(null);
+                  setSucesso(null);
+                }} className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100">
+                  {phoneCountries.map(country => <option key={country.code} value={country.code}>{country.label} {country.dialCode}</option>)}
+                </select>
+                <div className="mt-3 flex gap-2">
+                  <input aria-label="DDI" type="tel" inputMode="tel" value={phoneDdi} onChange={event => {
+                    setPhoneDdi(event.target.value);
+                    setErro(null);
+                    setSucesso(null);
+                  }} placeholder="+55" className="min-h-12 w-24 shrink-0 rounded-xl border border-slate-300 px-3 py-3 outline-none focus:border-purple-500" />
+                  <input id="phone" name="phone" type="tel" value={perfil.phone} onChange={atualizarCampo} placeholder={phoneCountry === "JP" ? "090 1234 5678" : phoneCountry === "BR" ? "(31) 99999-9999" : "Número do WhatsApp"} className="min-h-12 min-w-0 flex-1 rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100" />
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-500">Selecione o país e informe o número. O DDI será incluído ao salvar. Você também pode digitar o número completo com +DDI.</p>
               </div>
 
               <div>
