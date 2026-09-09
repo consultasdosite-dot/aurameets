@@ -517,129 +517,30 @@ export async function POST(request: Request) {
       );
     }
 
-    /*
-     * SERVIÇO OBRIGATÓRIO
-     */
+    // Serviço e PIX são opcionais na criação inicial da conta.
+    const possuiServico = Boolean(servicoNome);
+    const possuiPix = Boolean(pixTipoChave || pixChave || pixTitular || pixBanco);
 
-    if (!servicoNome) {
-      return NextResponse.json(
-        {
-          error:
-            "Cadastre pelo menos um serviço para continuar.",
-        },
-        {
-          status: 400,
-        },
-      );
+    if (possuiServico) {
+      if (!servicoCategoria || !servicoDescricao ||
+          !Number.isInteger(servicoDuracao) || servicoDuracao <= 0 ||
+          !Number.isFinite(servicoPreco) || servicoPreco < 0 ||
+          (!servicoOnline && !servicoPresencial)) {
+        return NextResponse.json(
+          { error: "Complete corretamente os dados do serviço informado." },
+          { status: 400 },
+        );
+      }
     }
 
-    if (!servicoCategoria) {
-      return NextResponse.json(
-        {
-          error:
-            "Informe a categoria do serviço.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!servicoDescricao) {
-      return NextResponse.json(
-        {
-          error:
-            "Informe uma descrição para o serviço.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (
-      !Number.isInteger(servicoDuracao) ||
-      servicoDuracao <= 0
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Informe corretamente a duração do serviço em minutos.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (
-      !Number.isFinite(servicoPreco) ||
-      servicoPreco < 0
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Informe corretamente o valor do serviço.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!servicoOnline && !servicoPresencial) {
-      return NextResponse.json(
-        {
-          error:
-            "Selecione pelo menos uma modalidade para o serviço.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    /*
-     * PIX OBRIGATÓRIO
-     */
-
-    if (
-      !pixTipoChave ||
-      !TIPOS_DE_CHAVE_PIX.includes(pixTipoChave)
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Selecione um tipo de chave PIX válido.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!pixChave) {
-      return NextResponse.json(
-        {
-          error:
-            "Informe sua chave PIX para continuar.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!pixTitular) {
-      return NextResponse.json(
-        {
-          error:
-            "Informe o nome do titular da conta PIX.",
-        },
-        {
-          status: 400,
-        },
-      );
+    if (possuiPix) {
+      if (!pixTipoChave || !TIPOS_DE_CHAVE_PIX.includes(pixTipoChave) ||
+          !pixChave || !pixTitular) {
+        return NextResponse.json(
+          { error: "Complete corretamente os dados PIX informados." },
+          { status: 400 },
+        );
+      }
     }
 
     const supabaseAdmin = criarSupabaseAdmin();
@@ -828,103 +729,61 @@ export async function POST(request: Request) {
       Number(terapeutaCriado.id);
 
     /*
-     * 5. CRIAR PRIMEIRO SERVIÇO
-     *
-     * IMPORTANTE:
-     * services.therapist_id aponta para auth.users.id
+     * 5. SERVIÇO OPCIONAL
+     * services.therapist_id aponta para auth.users.id.
      */
+    let serviceId: string | number | null = null;
 
-    const {
-      data: servicoCriado,
-      error: erroServico,
-    } = await supabaseAdmin
-      .from("services")
-      .insert({
-        therapist_id: authUserId,
+    if (possuiServico) {
+      const { data: servicoCriado, error: erroServico } = await supabaseAdmin
+        .from("services")
+        .insert({
+          therapist_id: authUserId,
+          name: servicoNome,
+          category: servicoCategoria,
+          description: servicoDescricao,
+          online: servicoOnline,
+          in_person: servicoPresencial,
+          duration_minutes: servicoDuracao,
+          price: servicoPreco,
+          currency: "BRL",
+          status: "active",
+          approval_status: "pending",
+          sale_mode: "schedule",
+        })
+        .select("id")
+        .single();
 
-        name: servicoNome,
-        category: servicoCategoria,
-        description: servicoDescricao,
-
-        online: servicoOnline,
-        in_person: servicoPresencial,
-
-        duration_minutes:
-          servicoDuracao,
-
-        price: servicoPreco,
-
-        currency: "BRL",
-
-        status: "active",
-
-        approval_status: "pending",
-
-        sale_mode: "schedule",
-      })
-      .select("id, name, price")
-      .single();
-
-    if (
-      erroServico ||
-      !servicoCriado
-    ) {
-      console.error(
-        "Erro ao criar primeiro serviço:",
-        erroServico,
-      );
-
-      throw new Error(
-        `Não foi possível cadastrar o serviço: ${
-          erroServico?.message ??
-          "erro desconhecido"
-        }`,
-      );
+      if (erroServico || !servicoCriado) {
+        throw new Error(`Não foi possível cadastrar o serviço: ${erroServico?.message ?? "erro desconhecido"}`);
+      }
+      serviceId = servicoCriado.id;
     }
 
     /*
-     * 6. CRIAR CONFIGURAÇÃO PIX
-     *
-     * IMPORTANTE:
-     * therapist_payment_settings.therapist_id
-     * aponta para therapists.id (BIGINT)
+     * 6. CONFIGURAÇÃO PIX OPCIONAL
+     * therapist_payment_settings.therapist_id aponta para therapists.id.
      */
+    let paymentSettingsId: string | number | null = null;
 
-    const {
-      data: pixCriado,
-      error: erroPix,
-    } = await supabaseAdmin
-      .from("therapist_payment_settings")
-      .insert({
-        therapist_id: therapistId,
+    if (possuiPix) {
+      const { data: pixCriado, error: erroPix } = await supabaseAdmin
+        .from("therapist_payment_settings")
+        .insert({
+          therapist_id: therapistId,
+          pix_enabled: true,
+          pix_key_type: pixTipoChave,
+          pix_key: pixChave,
+          pix_holder_name: pixTitular,
+          pix_bank_name: pixBanco,
+        })
+        .select("id")
+        .single();
 
-        pix_enabled: true,
-
-        pix_key_type: pixTipoChave,
-        pix_key: pixChave,
-        pix_holder_name: pixTitular,
-        pix_bank_name: pixBanco,
-      })
-      .select(
-        "id, therapist_id, pix_enabled",
-      )
-      .single();
-
-    if (
-      erroPix ||
-      !pixCriado
-    ) {
-      console.error(
-        "Erro ao cadastrar PIX:",
-        erroPix,
-      );
-
-      throw new Error(
-        `Não foi possível cadastrar os dados do PIX: ${
-          erroPix?.message ??
-          "erro desconhecido"
-        }`,
-      );
+      if (erroPix || !pixCriado) {
+        throw new Error(`Não foi possível cadastrar os dados do PIX: ${erroPix?.message ?? "erro desconhecido"}`);
+      }
+      paymentSettingsId = pixCriado.id;
     }
 
     /*
@@ -1001,11 +860,9 @@ export async function POST(request: Request) {
 
         therapistId,
 
-        serviceId:
-          servicoCriado.id,
+        serviceId,
 
-        paymentSettingsId:
-          pixCriado.id,
+        paymentSettingsId,
 
         profilePhotoUrl,
       },
