@@ -147,6 +147,63 @@ function isValidInternationalPhone(phone: string) {
   return /^\+[1-9]\d{6,14}$/.test(phone);
 }
 
+function normalizeTherapistWhatsapp(rawPhone: string | null | undefined) {
+  const trimmed = (rawPhone ?? "").trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.startsWith("+")) {
+    return trimmed.replace(/\D/g, "");
+  }
+
+  let digits = trimmed.replace(/\D/g, "");
+
+  // Japão: celulares locais normalmente começam por 070, 080 ou 090.
+  // Para o WhatsApp internacional, retiramos o zero inicial e usamos DDI 81.
+  if (/^0(?:70|80|90)\d{8}$/.test(digits)) {
+    return `81${digits.slice(1)}`;
+  }
+
+  // Se o número japonês já estiver salvo com DDI 81, preserva.
+  if (/^81(?:70|80|90)\d{8}$/.test(digits)) {
+    return digits;
+  }
+
+  // Brasil: mantém números já salvos com DDI 55.
+  if (/^55\d{10,11}$/.test(digits)) {
+    return digits;
+  }
+
+  // Compatibilidade com os cadastros brasileiros antigos sem DDI.
+  if (/^\d{10,11}$/.test(digits)) {
+    return `55${digits}`;
+  }
+
+  return digits;
+}
+
+function formatTherapistPhone(rawPhone: string | null | undefined) {
+  const trimmed = (rawPhone ?? "").trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  const digits = trimmed.replace(/\D/g, "");
+
+  if (/^0(?:70|80|90)\d{8}$/.test(digits)) {
+    return `+81 ${digits.slice(1)}`;
+  }
+
+  if (/^81(?:70|80|90)\d{8}$/.test(digits)) {
+    return `+81 ${digits.slice(2)}`;
+  }
+
+  return formatPhone(trimmed);
+}
+
 const initialForm: FormData = {
   name: "",
   email: "",
@@ -734,7 +791,7 @@ export default function PublicAppointmentPage() {
     [therapist.city, therapist.state].filter(Boolean).join(" • ") ||
     "Atendimento online";
 
-  const whatsappNumber = (therapist.phone || "").replace(/\D/g, "");
+  const whatsappNumber = normalizeTherapistWhatsapp(therapist.phone);
 
   const appointmentWhatsappMessage = `Olá, ${
     therapist.name || "profissional"
@@ -841,7 +898,7 @@ export default function PublicAppointmentPage() {
                   <div className="flex items-center justify-between gap-4">
                     <p className="text-sm text-slate-500">Contato</p>
                     <p className="text-right font-bold">
-                      {formatPhone(therapist.phone)}
+                      {formatTherapistPhone(therapist.phone)}
                     </p>
                   </div>
                 )}
