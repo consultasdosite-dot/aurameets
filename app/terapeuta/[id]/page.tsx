@@ -305,12 +305,32 @@ export default async function TherapistPage({ params }: PageProps) {
                       Investimento
                     </span>
 
-                    <strong className="mt-1 block whitespace-nowrap text-lg text-[#e1c56d] sm:text-xl">
-                      {formatCurrency(
-                        getFinalPrice(service),
-                        service.currency || "BRL",
-                      )}
-                    </strong>
+                    {service.promotional_price !== null &&
+                    Number.isFinite(Number(service.promotional_price)) &&
+                    Number(service.promotional_price) < Number(service.price) ? (
+                      <>
+                        <strong className="mt-1 block whitespace-nowrap text-2xl font-black text-[#e1c56d] line-through decoration-2 sm:text-3xl">
+                          {formatCurrency(
+                            service.price,
+                            service.currency || "BRL",
+                          )}
+                        </strong>
+
+                        <span className="mt-1 block whitespace-nowrap text-base font-bold text-white/75 sm:text-lg">
+                          {formatCurrency(
+                            service.promotional_price,
+                            service.currency || "BRL",
+                          )}
+                        </span>
+                      </>
+                    ) : (
+                      <strong className="mt-1 block whitespace-nowrap text-2xl font-black text-[#e1c56d] sm:text-3xl">
+                        {formatCurrency(
+                          service.price,
+                          service.currency || "BRL",
+                        )}
+                      </strong>
+                    )}
                   </div>
 
                   <Link
