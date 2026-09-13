@@ -41,7 +41,6 @@ type OfferCardProps = {
   badge: string;
   initials: string;
   imageUrl?: string | null;
-  href: string;
   profileHref: string;
 };
 
@@ -277,7 +276,7 @@ export default function HomePage() {
         </h1>
       </section>
 
-      {/* EXPERIÊNCIAS PRESENTE */}
+      {/* OFERTAS COM DESCONTO */}
       <section
         id="ofertas"
         className="scroll-mt-24 bg-gradient-to-b from-[#f8f2fc] to-white px-5 py-16 sm:px-8 sm:py-20 lg:px-12"
@@ -287,17 +286,17 @@ export default function HomePage() {
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#e2cef2] bg-white px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[#713aa8] shadow-sm">
                 <GiftIcon className="h-4 w-4" />
-                Experiências Presente
+                Ofertas com desconto
               </div>
 
               <h2 className="mt-5 text-[34px] font-black leading-tight tracking-[-0.035em] text-[#101d3b] sm:text-[42px]">
-                Conheça nossos terapeutas e receba um presente muito especial
+                Conheça nossos terapeutas e aproveite condições especiais
               </h2>
 
               <p className="mt-4 max-w-2xl text-[16px] font-medium leading-7 text-[#4d5870]">
-                Escolha uma experiência oferecida por um terapeuta, conheça seu trabalho
-                e dê um primeiro passo em direção ao seu bem-estar. Cada presente
-                possui apenas 3 vagas.
+                Conheça o trabalho dos nossos terapeutas e acesse o perfil de cada profissional
+                para conferir os serviços disponíveis e os descontos especiais
+                definidos por ele.
               </p>
             </div>
 
@@ -319,7 +318,7 @@ export default function HomePage() {
                   title={oferta.title}
                   description={
                     oferta.description?.trim() ||
-                    "Receba este presente, conheça o trabalho do terapeuta e dê o primeiro passo em sua jornada de cuidado."
+                    "Conheça esta experiência, acesse o perfil do terapeuta e confira os descontos disponíveis para os serviços oferecidos."
                   }
                   slots={oferta.remaining_slots}
                   duration={oferta.display_duration}
@@ -327,7 +326,6 @@ export default function HomePage() {
                   badge={oferta.display_badge}
                   initials={getTherapistInitials(oferta.therapist_name)}
                   imageUrl={oferta.therapist_photo_url}
-                  href={oferta.whatsapp_href || oferta.public_href}
                   profileHref={
                     oferta.therapist_slug
                       ? `/terapeuta/${oferta.therapist_slug}`
@@ -343,33 +341,33 @@ export default function HomePage() {
               </div>
 
               <p className="mt-5 text-sm font-extrabold uppercase tracking-[0.15em] text-[#7740aa]">
-                Novos presentes em preparação
+                Novas ofertas em preparação
               </p>
 
               <h3 className="mt-3 text-[25px] font-black text-[#101d3b]">
-                Em breve, você encontrará novas Experiências Presente aqui.
+                Em breve, você encontrará novas ofertas com desconto aqui.
               </h3>
 
               <p className="mx-auto mt-3 max-w-3xl text-sm font-medium leading-7 text-[#5c667b]">
-                As Experiências Presente terão apenas 3 vagas, prazo de validade
-                e formatos como encontros de até 10 minutos ou entregas por e-mail.
+                Cada terapeuta poderá disponibilizar condições especiais em seus serviços,
+                conforme os descontos definidos em seu próprio painel.
               </p>
             </div>
           )}
 
           <div className="mt-8 rounded-[24px] border border-[#e4d4ef] bg-white p-6 text-center shadow-[0_14px_35px_rgba(68,42,103,0.08)] sm:p-8">
             <p className="text-sm font-extrabold uppercase tracking-[0.15em] text-[#7740aa]">
-              Presentes com critérios claros
+              Descontos definidos pelo terapeuta
             </p>
 
             <h3 className="mt-3 text-[25px] font-black text-[#101d3b]">
-              Experiências Presente de até 10 minutos ou entregas personalizadas
-              por e-mail.
+              Condições especiais para você conhecer e contratar
+              o profissional que mais combina com o seu momento.
             </h3>
 
             <p className="mx-auto mt-3 max-w-3xl text-sm font-medium leading-7 text-[#5c667b]">
-              Cada presente possui 3 vagas, prazo de validade e acompanhamento
-              direto pela plataforma AuraMeets.
+              Cada terapeuta define os descontos disponíveis em seus serviços.
+              Consulte o perfil profissional para conferir as condições atuais.
             </p>
           </div>
         </div>
@@ -580,13 +578,13 @@ export default function HomePage() {
             </p>
 
             <h2 className="mt-4 text-[34px] font-black leading-tight tracking-[-0.035em] sm:text-[42px]">
-              Apresente seu trabalho e crie experiências que aproximam novos
+              Apresente seu trabalho e crie ofertas que aproximam novos
               clientes.
             </h2>
 
             <p className="mt-5 text-[16px] font-medium leading-8 text-[#b9c2d5]">
-              Publique seu perfil, receba solicitações e crie Experiências Presente
-              para apresentar seu trabalho a novos clientes.
+              Publique seu perfil, apresente seus serviços e defina descontos especiais
+              para atrair novos clientes.
             </p>
           </div>
 
@@ -645,7 +643,6 @@ function OfferCard({
   badge,
   initials,
   imageUrl,
-  href,
   profileHref,
 }: OfferCardProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
@@ -763,10 +760,10 @@ function OfferCard({
 
         <div className="mt-auto grid gap-2 pt-5 sm:grid-cols-2">
           <Link
-            href={href}
+            href={profileHref}
             className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7d45b5] to-[#57298f] px-4 text-center text-[13px] font-extrabold text-white shadow-md transition duration-300 hover:-translate-y-0.5 hover:shadow-lg"
           >
-            Receber meu presente
+            QUERO DESCONTO
             <ArrowIcon className="h-4 w-4 shrink-0" />
           </Link>
 

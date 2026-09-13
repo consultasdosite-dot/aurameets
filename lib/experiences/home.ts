@@ -12,6 +12,7 @@ export type HomeExperienceTherapist = {
   service_type: string | null;
   verified: boolean | null;
   phone: string | null;
+  active: boolean | null;
   created_at: string;
 };
 
@@ -87,6 +88,7 @@ const EXPERIENCE_SELECT = `
     service_type,
     verified,
     phone,
+    active,
     created_at
   )
 `;
@@ -377,7 +379,8 @@ export async function getFeaturedExperiences(): Promise<
       .map(normalizeExperience)
       .filter(
         (experience) =>
-          experience.remaining_slots > 0,
+          experience.remaining_slots > 0 &&
+          experience.therapist?.active === true,
       );
 
   return selectHomeExperiences(
@@ -431,7 +434,8 @@ export async function getHomeExperienceById(
     normalizeExperience(experience);
 
   if (
-    normalizedExperience.remaining_slots <= 0
+    normalizedExperience.remaining_slots <= 0 ||
+    normalizedExperience.therapist?.active !== true
   ) {
     return null;
   }

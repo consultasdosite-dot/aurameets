@@ -90,7 +90,7 @@ export default function NovoServicoPage() {
   const [entregaAudio, setEntregaAudio] = useState(false);
   const [duracao, setDuracao] = useState("60");
   const [preco, setPreco] = useState("");
-  const [precoPromocional, setPrecoPromocional] = useState("");
+  const [percentualDesconto, setPercentualDesconto] = useState("");
   const [moeda, setMoeda] = useState("BRL");
   const [modoVenda, setModoVenda] = useState<
     "schedule" | "direct_payment"
@@ -232,27 +232,28 @@ export default function NovoServicoPage() {
       return;
     }
 
-    let precoPromocionalConvertido: number | null = null;
+    const percentualDescontoConvertido =
+      percentualDesconto.trim()
+        ? Number(percentualDesconto.replace(",", "."))
+        : 0;
 
-    if (precoPromocional.trim()) {
-      precoPromocionalConvertido =
-        converterValorParaNumero(precoPromocional);
-
-      if (
-        Number.isNaN(precoPromocionalConvertido) ||
-        precoPromocionalConvertido < 0
-      ) {
-        setErro("Informe um preço promocional válido.");
-        return;
-      }
-
-      if (precoPromocionalConvertido >= precoConvertido) {
-        setErro(
-          "O preço promocional precisa ser menor que o preço normal.",
-        );
-        return;
-      }
+    if (
+      Number.isNaN(percentualDescontoConvertido) ||
+      percentualDescontoConvertido < 0 ||
+      percentualDescontoConvertido >= 100
+    ) {
+      setErro("Informe um desconto válido entre 0% e 99,99%.");
+      return;
     }
+
+    const precoPromocionalConvertido =
+      percentualDescontoConvertido > 0
+        ? Math.round(
+            precoConvertido *
+              (1 - percentualDescontoConvertido / 100) *
+              100,
+          ) / 100
+        : null;
 
     if (modoVenda === "direct_payment") {
       const linkLimpo = linkPagamento.trim();
@@ -828,7 +829,7 @@ export default function NovoServicoPage() {
                   htmlFor="preco"
                   className="mb-2 block font-bold"
                 >
-                  Preço
+                  Preço oficial
                 </label>
 
                 <input
@@ -847,24 +848,31 @@ export default function NovoServicoPage() {
 
               <div>
                 <label
-                  htmlFor="precoPromocional"
+                  htmlFor="percentualDesconto"
                   className="mb-2 block font-bold"
                 >
-                  Preço promocional
+                  Desconto (%)
                 </label>
 
                 <input
-                  id="precoPromocional"
-                  type="text"
+                  id="percentualDesconto"
+                  type="number"
+                  min="0"
+                  max="99.99"
+                  step="0.01"
                   inputMode="decimal"
-                  value={precoPromocional}
+                  value={percentualDesconto}
                   onChange={(event) =>
-                    setPrecoPromocional(event.target.value)
+                    setPercentualDesconto(event.target.value)
                   }
-                  placeholder="Opcional"
+                  placeholder="Ex.: 20"
                   disabled={carregando}
                   className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
                 />
+
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  O preço com desconto será calculado automaticamente.
+                </p>
               </div>
             </div>
           </section>

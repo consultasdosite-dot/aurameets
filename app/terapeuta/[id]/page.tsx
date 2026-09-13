@@ -22,6 +22,7 @@ type Service = {
   price: number | string | null;
   promotional_price: number | string | null;
   currency: string | null;
+  display_order: number | null;
 };
 
 function formatCurrency(value: number | string | null, currency = "BRL") {
@@ -125,12 +126,12 @@ export default async function TherapistPage({ params }: PageProps) {
     const { data, error } = await supabase
       .from("services")
       .select(
-        "id,name,category,description,cover_photo_url,online,in_person,duration_minutes,price,promotional_price,currency",
+        "id,name,category,description,cover_photo_url,online,in_person,duration_minutes,price,promotional_price,currency,display_order",
       )
       .eq("therapist_id", therapist.profile_id)
       .eq("status", "active")
-      .order("display_order", { ascending: true })
-      .order("created_at", { ascending: false });
+      .order("display_order", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true });
 
     if (error) {
       console.error("Erro ao carregar serviços públicos:", error);

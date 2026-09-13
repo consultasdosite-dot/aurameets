@@ -32,7 +32,7 @@ type FormEdicao = {
   in_person: boolean;
   duration_minutes: string;
   price: string;
-  promotional_price: string;
+  discount_percentage: string;
   currency: string;
 };
 
@@ -128,8 +128,8 @@ export default function ServicosPage() {
     preco: {
       titulo: "Colocar o preço",
       passos: [
-        "No campo Preço, coloque o valor normal do atendimento.",
-        "Se houver desconto, use também Preço promocional.",
+        "No campo Preço oficial, coloque o valor normal do atendimento.",
+        "Se quiser oferecer desconto, informe a porcentagem.",
         "Confira a moeda: Real, Dólar ou Euro.",
         "Salve as alterações.",
       ],
@@ -408,9 +408,17 @@ export default function ServicosPage() {
         servico.duration_minutes,
       ),
       price: String(servico.price),
-      promotional_price:
-        servico.promotional_price !== null
-          ? String(servico.promotional_price)
+      discount_percentage:
+        servico.promotional_price !== null &&
+        Number(servico.price) > 0 &&
+        Number(servico.promotional_price) < Number(servico.price)
+          ? String(
+              Math.round(
+                ((Number(servico.price) - Number(servico.promotional_price)) /
+                  Number(servico.price)) *
+                  10000,
+              ) / 100,
+            )
           : "",
       currency: servico.currency,
     });
@@ -436,14 +444,21 @@ export default function ServicosPage() {
       formEdicao.price.replace(",", "."),
     );
 
-    const precoPromocional =
-      formEdicao.promotional_price.trim() !== ""
+    const percentualDesconto =
+      formEdicao.discount_percentage.trim() !== ""
         ? Number(
-            formEdicao.promotional_price.replace(
+            formEdicao.discount_percentage.replace(
               ",",
               ".",
             ),
           )
+        : 0;
+
+    const precoPromocional =
+      percentualDesconto > 0
+        ? Math.round(
+            preco * (1 - percentualDesconto / 100) * 100,
+          ) / 100
         : null;
 
     if (!formEdicao.name.trim()) {
@@ -485,12 +500,12 @@ export default function ServicosPage() {
     }
 
     if (
-      precoPromocional !== null &&
-      (!Number.isFinite(precoPromocional) ||
-        precoPromocional < 0)
+      !Number.isFinite(percentualDesconto) ||
+      percentualDesconto < 0 ||
+      percentualDesconto >= 100
     ) {
       setErro(
-        "Informe um preço promocional válido.",
+        "Informe um desconto válido entre 0% e 99,99%.",
       );
       return;
     }
@@ -679,13 +694,9 @@ export default function ServicosPage() {
       return;
     }
 
-    const servicoAtual = servicos[index];
-    const servicoDestino = servicos[novoIndex];
+    const servicoMovido = servicos[index];
 
-    const ordemAtual = servicoAtual.display_order ?? index + 1;
-    const ordemDestino = servicoDestino.display_order ?? novoIndex + 1;
-
-    setAcaoId(servicoAtual.id);
+    setAcaoId(servicoMovido.id);
     setErro("");
     setMensagem("");
 
@@ -700,42 +711,36 @@ export default function ServicosPage() {
         return;
       }
 
-      const [resultadoAtual, resultadoDestino] = await Promise.all([
-        supabase
-          .from("services")
-          .update({ display_order: ordemDestino })
-          .eq("id", servicoAtual.id)
-          .eq("therapist_id", user.id),
+      const novaLista = [...servicos];
+      const [itemRemovido] = novaLista.splice(index, 1);
+      novaLista.splice(novoIndex, 0, itemRemovido);
 
-        supabase
-          .from("services")
-          .update({ display_order: ordemAtual })
-          .eq("id", servicoDestino.id)
-          .eq("therapist_id", user.id),
-      ]);
+      const listaReordenada = novaLista.map((servico, posicao) => ({
+        ...servico,
+        display_order: posicao + 1,
+      }));
 
-      if (resultadoAtual.error || resultadoDestino.error) {
-        const mensagemErro =
-          resultadoAtual.error?.message ||
-          resultadoDestino.error?.message ||
-          "Erro ao alterar a ordem.";
+      const resultados = await Promise.all(
+        listaReordenada.map((servico) =>
+          supabase
+            .from("services")
+            .update({
+              display_order: servico.display_order,
+            })
+            .eq("id", servico.id)
+            .eq("therapist_id", user.id),
+        ),
+      );
 
-        throw new Error(mensagemErro);
+      const resultadoComErro = resultados.find(
+        (resultado) => resultado.error,
+      );
+
+      if (resultadoComErro?.error) {
+        throw new Error(resultadoComErro.error.message);
       }
 
-      const novaLista = [...servicos];
-
-      novaLista[index] = {
-        ...servicoDestino,
-        display_order: ordemAtual,
-      };
-
-      novaLista[novoIndex] = {
-        ...servicoAtual,
-        display_order: ordemDestino,
-      };
-
-      setServicos(novaLista);
+      setServicos(listaReordenada);
       setMensagem("Ordem dos serviços atualizada com sucesso.");
     } catch (error) {
       console.error("Erro ao alterar ordem dos serviços:", error);
@@ -1095,14 +1100,28 @@ export default function ServicosPage() {
                                 )}
                               </p>
 
-                              <p className="mt-1 text-3xl font-black text-yellow-400">
-                                {formatarPreco(
-                                  Number(
-                                    servico.promotional_price,
-                                  ),
-                                  servico.currency,
+                              <div className="mt-1 flex flex-wrap items-center gap-3">
+                                <p className="text-3xl font-black text-yellow-400">
+                                  {formatarPreco(
+                                    Number(
+                                      servico.promotional_price,
+                                    ),
+                                    servico.currency,
+                                  )}
+                                </p>
+
+                                {Number(servico.price) > 0 && (
+                                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-300">
+                                    {Math.round(
+                                      ((Number(servico.price) -
+                                        Number(servico.promotional_price)) /
+                                        Number(servico.price)) *
+                                        10000,
+                                    ) / 100}
+                                    % OFF
+                                  </span>
                                 )}
-                              </p>
+                              </div>
                             </div>
                           ) : (
                             <p className="text-3xl font-black text-yellow-400">
@@ -1643,7 +1662,7 @@ export default function ServicosPage() {
                 <div className="grid gap-6 sm:grid-cols-2">
                   <label>
                     <span className="mb-2 block font-bold">
-                      Preço
+                      Preço oficial
                     </span>
 
                     <input
@@ -1664,24 +1683,31 @@ export default function ServicosPage() {
 
                   <label>
                     <span className="mb-2 block font-bold">
-                      Preço promocional
+                      Desconto (%)
                     </span>
 
                     <input
+                      type="number"
+                      min="0"
+                      max="99.99"
+                      step="0.01"
                       value={
-                        formEdicao.promotional_price
+                        formEdicao.discount_percentage
                       }
                       onChange={(event) =>
                         setFormEdicao({
                           ...formEdicao,
-                          promotional_price:
-                            event.target
-                              .value,
+                          discount_percentage:
+                            event.target.value,
                         })
                       }
-                      placeholder="Opcional"
+                      placeholder="Ex.: 20"
                       className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
                     />
+
+                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                      Informe apenas a porcentagem. O preço com desconto é calculado automaticamente.
+                    </p>
                   </label>
                 </div>
 
