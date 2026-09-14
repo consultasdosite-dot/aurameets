@@ -55,6 +55,25 @@ function getFinalPrice(service: Service) {
     : service.price;
 }
 
+function getDiscountPercentage(service: Service) {
+  const originalPrice = Number(service.price);
+  const promotionalPrice = Number(service.promotional_price);
+
+  if (
+    !Number.isFinite(originalPrice) ||
+    !Number.isFinite(promotionalPrice) ||
+    originalPrice <= 0 ||
+    promotionalPrice < 0 ||
+    promotionalPrice >= originalPrice
+  ) {
+    return null;
+  }
+
+  return Math.round(
+    ((originalPrice - promotionalPrice) / originalPrice) * 100,
+  );
+}
+
 function getModality(service: Service) {
   if (service.online && service.in_person) return "Online ou presencial";
   if (service.online) return "Online";
@@ -316,12 +335,20 @@ export default async function TherapistPage({ params }: PageProps) {
                           )}
                         </strong>
 
-                        <span className="mt-1 block whitespace-nowrap text-base font-bold text-white/75 sm:text-lg">
-                          {formatCurrency(
-                            service.promotional_price,
-                            service.currency || "BRL",
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className="whitespace-nowrap text-base font-bold text-white/75 sm:text-lg">
+                            {formatCurrency(
+                              service.promotional_price,
+                              service.currency || "BRL",
+                            )}
+                          </span>
+
+                          {getDiscountPercentage(service) !== null && (
+                            <span className="inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-emerald-300 sm:text-[11px]">
+                              {getDiscountPercentage(service)}% OFF
+                            </span>
                           )}
-                        </span>
+                        </div>
                       </>
                     ) : (
                       <strong className="mt-1 block whitespace-nowrap text-2xl font-black text-[#e1c56d] sm:text-3xl">
