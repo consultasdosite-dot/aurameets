@@ -140,43 +140,7 @@ function calculateRemainingSlots(
 function getExperienceBadge(
   experience: SupabaseExperienceRow,
 ): string {
-  const searchableText = [
-    experience.title,
-    experience.description,
-    experience.duration,
-    experience.service_type,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  if (
-    searchableText.includes("mapa") ||
-    searchableText.includes("relatório") ||
-    searchableText.includes("relatorio") ||
-    searchableText.includes("avaliação") ||
-    searchableText.includes("avaliacao")
-  ) {
-    return "Avaliação Presente";
-  }
-
-  if (
-    searchableText.includes("e-mail") ||
-    searchableText.includes("email") ||
-    searchableText.includes("entrega digital")
-  ) {
-    return "Entrega Presente";
-  }
-
-  if (
-    searchableText.includes("aula") ||
-    searchableText.includes("orientação") ||
-    searchableText.includes("orientacao")
-  ) {
-    return "Orientação Presente";
-  }
-
-  return "Experiência Presente";
+  return "SUPER DESCONTO";
 }
 
 function createPublicHref(
@@ -224,7 +188,7 @@ function createWhatsAppHref(
 
   const message =
     customMessage ||
-    `Olá! Vi no AuraMeets a experiência presente "${experience.title}" e gostaria de receber meu presente.`;
+    `Olá! Vi no AuraMeets a oferta "${experience.title}" e gostaria de saber mais sobre o super desconto.`;
 
   return `https://wa.me/${phoneWithCountryCode}?text=${encodeURIComponent(
     message,
@@ -268,7 +232,7 @@ function normalizeExperience(
 
   const buttonText =
     normalizeText(experience.button_text) ||
-    "RECEBER MEU PRESENTE";
+    "QUERO APROVEITAR";
 
   return {
     ...experience,
@@ -304,7 +268,9 @@ function selectHomeExperiences(
   const shuffled = [...experiences];
 
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1));
+    const randomIndex = Math.floor(
+      Math.random() * (index + 1),
+    );
 
     [shuffled[index], shuffled[randomIndex]] = [
       shuffled[randomIndex],
@@ -359,7 +325,7 @@ export async function getFeaturedExperiences(): Promise<
 
   if (error) {
     console.error(
-      "Erro ao buscar Experiências Presente para a Home:",
+      "Erro ao buscar ofertas para a Home:",
       {
         message: error.message,
         details: error.details,
@@ -411,7 +377,7 @@ export async function getHomeExperienceById(
 
   if (error) {
     console.error(
-      "Erro ao buscar Experiência Presente pelo ID:",
+      "Erro ao buscar oferta pelo ID:",
       {
         message: error.message,
         details: error.details,
