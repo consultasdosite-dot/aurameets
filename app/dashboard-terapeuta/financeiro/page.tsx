@@ -207,6 +207,58 @@ function FinanceiroTerapeutaContent() {
     }
   }
 
+  async function informarPagamentoComissao() {
+    try {
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      const accessToken = await getAccessToken();
+
+      const response = await fetch(
+        "/api/financeiro/recebimentos",
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "informar_pagamento_comissao",
+          }),
+        },
+      );
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        totalInformado?: number;
+        message?: string;
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Não foi possível informar o pagamento.",
+        );
+      }
+
+      setSuccessMessage(
+        data.message ||
+          `Pagamento informado ao AuraMeets. Valor enviado: ${formatCurrency(
+            data.totalInformado,
+          )}. Agora aguarde a confirmação da administração.`,
+      );
+
+      await carregarRecebimentosExternos();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Erro ao informar pagamento.",
+      );
+    }
+  }
+
   const auraFinanceiro: Record<
     string,
     {

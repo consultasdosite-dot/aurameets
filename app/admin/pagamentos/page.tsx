@@ -1,17 +1,20 @@
+import { revalidatePath } from "next/cache";
+
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
-type PaymentRow = {
-  id: number;
+type FinancialRecord = {
+  id: string;
   created_at: string | null;
-  therapist_id: number | null;
-  client_id: number | null;
-  service_id: string | null;
-  amount: number | string | null;
-  commission: number | string | null;
-  status: string | null;
-  stripe_session_id: string | null;
+  therapist_id: number;
+  client_name: string | null;
+  service_name: string | null;
+  gross_amount: number | string | null;
+  platform_fee_percent: number | string | null;
+  platform_fee_amount: number | string | null;
+  payment_method: string | null;
+  commission_status: "pendente" | "informada" | "confirmada" | "cancelada";
 };
 
 type TherapistRow = {
@@ -19,21 +22,8 @@ type TherapistRow = {
   name: string | null;
 };
 
-type ClientRow = {
-  id: number;
-  name: string | null;
-  email: string | null;
-  phone: string | null;
-};
-
-type ServiceRow = {
-  id: string;
-  name: string | null;
-};
-
 function numero(valor: number | string | null | undefined) {
   const convertido = Number(valor ?? 0);
-
   return Number.isFinite(convertido) ? convertido : 0;
 }
 
@@ -47,15 +37,10 @@ function dinheiro(valor: number) {
 }
 
 function dataHora(valor: string | null) {
-  if (!valor) {
-    return "—";
-  }
+  if (!valor) return "—";
 
   const data = new Date(valor);
-
-  if (Number.isNaN(data.getTime())) {
-    return "—";
-  }
+  if (Number.isNaN(data.getTime())) return "—";
 
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "short",
@@ -64,32 +49,82 @@ function dataHora(valor: string | null) {
   }).format(data);
 }
 
+function statusLabel(status: FinancialRecord["commission_status"]) {
+  if (status === "pendente") return "A PAGAR";
+  if (status === "informada") return "PAGAMENTO INFORMADO";
+  if (status === "confirmada") return "PAGO";
+  return "CANCELADA";
+}
+
+function statusClass(status: FinancialRecord["commission_status"]) {
+  if (status === "pendente") {
+    return "border-amber-400/20 bg-amber-500/10 text-amber-300";
+  }
+
+  if (status === "informada") {
+    return "border-blue-400/20 bg-blue-500/10 text-blue-300";
+  }
+
+  if (status === "confirmada") {
+    return "border-emerald-400/20 bg-emerald-500/10 text-emerald-300";
+  }
+
+  return "border-slate-400/20 bg-slate-500/10 text-slate-300";
+}
+
+async function confirmarPagamentoComissao(formData: FormData) {
+  "use server";
+
+  const recordId = String(formData.get("recordId") ?? "").trim();
+
+  if (!recordId) {
+    return;
+  }
+
+  const { error } = await supabaseAdmin
+    .from("financial_records")
+    .update({
+      commission_status: "confirmada",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", recordId)
+    .eq("commission_status", "informada");
+
+  if (error) {
+    throw new Error(
+      `Não foi possível confirmar a comissão: ${error.message}`,
+    );
+  }
+
+  revalidatePath("/admin/pagamentos");
+}
+
 export default async function AdminPagamentosPage() {
   const {
-    data: pagamentosData,
-    error: pagamentosError,
+    data: registrosData,
+    error: registrosError,
   } = await supabaseAdmin
-    .from("payments")
+    .from("financial_records")
     .select(
       `
         id,
         created_at,
         therapist_id,
-        client_id,
-        service_id,
-        amount,
-        commission,
-        status,
-        stripe_session_id
+        client_name,
+        service_name,
+        gross_amount,
+        platform_fee_percent,
+        platform_fee_amount,
+        payment_method,
+        commission_status
       `,
     )
-    .eq("status", "paid")
     .order("created_at", {
       ascending: false,
     })
-    .limit(200);
+    .limit(500);
 
-  if (pagamentosError) {
+  if (registrosError) {
     return (
       <main className="space-y-6">
         <section className="rounded-3xl border border-red-500/20 bg-red-500/10 p-6 sm:p-8">
@@ -98,56 +133,28 @@ export default async function AdminPagamentosPage() {
           </p>
 
           <h1 className="mt-2 text-3xl font-bold text-white">
-            Não foi possível carregar os pagamentos
+            Não foi possível carregar os registros financeiros
           </h1>
 
           <p className="mt-4 text-sm leading-7 text-red-200">
-            {pagamentosError.message}
+            {registrosError.message}
           </p>
         </section>
       </main>
     );
   }
 
-  const pagamentos = (pagamentosData ?? []) as PaymentRow[];
+  const registros = (registrosData ?? []) as FinancialRecord[];
 
   const therapistIds = Array.from(
     new Set(
-      pagamentos
+      registros
         .map((item) => item.therapist_id)
-        .filter(
-          (id): id is number =>
-            typeof id === "number",
-        ),
-    ),
-  );
-
-  const clientIds = Array.from(
-    new Set(
-      pagamentos
-        .map((item) => item.client_id)
-        .filter(
-          (id): id is number =>
-            typeof id === "number",
-        ),
-    ),
-  );
-
-  const serviceIds = Array.from(
-    new Set(
-      pagamentos
-        .map((item) => item.service_id)
-        .filter(
-          (id): id is string =>
-            typeof id === "string" &&
-            id.length > 0,
-        ),
+        .filter((id): id is number => typeof id === "number"),
     ),
   );
 
   let terapeutas: TherapistRow[] = [];
-  let clientes: ClientRow[] = [];
-  let servicos: ServiceRow[] = [];
 
   if (therapistIds.length > 0) {
     const { data } = await supabaseAdmin
@@ -158,74 +165,37 @@ export default async function AdminPagamentosPage() {
     terapeutas = (data ?? []) as TherapistRow[];
   }
 
-  if (clientIds.length > 0) {
-    const { data } = await supabaseAdmin
-      .from("clients")
-      .select(
-        `
-          id,
-          name,
-          email,
-          phone
-        `,
-      )
-      .in("id", clientIds);
-
-    clientes = (data ?? []) as ClientRow[];
-  }
-
-  if (serviceIds.length > 0) {
-    const { data } = await supabaseAdmin
-      .from("services")
-      .select("id, name")
-      .in("id", serviceIds);
-
-    servicos = (data ?? []) as ServiceRow[];
-  }
-
   const terapeutasPorId = new Map(
-    terapeutas.map((item) => [
-      item.id,
-      item,
-    ]),
+    terapeutas.map((item) => [item.id, item]),
   );
 
-  const clientesPorId = new Map(
-    clientes.map((item) => [
-      item.id,
-      item,
-    ]),
-  );
-
-  const servicosPorId = new Map(
-    servicos.map((item) => [
-      item.id,
-      item,
-    ]),
-  );
-
-  const totalVendido = pagamentos.reduce(
-    (total, pagamento) =>
-      total + numero(pagamento.amount),
+  const totalCobrado = registros.reduce(
+    (total, registro) =>
+      total + numero(registro.gross_amount),
     0,
   );
 
-  const totalComissao = pagamentos.reduce(
-    (total, pagamento) =>
-      total + numero(pagamento.commission),
+  const totalComissao = registros.reduce(
+    (total, registro) =>
+      total + numero(registro.platform_fee_amount),
     0,
   );
 
-  const totalTerapeutas = pagamentos.reduce(
-    (total, pagamento) =>
-      total +
-      Math.max(
-        numero(pagamento.amount) -
-          numero(pagamento.commission),
-        0,
-      ),
-    0,
-  );
+  const comissaoPendente = registros
+    .filter((registro) => registro.commission_status === "pendente")
+    .reduce(
+      (total, registro) =>
+        total + numero(registro.platform_fee_amount),
+      0,
+    );
+
+  const comissaoInformada = registros
+    .filter((registro) => registro.commission_status === "informada")
+    .reduce(
+      (total, registro) =>
+        total + numero(registro.platform_fee_amount),
+      0,
+    );
 
   return (
     <main className="space-y-6">
@@ -239,228 +209,152 @@ export default async function AdminPagamentosPage() {
         </h1>
 
         <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
-          Acompanhe exclusivamente as compras
-          confirmadas pela plataforma, os valores
-          destinados aos terapeutas e a comissão
-          bruta do AuraMeets.
+          Acompanhe os atendimentos registrados pelos terapeutas,
+          os valores cobrados e as comissões de 3% do AuraMeets.
         </p>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Resumo
-          titulo="Vendas pagas"
-          valor={String(pagamentos.length)}
-          detalhe="Compras realmente confirmadas"
+          titulo="Atendimentos"
+          valor={String(registros.length)}
+          detalhe="Registros informados pelos terapeutas"
         />
 
         <Resumo
-          titulo="Volume vendido"
-          valor={dinheiro(totalVendido)}
-          detalhe="Total das vendas pagas"
+          titulo="Total cobrado"
+          valor={dinheiro(totalCobrado)}
+          detalhe="Valor total dos atendimentos registrados"
         />
 
         <Resumo
           titulo="Comissão AuraMeets"
           valor={dinheiro(totalComissao)}
-          detalhe="Comissão bruta registrada"
+          detalhe="3% sobre os valores registrados"
         />
 
         <Resumo
-          titulo="Líquido terapeutas"
-          valor={dinheiro(totalTerapeutas)}
-          detalhe="Venda menos comissão AuraMeets"
+          titulo="A receber"
+          valor={dinheiro(comissaoPendente)}
+          detalhe="Comissões ainda não informadas como pagas"
         />
       </section>
 
-      <section className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-5 py-4">
-        <p className="text-sm leading-6 text-emerald-200">
-          <strong>Controle financeiro:</strong>{" "}
-          esta página mostra somente pagamentos
-          efetivamente confirmados. Tentativas de
-          checkout, testes e pagamentos não
-          concluídos não aparecem nesta área.
-        </p>
-      </section>
+      {comissaoInformada > 0 && (
+        <section className="rounded-2xl border border-blue-400/20 bg-blue-500/10 px-5 py-4">
+          <p className="text-sm leading-6 text-blue-200">
+            <strong>Pagamento informado:</strong>{" "}
+            {dinheiro(comissaoInformada)} aguardando confirmação da administração.
+          </p>
+        </section>
+      )}
 
       <section className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/60">
         <div className="border-b border-white/10 p-6">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-300">
-            Histórico financeiro
+            Controle dos terapeutas
           </p>
 
           <h2 className="mt-2 text-2xl font-bold text-white">
-            Vendas confirmadas
+            Atendi · Cobrei · Porcentagem · Paguei
           </h2>
 
           <p className="mt-2 text-sm text-slate-400">
-            {pagamentos.length === 1
-              ? "1 venda paga encontrada."
-              : `${pagamentos.length} vendas pagas encontradas.`}
+            {registros.length === 1
+              ? "1 atendimento registrado."
+              : `${registros.length} atendimentos registrados.`}
           </p>
         </div>
 
-        {pagamentos.length === 0 ? (
+        {registros.length === 0 ? (
           <div className="p-8 text-center">
             <p className="text-slate-400">
-              Nenhuma venda paga registrada.
+              Nenhum atendimento financeiro registrado.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-[1250px] w-full text-left">
+            <table className="min-w-[1100px] w-full text-left">
               <thead className="bg-slate-950/60">
                 <tr className="text-xs uppercase tracking-[0.12em] text-slate-400">
-                  <th className="px-5 py-4">
-                    Pedido
-                  </th>
-
-                  <th className="px-5 py-4">
-                    Data
-                  </th>
-
-                  <th className="px-5 py-4">
-                    Terapeuta
-                  </th>
-
-                  <th className="px-5 py-4">
-                    Comprador
-                  </th>
-
-                  <th className="px-5 py-4">
-                    Produto / serviço
-                  </th>
-
-                  <th className="px-5 py-4 text-right">
-                    Valor
-                  </th>
-
-                  <th className="px-5 py-4 text-right">
-                    Comissão
-                  </th>
-
-                  <th className="px-5 py-4 text-right">
-                    Terapeuta
-                  </th>
-
-                  <th className="px-5 py-4">
-                    Status
-                  </th>
+                  <th className="px-5 py-4">Data</th>
+                  <th className="px-5 py-4">Terapeuta</th>
+                  <th className="px-5 py-4">Atendi</th>
+                  <th className="px-5 py-4">Serviço</th>
+                  <th className="px-5 py-4 text-right">Cobrei</th>
+                  <th className="px-5 py-4 text-right">Porcentagem</th>
+                  <th className="px-5 py-4">Paguei</th>
                 </tr>
               </thead>
 
               <tbody>
-                {pagamentos.map((pagamento) => {
+                {registros.map((registro) => {
                   const terapeuta =
-                    pagamento.therapist_id
-                      ? terapeutasPorId.get(
-                          pagamento.therapist_id,
-                        )
-                      : null;
-
-                  const cliente =
-                    pagamento.client_id
-                      ? clientesPorId.get(
-                          pagamento.client_id,
-                        )
-                      : null;
-
-                  const servico =
-                    pagamento.service_id
-                      ? servicosPorId.get(
-                          pagamento.service_id,
-                        )
-                      : null;
-
-                  const valor = numero(
-                    pagamento.amount,
-                  );
-
-                  const comissao = numero(
-                    pagamento.commission,
-                  );
-
-                  const liquidoTerapeuta =
-                    Math.max(
-                      valor - comissao,
-                      0,
-                    );
+                    terapeutasPorId.get(registro.therapist_id);
 
                   return (
                     <tr
-                      key={pagamento.id}
+                      key={registro.id}
                       className="border-t border-white/5 align-top transition hover:bg-white/[0.03]"
                     >
-                      <td className="px-5 py-5">
-                        <p className="font-bold text-white">
-                          #{pagamento.id}
-                        </p>
-
-                        {pagamento.stripe_session_id && (
-                          <p className="mt-1 max-w-[150px] truncate text-[11px] text-slate-500">
-                            {
-                              pagamento.stripe_session_id
-                            }
-                          </p>
-                        )}
-                      </td>
-
                       <td className="whitespace-nowrap px-5 py-5 text-sm text-slate-300">
-                        {dataHora(
-                          pagamento.created_at,
-                        )}
+                        {dataHora(registro.created_at)}
                       </td>
 
                       <td className="px-5 py-5">
                         <p className="font-semibold text-white">
                           {terapeuta?.name ??
-                            `Terapeuta #${pagamento.therapist_id ?? "—"}`}
+                            `Terapeuta #${registro.therapist_id}`}
                         </p>
                       </td>
 
                       <td className="px-5 py-5">
                         <p className="font-semibold text-white">
-                          {cliente?.name ??
-                            "Não identificado"}
+                          {registro.client_name || "Não informado"}
                         </p>
-
-                        {cliente?.email && (
-                          <p className="mt-1 text-xs text-slate-400">
-                            {cliente.email}
-                          </p>
-                        )}
-
-                        {cliente?.phone && (
-                          <p className="mt-1 text-xs text-slate-500">
-                            {cliente.phone}
-                          </p>
-                        )}
                       </td>
 
                       <td className="px-5 py-5">
-                        <p className="max-w-[280px] font-semibold text-white">
-                          {servico?.name ??
-                            "Serviço não identificado"}
+                        <p className="font-semibold text-white">
+                          {registro.service_name || "Não informado"}
                         </p>
                       </td>
 
                       <td className="whitespace-nowrap px-5 py-5 text-right font-bold text-white">
-                        {dinheiro(valor)}
+                        {dinheiro(numero(registro.gross_amount))}
                       </td>
 
                       <td className="whitespace-nowrap px-5 py-5 text-right font-bold text-amber-300">
-                        {dinheiro(comissao)}
-                      </td>
-
-                      <td className="whitespace-nowrap px-5 py-5 text-right font-bold text-emerald-300">
-                        {dinheiro(
-                          liquidoTerapeuta,
-                        )}
+                        {dinheiro(numero(registro.platform_fee_amount))}
                       </td>
 
                       <td className="px-5 py-5">
-                        <span className="inline-flex rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300">
-                          PAGO
-                        </span>
+                        <div className="flex flex-col items-start gap-2">
+                          <span
+                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${statusClass(
+                              registro.commission_status,
+                            )}`}
+                          >
+                            {statusLabel(registro.commission_status)}
+                          </span>
+
+                          {registro.commission_status === "informada" && (
+                            <form action={confirmarPagamentoComissao}>
+                              <input
+                                type="hidden"
+                                name="recordId"
+                                value={registro.id}
+                              />
+
+                              <button
+                                type="submit"
+                                className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-black text-slate-950 transition hover:bg-emerald-400"
+                              >
+                                CONFIRMAR PAGAMENTO
+                              </button>
+                            </form>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -469,16 +363,6 @@ export default async function AdminPagamentosPage() {
             </table>
           </div>
         )}
-      </section>
-
-      <section className="rounded-2xl border border-blue-400/20 bg-blue-500/10 px-5 py-4">
-        <p className="text-sm leading-6 text-blue-200">
-          <strong>Importante:</strong> a comissão
-          exibida corresponde à comissão bruta
-          registrada pelo AuraMeets. As tarifas
-          cobradas pela Stripe não estão incluídas
-          neste cálculo.
-        </p>
       </section>
     </main>
   );
