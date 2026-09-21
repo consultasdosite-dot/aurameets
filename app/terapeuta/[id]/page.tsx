@@ -142,19 +142,19 @@ function ExpandableText({
             style={{
               display: "-webkit-box",
               WebkitBoxOrient: "vertical",
-              WebkitLineClamp: 6,
+              WebkitLineClamp: 4,
             }}
           >
             {text}
           </span>
 
-          <span className="mt-2 inline-flex text-xs font-extrabold uppercase tracking-[0.12em] text-[#d9bd66] transition hover:text-[#f1dc92]">
-            Ver mais
+          <span className="mt-3 inline-flex text-xs font-extrabold uppercase tracking-[0.12em] text-[#d9bd66] transition hover:text-[#f1dc92]">
+            Leia mais
           </span>
         </span>
 
-        <span className="mt-2 hidden text-xs font-extrabold uppercase tracking-[0.12em] text-[#d9bd66] transition hover:text-[#f1dc92] group-open:inline-flex">
-          Ver menos
+        <span className="mt-3 hidden text-xs font-extrabold uppercase tracking-[0.12em] text-[#d9bd66] transition hover:text-[#f1dc92] group-open:inline-flex">
+          Leia menos
         </span>
       </summary>
 
@@ -275,15 +275,33 @@ export default async function TherapistPage({
     therapist.profile_photo_url ||
     therapist.photo_url;
 
-  const whatsapp = (therapist.phone ?? "").replace(
-    /\D/g,
-    "",
-  );
+  const rawWhatsapp = (therapist.phone ?? "").trim();
 
-  const whatsappNumber =
-    whatsapp && !whatsapp.startsWith("55")
-      ? `55${whatsapp}`
-      : whatsapp;
+  const whatsapp = rawWhatsapp.replace(/\D/g, "");
+
+  let whatsappNumber = "";
+
+  if (rawWhatsapp.startsWith("+")) {
+    // Número já cadastrado em formato internacional.
+    // Preserva qualquer DDI: +81 Japão, +55 Brasil, +1 EUA etc.
+    whatsappNumber = whatsapp;
+  } else if (/^81(?:70|80|90)\d{8}$/.test(whatsapp)) {
+    // Japão já cadastrado com DDI, mas sem o sinal +
+    whatsappNumber = whatsapp;
+  } else if (/^0(?:70|80|90)\d{8}$/.test(whatsapp)) {
+    // Celular japonês cadastrado no formato local:
+    // 09012345678 -> 819012345678
+    whatsappNumber = `81${whatsapp.slice(1)}`;
+  } else if (/^55\d{10,11}$/.test(whatsapp)) {
+    // Brasil já cadastrado com DDI
+    whatsappNumber = whatsapp;
+  } else if (/^\d{10,11}$/.test(whatsapp)) {
+    // Compatibilidade com cadastros brasileiros antigos sem +55
+    whatsappNumber = `55${whatsapp}`;
+  } else {
+    // Outros países: não força o DDI brasileiro
+    whatsappNumber = whatsapp;
+  }
 
   const scheduleMessage = encodeURIComponent(
     `Olá, ${name}! Vi seu perfil no AuraMeets e quero agendar um atendimento.`,

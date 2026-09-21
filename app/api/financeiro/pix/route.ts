@@ -4,272 +4,230 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";
 
-type PixPayload = {
-  pixEnabled?: boolean;
-  pixKeyType?: string;
-  pixKey?: string;
-  pixHolderName?: string;
-  pixBankName?: string;
+type ServiceData = {
+  id: string;
+  therapist_id: string;
+  name: string;
+  category: string | null;
+  description: string | null;
+  cover_photo_url: string | null;
+  price: number | string | null;
+  promotional_price: number | string | null;
+  currency: string | null;
+  duration_minutes: number | null;
+  online: boolean | null;
+  in_person: boolean | null;
+  status: string | null;
+  payment_url: string | null;
 };
 
-async function obterUsuario(request: NextRequest) {
-  const authorization = request.headers.get("authorization");
+type TherapistData = {
+  id: number;
+  name: string | null;
+  slug: string | null;
+  profile_photo_url: string | null;
+  photo_url: string | null;
+};
 
-  if (!authorization?.startsWith("Bearer ")) {
+type PaymentSettingsData = {
+  therapist_id: number;
+  pix_enabled: boolean | null;
+  pix_key_type: string | null;
+  pix_key: string | null;
+  pix_holder_name: string | null;
+  pix_bank_name: string | null;
+};
+
+function converterValor(
+  valor: number | string | null | undefined,
+): number | null {
+  if (valor === null || valor === undefined) {
     return null;
   }
 
-  const accessToken = authorization
-    .replace("Bearer ", "")
-    .trim();
+  const numero =
+    typeof valor === "number"
+      ? valor
+      : Number(
+          String(valor)
+            .trim()
+            .replace(/\./g, "")
+            .replace(",", "."),
+        );
 
-  if (!accessToken) {
+  if (!Number.isFinite(numero) || numero < 0) {
     return null;
   }
 
-  const {
-    data: { user },
-    error,
-  } = await supabaseAdmin.auth.getUser(accessToken);
-
-  if (error || !user) {
-    return null;
-  }
-
-  return user;
+  return numero;
 }
 
-async function obterTerapeutaId(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("therapists")
-    .select("id")
-    .eq("profile_id", userId)
-    .maybeSingle();
+function obterPrecoFinal(service: ServiceData): number | null {
+  const promocional = converterValor(service.promotional_price);
 
-  if (error) {
-    throw new Error(
-      `Erro ao localizar terapeuta: ${error.message}`,
-    );
+  if (promocional !== null && promocional > 0) {
+    return promocional;
   }
 
-  return data?.id ?? null;
+  return converterValor(service.price);
+}
+
+function obterLinkInfinitePay(
+  valor: string | null | undefined,
+): string | null {
+  const link = valor?.trim();
+
+  if (!link) {
+    return null;
+  }
+
+  try {
+    const url = new URL(link);
+
+    if (url.protocol !== "https:") {
+      return null;
+    }
+
+    if (!url.hostname.toLowerCase().includes("infinitepay")) {
+      return null;
+    }
+
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await obterUsuario(request);
+    const serviceId =
+      request.nextUrl.searchParams.get("servico")?.trim() ?? "";
 
-    if (!user) {
+    if (!serviceId) {
       return NextResponse.json(
-        {
-          error: "Usuário não autenticado.",
-        },
-        {
-          status: 401,
-        },
+        { error: "O serviço não foi identificado." },
+        { status: 400 },
       );
     }
 
-    const therapistId = await obterTerapeutaId(user.id);
+    /*
+     * 1. BUSCA O SERVIÇO
+     */
+    const { data: serviceResult, error: serviceError } =
+      await supabaseAdmin
+        .from("services")
+        .select(
+          `
+            id,
+            therapist_id,
+            name,
+            category,
+            description,
+            cover_photo_url,
+            price,
+            promotional_price,
+            currency,
+            duration_minutes,
+            online,
+            in_person,
+            status,
+            payment_url
+          `,
+        )
+        .eq("id", serviceId)
+        .eq("status", "active")
+        .maybeSingle();
 
-    if (!therapistId) {
-      return NextResponse.json(
-        {
-          error: "Perfil de terapeuta não encontrado.",
-        },
-        {
-          status: 404,
-        },
-      );
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from("therapist_payment_settings")
-      .select(
-        `
-          id,
-          therapist_id,
-          pix_enabled,
-          pix_key_type,
-          pix_key,
-          pix_holder_name,
-          pix_bank_name,
-          created_at,
-          updated_at
-        `,
-      )
-      .eq("therapist_id", therapistId)
-      .maybeSingle();
-
-    if (error) {
+    if (serviceError) {
       console.error(
-        "Erro ao carregar configuração PIX:",
-        error,
+        "Erro ao consultar serviço para compra:",
+        serviceError,
       );
 
       return NextResponse.json(
         {
           error:
-            "Não foi possível carregar seus dados PIX.",
+            "Não foi possível carregar os dados deste serviço.",
         },
-        {
-          status: 500,
-        },
+        { status: 500 },
       );
     }
 
-    if (!data) {
-      return NextResponse.json({
-        success: true,
-        pix: {
-          pixEnabled: false,
-          pixKeyType: "",
-          pixKey: "",
-          pixHolderName: "",
-          pixBankName: "",
-        },
-      });
-    }
-
-    return NextResponse.json({
-      success: true,
-      pix: {
-        pixEnabled: data.pix_enabled,
-        pixKeyType: data.pix_key_type ?? "",
-        pixKey: data.pix_key ?? "",
-        pixHolderName: data.pix_holder_name ?? "",
-        pixBankName: data.pix_bank_name ?? "",
-      },
-    });
-  } catch (error) {
-    console.error(
-      "Erro inesperado ao carregar PIX:",
-      error,
-    );
-
-    return NextResponse.json(
-      {
-        error:
-          "Não foi possível carregar seus dados PIX.",
-      },
-      {
-        status: 500,
-      },
-    );
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const user = await obterUsuario(request);
-
-    if (!user) {
+    if (!serviceResult) {
       return NextResponse.json(
         {
-          error: "Usuário não autenticado.",
+          error: "Serviço não encontrado ou indisponível.",
         },
-        {
-          status: 401,
-        },
+        { status: 404 },
       );
     }
 
-    const therapistId = await obterTerapeutaId(user.id);
+    const service = serviceResult as ServiceData;
 
-    if (!therapistId) {
-      return NextResponse.json(
-        {
-          error: "Perfil de terapeuta não encontrado.",
-        },
-        {
-          status: 404,
-        },
+    /*
+     * 2. BUSCA O TERAPEUTA RESPONSÁVEL PELO SERVIÇO
+     *
+     * services.therapist_id corresponde ao profile_id
+     * do terapeuta.
+     */
+    const { data: therapistResult, error: therapistError } =
+      await supabaseAdmin
+        .from("therapists")
+        .select(
+          `
+            id,
+            name,
+            slug,
+            profile_photo_url,
+            photo_url
+          `,
+        )
+        .eq("profile_id", service.therapist_id)
+        .maybeSingle();
+
+    if (therapistError) {
+      console.error(
+        "Erro ao consultar terapeuta para compra:",
+        therapistError,
       );
-    }
 
-    const body = (await request.json()) as PixPayload;
-
-    const pixEnabled = body.pixEnabled !== false;
-    const pixKeyType = body.pixKeyType?.trim() ?? "";
-    const pixKey = body.pixKey?.trim() ?? "";
-    const pixHolderName =
-      body.pixHolderName?.trim() ?? "";
-    const pixBankName =
-      body.pixBankName?.trim() ?? "";
-
-    const tiposPermitidos = [
-      "cpf",
-      "cnpj",
-      "email",
-      "telefone",
-      "aleatoria",
-    ];
-
-    if (!pixKeyType) {
-      return NextResponse.json(
-        {
-          error: "Escolha o tipo da chave PIX.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!tiposPermitidos.includes(pixKeyType)) {
-      return NextResponse.json(
-        {
-          error: "Tipo de chave PIX inválido.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!pixKey) {
-      return NextResponse.json(
-        {
-          error: "Digite sua chave PIX.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!pixHolderName) {
       return NextResponse.json(
         {
           error:
-            "Digite o nome do titular da chave PIX.",
+            "Não foi possível carregar os dados do terapeuta.",
         },
-        {
-          status: 400,
-        },
+        { status: 500 },
       );
     }
 
-    const agora = new Date().toISOString();
+    if (!therapistResult) {
+      return NextResponse.json(
+        {
+          error:
+            "O terapeuta deste serviço não foi localizado.",
+        },
+        { status: 404 },
+      );
+    }
 
-    const { data, error } = await supabaseAdmin
+    const therapist = therapistResult as TherapistData;
+
+    /*
+     * 3. BUSCA A CONFIGURAÇÃO FINANCEIRA DO TERAPEUTA
+     *
+     * O PIX não pertence ao serviço.
+     * Ele pertence ao terapeuta e fica salvo em:
+     *
+     * therapist_payment_settings
+     */
+    const {
+      data: paymentSettingsResult,
+      error: paymentSettingsError,
+    } = await supabaseAdmin
       .from("therapist_payment_settings")
-      .upsert(
-        {
-          therapist_id: therapistId,
-          pix_enabled: pixEnabled,
-          pix_key_type: pixKeyType,
-          pix_key: pixKey,
-          pix_holder_name: pixHolderName,
-          pix_bank_name: pixBankName || null,
-          updated_at: agora,
-        },
-        {
-          onConflict: "therapist_id",
-        },
-      )
       .select(
         `
+          therapist_id,
           pix_enabled,
           pix_key_type,
           pix_key,
@@ -277,50 +235,139 @@ export async function PUT(request: NextRequest) {
           pix_bank_name
         `,
       )
-      .single();
+      .eq("therapist_id", therapist.id)
+      .maybeSingle();
 
-    if (error) {
+    if (paymentSettingsError) {
       console.error(
-        "Erro ao salvar configuração PIX:",
-        error,
+        "Erro ao consultar configuração PIX do terapeuta:",
+        paymentSettingsError,
       );
 
       return NextResponse.json(
         {
           error:
-            "Não foi possível salvar sua chave PIX.",
+            "Não foi possível carregar os dados de pagamento do terapeuta.",
         },
-        {
-          status: 500,
-        },
+        { status: 500 },
       );
     }
 
+    const paymentSettings =
+      paymentSettingsResult as PaymentSettingsData | null;
+
+    /*
+     * 4. CALCULA O PREÇO FINAL
+     */
+    const price = obterPrecoFinal(service);
+
+    if (price === null) {
+      return NextResponse.json(
+        {
+          error:
+            "Este serviço não possui um preço válido.",
+        },
+        { status: 400 },
+      );
+    }
+
+    /*
+     * 5. INFINITEPAY
+     *
+     * Mantemos a lógica atual do link cadastrado
+     * diretamente no serviço.
+     */
+    const infinitePayUrl = obterLinkInfinitePay(
+      service.payment_url,
+    );
+
+    const infinitePayAvailable = Boolean(infinitePayUrl);
+
+    /*
+     * 6. PIX DO TERAPEUTA
+     *
+     * Só disponibilizamos PIX quando:
+     * - existe configuração financeira;
+     * - PIX está habilitado;
+     * - existe uma chave cadastrada.
+     */
+    const pixKey =
+      paymentSettings?.pix_key?.trim() || null;
+
+    const pixAvailable = Boolean(
+      paymentSettings?.pix_enabled === true && pixKey,
+    );
+
+    /*
+     * 7. RESPOSTA PARA A PÁGINA DE COMPRA
+     */
     return NextResponse.json({
       success: true,
-      message: "Chave PIX salva com sucesso.",
-      pix: {
-        pixEnabled: data.pix_enabled,
-        pixKeyType: data.pix_key_type ?? "",
-        pixKey: data.pix_key ?? "",
-        pixHolderName: data.pix_holder_name ?? "",
-        pixBankName: data.pix_bank_name ?? "",
+
+      service: {
+        id: service.id,
+        name: service.name,
+        category: service.category?.trim() || "Outro",
+        description: service.description ?? "",
+        coverPhotoUrl:
+          service.cover_photo_url?.trim() || null,
+        price,
+        originalPrice: converterValor(service.price),
+        promotionalPrice: converterValor(
+          service.promotional_price,
+        ),
+        currency: service.currency || "BRL",
+        durationMinutes:
+          service.duration_minutes ?? null,
+        online: service.online === true,
+        inPerson: service.in_person === true,
+      },
+
+      therapist: {
+        id: therapist.id,
+        name:
+          therapist.name?.trim() ||
+          "Terapeuta AuraMeets",
+        slug: therapist.slug?.trim() || null,
+        photoUrl:
+          therapist.profile_photo_url?.trim() ||
+          therapist.photo_url?.trim() ||
+          null,
+      },
+
+      payment: {
+        infinitePayAvailable,
+        infinitePayUrl,
+
+        pixAvailable,
+
+        pix: pixAvailable
+          ? {
+              key: pixKey,
+              keyType:
+                paymentSettings?.pix_key_type?.trim() ||
+                null,
+              holderName:
+                paymentSettings?.pix_holder_name?.trim() ||
+                null,
+              bankName:
+                paymentSettings?.pix_bank_name?.trim() ||
+                null,
+            }
+          : null,
       },
     });
   } catch (error) {
     console.error(
-      "Erro inesperado ao salvar PIX:",
+      "Erro inesperado ao carregar dados da compra:",
       error,
     );
 
     return NextResponse.json(
       {
-        error:
-          "Não foi possível salvar sua chave PIX.",
+        error: "Não foi possível preparar esta compra.",
       },
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }
