@@ -71,41 +71,58 @@ function telefoneInternacionalOuNull(valor: unknown) {
   return normalizado;
 }
 
+async function obterUsuarioAutenticado(request: NextRequest) {
+  const authorization = request.headers.get("authorization");
+
+  if (!authorization?.startsWith("Bearer ")) {
+    return {
+      user: null,
+      error: "Usuário não autenticado.",
+    };
+  }
+
+  const accessToken = authorization.replace("Bearer ", "").trim();
+
+  const {
+    data: { user },
+    error,
+  } = await supabaseAdmin.auth.getUser(accessToken);
+
+  if (error || !user) {
+    return {
+      user: null,
+      error: "Sessão inválida ou expirada.",
+    };
+  }
+
+  return {
+    user,
+    error: null,
+  };
+}
+
 export async function PUT(request: NextRequest) {
   try {
-    const authorization =
-      request.headers.get("authorization");
+    const autenticacao = await obterUsuarioAutenticado(request);
 
-    if (!authorization?.startsWith("Bearer ")) {
+    if (!autenticacao.user) {
       return NextResponse.json(
-        { error: "Usuário não autenticado." },
+        { error: autenticacao.error },
         { status: 401 },
       );
     }
 
-    const accessToken = authorization
-      .replace("Bearer ", "")
-      .trim();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(accessToken);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Sessão inválida ou expirada." },
-        { status: 401 },
-      );
-    }
+    const user = autenticacao.user;
 
     const body =
       (await request.json()) as AtualizarPerfilBody;
 
     const name = textoOuNull(body.name);
+
     const professionalHeadline = textoOuNull(
       body.professional_headline,
     );
+
     const speciality = textoOuNull(body.speciality);
     const bio = textoOuNull(body.bio);
 
@@ -138,7 +155,10 @@ export async function PUT(request: NextRequest) {
     }
 
     const telefoneInformado = textoOuNull(body.phone);
-    const telefone = telefoneInternacionalOuNull(body.phone);
+
+    const telefone = telefoneInternacionalOuNull(
+      body.phone,
+    );
 
     if (telefoneInformado && !telefone) {
       return NextResponse.json(
@@ -151,9 +171,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const foto = textoOuNull(body.profile_photo_url);
+
     const videoInformado = textoOuNull(
       body.presentation_video_url,
     );
+
     const video = urlValidaOuNull(
       body.presentation_video_url,
     );
@@ -276,6 +298,81 @@ export async function PUT(request: NextRequest) {
       {
         error:
           `Não foi possível salvar o perfil: ${message}`,
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const autenticacao =
+      await obterUsuarioAutenticado(request);
+
+    if (!autenticacao.user) {
+      return NextResponse.json(
+        { error: autenticacao.error },
+        { status: 401 },
+      );
+    }
+
+    const user = autenticacao.user;
+
+    const agora = new Date().toISOString();
+
+    const {
+      data: therapist,
+      error: therapistError,
+    } = await supabaseAdmin
+      .from("therapists")
+      .update({
+        active: false,
+        deletion_requested: true,
+        deletion_requested_at: agora,
+        updated_at: agora,
+      })
+      .eq("profile_id", user.id)
+      .select(
+        "id, profile_id, name, active, deletion_requested, deletion_requested_at",
+      )
+      .maybeSingle();
+
+    if (therapistError) {
+      return NextResponse.json(
+        {
+          error:
+            `Não foi possível solicitar a exclusão do perfil: ${therapistError.message}`,
+        },
+        { status: 500 },
+      );
+    }
+
+    if (!therapist) {
+      return NextResponse.json(
+        {
+          error:
+            "O cadastro profissional desta conta não foi localizado.",
+        },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message:
+        "Seu perfil foi retirado da exibição pública e a solicitação de exclusão foi registrada.",
+      therapist,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Erro desconhecido.";
+
+    return NextResponse.json(
+      {
+        error:
+          `Não foi possível solicitar a exclusão do perfil: ${message}`,
       },
       { status: 500 },
     );

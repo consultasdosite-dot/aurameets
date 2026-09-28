@@ -1,5 +1,4 @@
 "use client";
-
 import {
   ChangeEvent,
   FormEvent,
@@ -9,7 +8,6 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-
 type PerfilTerapeuta = {
   id: number;
   profile_id: string;
@@ -33,7 +31,6 @@ type PerfilTerapeuta = {
   education_institution: string;
   education_year: string;
 };
-
 const perfilInicial: PerfilTerapeuta = {
   id: 0,
   profile_id: "",
@@ -57,7 +54,6 @@ const perfilInicial: PerfilTerapeuta = {
   education_institution: "",
   education_year: "",
 };
-
 function obterMensagemErro(
   error: unknown,
   mensagemPadrao: string,
@@ -65,58 +61,45 @@ function obterMensagemErro(
   if (error instanceof Error && error.message) {
     return error.message;
   }
-
   return mensagemPadrao;
 }
-
 function normalizarTexto(
   valor: string | null | undefined,
 ) {
   return valor ?? "";
 }
-
 function normalizarPreco(
   valor: number | string | null | undefined,
 ) {
   if (valor === null || valor === undefined) {
     return "";
   }
-
   return String(valor).replace(".", ",");
 }
-
 function converterPrecoParaNumero(valor: string) {
   const valorNormalizado = valor
     .replace(/\s/g, "")
-    .replace(/\./g, "")
+    .replace(/**\.**/g, "")
     .replace(",", ".");
-
   const numero = Number(valorNormalizado);
-
   if (!Number.isFinite(numero) || numero < 0) {
     return null;
   }
-
   return numero;
 }
-
 function obterYoutubeVideoId(valor: string) {
   const link = valor.trim();
-
   if (!link) {
     return null;
   }
-
   try {
     const url = new URL(link);
     const hostname = url.hostname
       .replace(/^www\./, "")
-      .toLowerCase();
-
+            .toLowerCase();
     if (hostname === "youtu.be") {
       return url.pathname.split("/").filter(Boolean)[0] || null;
     }
-
     if (
       hostname === "youtube.com" ||
       hostname === "m.youtube.com"
@@ -124,9 +107,7 @@ function obterYoutubeVideoId(valor: string) {
       if (url.pathname === "/watch") {
         return url.searchParams.get("v");
       }
-
       const partes = url.pathname.split("/").filter(Boolean);
-
       if (
         partes[0] === "embed" ||
         partes[0] === "shorts" ||
@@ -135,21 +116,17 @@ function obterYoutubeVideoId(valor: string) {
         return partes[1] || null;
       }
     }
-
     return null;
   } catch {
     return null;
   }
 }
-
 function obterYoutubeEmbedUrl(valor: string) {
   const videoId = obterYoutubeVideoId(valor);
-
   return videoId
     ? `https://www.youtube.com/embed/${videoId}`
     : null;
 }
-
 type PhoneCountry = { code: string; label: string; dialCode: string; stripZero?: boolean };
 const phoneCountries: PhoneCountry[] = [
   {code:"BR",label:"Brasil",dialCode:"+55"},
@@ -189,47 +166,38 @@ function normalizarTelefone(valor: string, ddi: string, countryCode: string) {
   if (phoneCountries.find(c => c.code === countryCode)?.stripZero) local = local.replace(/^0+/, "");
   return "+" + prefix + local;
 }
-
 export default function PerfilTerapeutaPage() {
   const router = useRouter();
-
   const [perfil, setPerfil] =
     useState<PerfilTerapeuta>(perfilInicial);
-
   const [carregando, setCarregando] =
     useState(true);
-
   const [salvando, setSalvando] =
     useState(false);
 
+  const [excluindoPerfil, setExcluindoPerfil] =
+    useState(false);
   const [enviandoFoto, setEnviandoFoto] =
     useState(false);
-
   const [erro, setErro] =
     useState<string | null>(null);
-
   const [sucesso, setSucesso] =
     useState<string | null>(null);
-
   const [phoneCountry, setPhoneCountry] = useState("BR");
   const [phoneDdi, setPhoneDdi] = useState("+55");
-
   const carregarPerfil = useCallback(async () => {
     setCarregando(true);
     setErro(null);
     setSucesso(null);
-
     try {
       const {
         data: { session },
         error: sessionError,
       } = await supabase.auth.getSession();
-
       if (sessionError || !session?.user) {
         router.replace("/login-terapeuta");
         return;
       }
-
       const { data, error } = await supabase
         .from("therapists")
         .select(
@@ -260,23 +228,19 @@ export default function PerfilTerapeutaPage() {
         )
         .eq("profile_id", session.user.id)
         .maybeSingle();
-
       if (error) {
         throw new Error(
           `Não foi possível carregar o perfil: ${error.message}`,
         );
       }
-
       if (!data) {
         throw new Error(
           "O cadastro profissional desta conta não foi localizado.",
         );
       }
-
       const telefoneCarregado = separarTelefone(normalizarTexto(data.phone));
       setPhoneCountry(telefoneCarregado.country);
       setPhoneDdi(telefoneCarregado.ddi);
-
       setPerfil({
         id: data.id,
         profile_id: data.profile_id ?? session.user.id,
@@ -333,11 +297,9 @@ export default function PerfilTerapeutaPage() {
       setCarregando(false);
     }
   }, [router]);
-
   useEffect(() => {
     void carregarPerfil();
   }, [carregarPerfil]);
-
   function atualizarCampo(
     event: ChangeEvent<
       HTMLInputElement |
@@ -346,66 +308,51 @@ export default function PerfilTerapeutaPage() {
     >,
   ) {
     const { name, value } = event.target;
-
     setPerfil((perfilAtual) => ({
       ...perfilAtual,
       [name]: value,
     }));
-
     setErro(null);
     setSucesso(null);
   }
-
   async function enviarFoto(
     event: ChangeEvent<HTMLInputElement>,
   ) {
     const arquivo = event.target.files?.[0];
-
     event.target.value = "";
-
     if (!arquivo) {
       return;
     }
-
     setErro(null);
     setSucesso(null);
-
     const formatosPermitidos = [
       "image/jpeg",
       "image/png",
       "image/webp",
     ];
-
     if (!formatosPermitidos.includes(arquivo.type)) {
       setErro(
         "Escolha uma imagem nos formatos JPG, PNG ou WebP.",
       );
       return;
     }
-
     const tamanhoMaximo = 5 * 1024 * 1024;
-
-    if (arquivo.size > tamanhoMaximo) {
+        if (arquivo.size > tamanhoMaximo) {
       setErro("A foto deve ter no máximo 5 MB.");
       return;
     }
-
     setEnviandoFoto(true);
-
     try {
       const {
         data: { session },
         error: sessionError,
       } = await supabase.auth.getSession();
-
       if (sessionError || !session?.user) {
         router.replace("/login-terapeuta");
         return;
       }
-
       const extensaoOriginal =
         arquivo.name.split(".").pop()?.toLowerCase();
-
       const extensao =
         extensaoOriginal &&
         ["jpg", "jpeg", "png", "webp"].includes(
@@ -413,10 +360,8 @@ export default function PerfilTerapeutaPage() {
         )
           ? extensaoOriginal
           : "jpg";
-
       const caminhoArquivo =
         `${session.user.id}/foto-perfil.${extensao}`;
-
       const { error: uploadError } =
         await supabase.storage
           .from("therapist-photos")
@@ -425,26 +370,21 @@ export default function PerfilTerapeutaPage() {
             contentType: arquivo.type,
             upsert: true,
           });
-
       if (uploadError) {
         throw new Error(
           `Não foi possível enviar a foto: ${uploadError.message}`,
         );
       }
-
       const { data: publicUrlData } =
         supabase.storage
           .from("therapist-photos")
           .getPublicUrl(caminhoArquivo);
-
       const urlComAtualizacao =
         `${publicUrlData.publicUrl}?v=${Date.now()}`;
-
       setPerfil((perfilAtual) => ({
         ...perfilAtual,
         profile_photo_url: urlComAtualizacao,
       }));
-
       setSucesso(
         "Foto enviada. Agora clique em Salvar perfil para confirmar a alteração.",
       );
@@ -459,50 +399,40 @@ export default function PerfilTerapeutaPage() {
       setEnviandoFoto(false);
     }
   }
-
   async function salvarPerfil(
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
-
     setErro(null);
     setSucesso(null);
-
     if (!perfil.name.trim()) {
       setErro("Informe seu nome profissional.");
       return;
     }
-
     if (!perfil.professional_headline.trim()) {
       setErro("Informe seu título profissional.");
       return;
     }
-
     if (!perfil.speciality.trim()) {
       setErro("Informe sua especialidade principal.");
       return;
     }
-
     if (!perfil.bio.trim()) {
       setErro("Escreva sua apresentação profissional.");
       return;
     }
-
     const preco = converterPrecoParaNumero(
       perfil.price,
     );
-
     if (perfil.price.trim() && preco === null) {
       setErro(
         "Informe um valor de atendimento válido.",
       );
       return;
     }
-
     const anoFormacao = perfil.education_year.trim()
       ? Number(perfil.education_year)
       : null;
-
     if (
       anoFormacao !== null &&
       (!Number.isInteger(anoFormacao) ||
@@ -514,7 +444,6 @@ export default function PerfilTerapeutaPage() {
       );
       return;
     }
-
     if (
       perfil.presentation_video_url.trim() &&
       !obterYoutubeVideoId(
@@ -526,25 +455,21 @@ export default function PerfilTerapeutaPage() {
       );
       return;
     }
-
     const telefoneInternacional = normalizarTelefone(perfil.phone, phoneDdi, phoneCountry);
     if (telefoneInternacional && !/^\+[1-9]\d{6,14}$/.test(telefoneInternacional)) {
       setErro("Informe um WhatsApp válido com DDI internacional.");
       return;
     }
     setSalvando(true);
-
     try {
       const {
         data: { session },
         error: sessionError,
       } = await supabase.auth.getSession();
-
       if (sessionError || !session?.user) {
         router.replace("/login-terapeuta");
         return;
       }
-
       const response = await fetch(
         "/api/terapeuta/perfil",
         {
@@ -597,18 +522,15 @@ export default function PerfilTerapeutaPage() {
           }),
         },
       );
-
       const resultado = (await response.json()) as {
         error?: string;
       };
-
       if (!response.ok) {
         throw new Error(
           resultado.error ||
             "Não foi possível salvar o perfil profissional.",
         );
       }
-
       setSucesso(
         "Perfil profissional salvo com sucesso.",
       );
@@ -623,13 +545,75 @@ export default function PerfilTerapeutaPage() {
       setSalvando(false);
     }
   }
+  async function excluirMeuPerfil() {
+    const confirmou = window.confirm(
+      "Tem certeza de que deseja excluir seu perfil do AuraMeets? Seu perfil será retirado imediatamente da exibição pública. Seus dados e históricos serão preservados para segurança e registros administrativos.",
+    );
+
+    if (!confirmou) {
+      return;
+    }
+
+    setErro(null);
+    setSucesso(null);
+    setExcluindoPerfil(true);
+
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.user) {
+        router.replace("/login-terapeuta");
+        return;
+      }
+
+      const response = await fetch("/api/terapeuta/perfil", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      const resultado = (await response.json()) as {
+        error?: string;
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          resultado.error ||
+            "Não foi possível solicitar a exclusão do perfil.",
+        );
+      }
+
+      const { error: signOutError } = await supabase.auth.signOut();
+
+      if (signOutError) {
+        throw new Error(
+          "O perfil foi retirado da exibição pública, mas não foi possível encerrar sua sessão automaticamente.",
+        );
+      }
+
+      router.replace("/");
+      router.refresh();
+    } catch (errorDesconhecido) {
+      setErro(
+        obterMensagemErro(
+          errorDesconhecido,
+          "Não foi possível solicitar a exclusão do perfil.",
+        ),
+      );
+      setExcluindoPerfil(false);
+    }
+  }
 
   if (carregando) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f7f8fc] px-6">
         <div className="text-center">
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-purple-200 border-t-purple-700" />
-
           <p className="mt-4 text-sm font-semibold text-slate-600">
             Carregando seu perfil...
           </p>
@@ -637,7 +621,6 @@ export default function PerfilTerapeutaPage() {
       </main>
     );
   }
-
   return (
     <main className="min-h-screen bg-[#f7f8fc]">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
@@ -646,18 +629,15 @@ export default function PerfilTerapeutaPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-purple-600">
               Meu perfil
             </p>
-
             <h1 className="mt-2 text-3xl font-bold text-slate-950 sm:text-4xl">
               Perfil profissional
             </h1>
-
             <p className="mt-3 max-w-3xl leading-7 text-slate-600">
               Preencha os dados que serão utilizados
               para apresentar seu trabalho aos clientes
               do AuraMeets.
             </p>
           </div>
-
           <button
             type="button"
             onClick={() =>
@@ -668,7 +648,6 @@ export default function PerfilTerapeutaPage() {
             Voltar ao painel
           </button>
         </div>
-
         {erro && (
           <div
             role="alert"
@@ -679,7 +658,6 @@ export default function PerfilTerapeutaPage() {
             </p>
           </div>
         )}
-
         {sucesso && (
           <div
             role="status"
@@ -690,7 +668,6 @@ export default function PerfilTerapeutaPage() {
             </p>
           </div>
         )}
-
         <form
           onSubmit={salvarPerfil}
           className="space-y-6"
@@ -713,18 +690,15 @@ export default function PerfilTerapeutaPage() {
                   </span>
                 )}
               </div>
-
               <div className="min-w-0 flex-1">
                 <h2 className="text-xl font-bold text-slate-950">
                   Foto profissional
                 </h2>
-
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Escolha uma foto nítida, com boa iluminação
                   e o rosto centralizado. Formatos aceitos:
                   JPG, PNG ou WebP, com até 5 MB.
                 </p>
-
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <label
                     htmlFor="profile_photo_file"
@@ -740,7 +714,6 @@ export default function PerfilTerapeutaPage() {
                         ? "Trocar foto"
                         : "Escolher foto"}
                   </label>
-
                   <input
                     id="profile_photo_file"
                     type="file"
@@ -749,7 +722,6 @@ export default function PerfilTerapeutaPage() {
                     disabled={enviandoFoto}
                     className="sr-only"
                   />
-
                   {perfil.profile_photo_url && (
                     <button
                       type="button"
@@ -770,7 +742,6 @@ export default function PerfilTerapeutaPage() {
                     </button>
                   )}
                 </div>
-
                 <p className="mt-3 text-xs leading-5 text-slate-500">
                   Depois do envio, confira a pré-visualização
                   e clique em Salvar perfil.
@@ -778,28 +749,24 @@ export default function PerfilTerapeutaPage() {
               </div>
             </div>
           </section>
-
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div>
               <h2 className="text-xl font-bold text-slate-950">
                 Informações profissionais
               </h2>
-
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Estes dados serão utilizados no seu
                 perfil dentro do AuraMeets.
               </p>
             </div>
-
             <div className="mt-7 grid gap-6 md:grid-cols-2">
               <div>
                 <label
                   htmlFor="name"
                   className="mb-2 block text-sm font-semibold text-slate-800"
                 >
-                  Nome profissional *
+                  Nome profissional \*
                 </label>
-
                 <input
                   id="name"
                   name="name"
@@ -810,15 +777,13 @@ export default function PerfilTerapeutaPage() {
                   className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 />
               </div>
-
               <div>
                 <label
                   htmlFor="professional_headline"
                   className="mb-2 block text-sm font-semibold text-slate-800"
                 >
-                  Título profissional *
+                  Título profissional \*
                 </label>
-
                 <input
                   id="professional_headline"
                   name="professional_headline"
@@ -830,15 +795,13 @@ export default function PerfilTerapeutaPage() {
                   className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 />
               </div>
-
               <div>
                 <label
                   htmlFor="speciality"
                   className="mb-2 block text-sm font-semibold text-slate-800"
                 >
-                  Especialidade principal *
+                  Especialidade principal \*
                 </label>
-
                 <input
                   id="speciality"
                   name="speciality"
@@ -850,7 +813,6 @@ export default function PerfilTerapeutaPage() {
                   className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 />
               </div>
-
               <div>
                 <label
                   htmlFor="experience"
@@ -858,7 +820,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Experiência profissional
                 </label>
-
                 <input
                   id="experience"
                   name="experience"
@@ -869,15 +830,13 @@ export default function PerfilTerapeutaPage() {
                   className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 />
               </div>
-
               <div className="md:col-span-2">
                 <label
                   htmlFor="bio"
                   className="mb-2 block text-sm font-semibold text-slate-800"
                 >
-                  Apresentação profissional *
+                  Apresentação profissional \*
                 </label>
-
                 <textarea
                   id="bio"
                   name="bio"
@@ -891,12 +850,10 @@ export default function PerfilTerapeutaPage() {
               </div>
             </div>
           </section>
-
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-xl font-bold text-slate-950">
               Atendimento
             </h2>
-
             <div className="mt-7 grid gap-6 md:grid-cols-2">
               <div>
                 <label
@@ -905,7 +862,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Modalidade
                 </label>
-
                 <select
                   id="service_type"
                   name="service_type"
@@ -916,17 +872,14 @@ export default function PerfilTerapeutaPage() {
                   <option value="Online">
                     Online
                   </option>
-
                   <option value="Presencial">
                     Presencial
                   </option>
-
                   <option value="Online e Presencial">
                     Online e Presencial
                   </option>
                 </select>
               </div>
-
               <div>
                 <label
                   htmlFor="price"
@@ -934,12 +887,10 @@ export default function PerfilTerapeutaPage() {
                 >
                   Valor da sessão
                 </label>
-
                 <div className="flex min-h-12 overflow-hidden rounded-xl border border-slate-300 bg-white focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-100">
                   <span className="flex items-center border-r border-slate-200 bg-slate-50 px-4 font-semibold text-slate-600">
                     R$
                   </span>
-
                   <input
                     id="price"
                     name="price"
@@ -952,7 +903,6 @@ export default function PerfilTerapeutaPage() {
                   />
                 </div>
               </div>
-
               <div>
                 <label
                   htmlFor="duration"
@@ -960,7 +910,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Duração da sessão
                 </label>
-
                 <input
                   id="duration"
                   name="duration"
@@ -971,7 +920,6 @@ export default function PerfilTerapeutaPage() {
                   className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 />
               </div>
-
               <div>
                 <label htmlFor="phone_country" className="mb-2 block text-sm font-semibold text-slate-800">País do WhatsApp</label>
                 <select id="phone_country" value={phoneCountry} onChange={(event) => {
@@ -993,7 +941,6 @@ export default function PerfilTerapeutaPage() {
                 </div>
                 <p className="mt-2 text-xs leading-5 text-slate-500">Selecione o país e informe o número. O DDI será incluído ao salvar. Você também pode digitar o número completo com +DDI.</p>
               </div>
-
               <div>
                 <label
                   htmlFor="city"
@@ -1001,7 +948,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Cidade
                 </label>
-
                 <input
                   id="city"
                   name="city"
@@ -1011,7 +957,6 @@ export default function PerfilTerapeutaPage() {
                   className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 />
               </div>
-
               <div>
                 <label
                   htmlFor="state"
@@ -1019,7 +964,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Estado
                 </label>
-
                 <input
                   id="state"
                   name="state"
@@ -1033,12 +977,10 @@ export default function PerfilTerapeutaPage() {
               </div>
             </div>
           </section>
-
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-xl font-bold text-slate-950">
               Formação
             </h2>
-
             <div className="mt-7 grid gap-6 md:grid-cols-3">
               <div>
                 <label
@@ -1047,7 +989,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Formação principal
                 </label>
-
                 <input
                   id="main_education"
                   name="main_education"
@@ -1058,7 +999,6 @@ export default function PerfilTerapeutaPage() {
                   className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 />
               </div>
-
               <div>
                 <label
                   htmlFor="education_institution"
@@ -1066,7 +1006,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Instituição
                 </label>
-
                 <input
                   id="education_institution"
                   name="education_institution"
@@ -1076,7 +1015,6 @@ export default function PerfilTerapeutaPage() {
                   className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 />
               </div>
-
               <div>
                 <label
                   htmlFor="education_year"
@@ -1084,7 +1022,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Ano de conclusão
                 </label>
-
                 <input
                   id="education_year"
                   name="education_year"
@@ -1098,12 +1035,10 @@ export default function PerfilTerapeutaPage() {
               </div>
             </div>
           </section>
-
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-xl font-bold text-slate-950">
               Presença digital
             </h2>
-
             <div className="mt-7 grid gap-6 md:grid-cols-2">
               <div>
                 <label
@@ -1112,7 +1047,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Instagram
                 </label>
-
                 <input
                   id="instagram"
                   name="instagram"
@@ -1123,7 +1057,6 @@ export default function PerfilTerapeutaPage() {
                   className="min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
                 />
               </div>
-
               <div>
                 <label
                   htmlFor="website"
@@ -1131,7 +1064,6 @@ export default function PerfilTerapeutaPage() {
                 >
                   Site
                 </label>
-
                 <input
                   id="website"
                   name="website"
@@ -1144,13 +1076,30 @@ export default function PerfilTerapeutaPage() {
               </div>
             </div>
           </section>
+          <section className="rounded-3xl border border-red-200 bg-red-50 p-6 shadow-sm sm:p-8">
+            <h2 className="text-xl font-bold text-red-800">
+              Excluir meu perfil
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-red-700">
+              Ao confirmar, seu perfil será retirado imediatamente da exibição pública do AuraMeets. Seus dados e históricos serão preservados para segurança e registros administrativos.
+            </p>
+            <button
+              type="button"
+              onClick={excluirMeuPerfil}
+              disabled={excluindoPerfil || salvando}
+              className="mt-5 min-h-12 rounded-xl border border-red-600 bg-white px-6 py-3 text-sm font-bold text-red-700 transition hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {excluindoPerfil
+                ? "EXCLUINDO PERFIL..."
+                : "EXCLUIR MEU PERFIL"}
+            </button>
+          </section>
 
           <div className="sticky bottom-4 z-20 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-600">
               Os dados serão enviados novamente para
               análise quando forem atualizados.
             </p>
-
             <button
               type="submit"
               disabled={salvando}
