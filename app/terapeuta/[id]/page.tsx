@@ -229,6 +229,46 @@ export default async function TherapistPage({
       services = (data ?? []) as Service[];
     }
   }
+  // experiences.therapist_id é bigint (therapists.id), nunca o UUID profile_id.
+  let hasPresent = false;
+  let hasDiscount = false;
+  const therapistEmail =
+    "email" in therapist && typeof therapist.email === "string"
+      ? therapist.email.trim().toLowerCase()
+      : "";
+
+  // Busca o ID numérico do terapeuta. Caso o e-mail não esteja disponível
+  // no perfil público, usa o nome exato como alternativa.
+  const { data: therapistRecord, error: therapistLookupError } =
+    await supabase
+      .from("therapists")
+      .select("id")
+      .eq(therapistEmail ? "email" : "name", therapistEmail || therapist.name)
+      .maybeSingle();
+
+  if (therapistLookupError) {
+    console.error("Erro ao identificar terapeuta para ofertas:", therapistLookupError);
+  } else if (therapistRecord && /^\d+$/.test(String(therapistRecord.id))) {
+    const { data: offers, error: offersError } = await supabase
+      .from("experiences")
+      .select("offer_type,quantity_available")
+      .eq("therapist_id", therapistRecord.id)
+      .eq("approval_status", "approved")
+      .eq("active", true)
+      .in("offer_type", ["presente", "desconto"]);
+
+    if (offersError) {
+      console.error("Erro ao carregar ofertas do terapeuta:", offersError);
+    } else {
+      const availableOffers = (offers ?? []).filter(
+        (offer) => offer.quantity_available === null || offer.quantity_available > 0,
+      );
+      hasPresent = availableOffers.some((offer) => offer.offer_type === "presente");
+      hasDiscount = availableOffers.some((offer) => offer.offer_type === "desconto");
+    }
+  } else {
+    console.error("Não foi encontrado um ID numérico para as ofertas do terapeuta.");
+  }
   const name =
     therapist.name || "Profissional AuraMeets";
   const headline =
@@ -285,35 +325,39 @@ export default async function TherapistPage({
     `https://wa.me/?text=${encodeURIComponent(
       `Conheça o perfil profissional de ${name} no AuraMeets: ${profileUrl}`,
     )}`;
+  const presentHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero meu presente")}`
+    : "#servicos";
+  const discountHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero desconto")}`
+    : "#servicos";
+
   const actions: {
     label: string;
     icon: IconName;
     href: string;
-    featured?: boolean;
-    whatsapp?: boolean;
+    variant: "schedule" | "buy" | "present" | "discount" | "whatsapp";
   }[] = [
-    {
-      label: "Quero agendar",
-      icon: "calendar",
-      href: scheduleHref,
-      featured: true,
-    },
-    {
-      label: "Quero comprar",
-      icon: "bag",
-      href: "#servicos",
-    },
+    { label: "Quero agendar", icon: "calendar", href: scheduleHref, variant: "schedule" },
+    { label: "Quero comprar", icon: "bag", href: "#servicos", variant: "buy" },
+    ...(whatsappNumber && hasPresent
+      ? [{ label: "Quero presente", icon: "gift" as IconName, href: presentHref, variant: "present" as const }]
+      : []),
+    ...(whatsappNumber && hasDiscount
+      ? [{ label: "Quero desconto", icon: "ticket" as IconName, href: discountHref, variant: "discount" as const }]
+      : []),
     ...(whatsappNumber
-      ? [
-          {
-            label: "Falar no WhatsApp",
-            icon: "whatsapp" as IconName,
-            href: whatsappHref,
-            whatsapp: true,
-          },
-        ]
+      ? [{ label: "Falar no WhatsApp", icon: "whatsapp" as IconName, href: whatsappHref, variant: "whatsapp" as const }]
       : []),
   ];
+
+  const actionClasses: Record<(typeof actions)[number]["variant"], string> = {
+    schedule: "border-[#d4b452]/60 bg-gradient-to-br from-[#813587] to-[#542058] hover:border-[#f0da92]",
+    buy: "border-[#d4b452]/35 bg-gradient-to-br from-[#261529] to-[#151017] hover:border-[#d4b452]/65",
+    present: "border-emerald-300/50 bg-[#16834B] hover:bg-[#116A3C]",
+    discount: "border-[#edcf77]/60 bg-[#B78B32] hover:bg-[#977125]",
+    whatsapp: "border-emerald-400/50 bg-gradient-to-br from-[#25D366] to-[#128C7E] hover:border-emerald-300",
+  };
   return (
     <main className="min-h-screen bg-[#080709] text-white selection:bg-[#d3b35a] selection:text-[#130d16]">
       <section className="relative overflow-hidden border-b border-white/10">
@@ -420,35 +464,20 @@ export default async function TherapistPage({
         </div>
       </section>
       <section className="relative z-10 mx-auto -mt-1 max-w-6xl px-5 sm:px-8">
-        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 rounded-[2rem] border border-white/10 bg-[#100d12]/90 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:grid-cols-3">
+        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-2 rounded-[1.5rem] border border-white/10 bg-[#100d12]/90 p-2 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:gap-3 sm:p-3">
           {actions.map((action) => (
             <Link
               key={action.label}
               href={action.href}
-              target={
-                action.href.startsWith("http")
-                  ? "\_blank"
-                  : undefined
-              }
-              className={`group flex min-h-32 flex-col items-center justify-center gap-4 rounded-[1.5rem] border px-5 text-center transition duration-300 hover:-translate-y-1 sm:min-h-36 ${
-                action.whatsapp
-                  ? "border-emerald-400/50 bg-gradient-to-br from-[#25D366] to-[#128C7E] shadow-[0_12px_30px_rgba(37,211,102,0.22)] hover:border-emerald-300"
-                  : action.featured
-                    ? "border-[#d4b452]/60 bg-gradient-to-br from-[#813587] to-[#542058] shadow-[0_12px_30px_rgba(108,38,116,0.3)]"
-                    : "border-[#d4b452]/35 bg-gradient-to-br from-[#261529] to-[#151017] shadow-[0_12px_30px_rgba(0,0,0,0.25)] hover:border-[#d4b452]/65"
-              }`}
+              target={action.href.startsWith("http") ? "_blank" : undefined}
+              rel={action.href.startsWith("http") ? "noopener noreferrer" : undefined}
+              className={`group flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center shadow-lg transition duration-300 hover:-translate-y-0.5 sm:min-h-24 sm:px-4 ${action.variant === "whatsapp" ? "col-span-2 min-h-14 flex-row sm:min-h-16" : ""} ${actionClasses[action.variant]}`}
             >
               <Icon
                 name={action.icon}
-                className={`h-8 w-8 ${
-                  action.whatsapp
-                    ? "text-white"
-                    : action.featured
-                      ? "text-[#f0da92]"
-                      : "text-[#d9bc62]"
-                }`}
+                className={`h-5 w-5 sm:h-6 sm:w-6 ${action.variant === "schedule" || action.variant === "buy" ? "text-[#f0da92]" : "text-white"}`}
               />
-              <span className="text-sm font-extrabold uppercase tracking-[0.11em] sm:text-base">
+              <span className="text-[11px] font-extrabold uppercase tracking-[0.04em] text-white sm:text-sm sm:tracking-[0.08em]">
                 {action.label}
               </span>
             </Link>

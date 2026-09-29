@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import Link from "next/link";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -16,15 +14,11 @@ import {
 
 } from "../lib/experiences/home";
 
-
-
 type IconProps = {
 
   className?: string;
 
 };
-
-
 
 type AccessCardProps = {
 
@@ -46,8 +40,6 @@ type AccessCardProps = {
 
 };
 
-
-
 type StepProps = {
 
   number: string;
@@ -59,8 +51,6 @@ type StepProps = {
   icon: ReactNode;
 
 };
-
-
 
 type OfferCardProps = {
 
@@ -85,16 +75,14 @@ type OfferCardProps = {
   imageUrl?: string | null;
 
   profileHref: string;
+  whatsappHref: string | null;
+  offerType: "presente" | "desconto";
 
 };
-
-
 
 function embaralharOfertas<T>(itens: T[]): T[] {
 
   const resultado = [...itens];
-
-
 
   for (let indice = resultado.length - 1; indice > 0; indice -= 1) {
 
@@ -110,15 +98,9 @@ function embaralharOfertas<T>(itens: T[]): T[] {
 
   }
 
-
-
   return resultado;
 
 }
-
-
-
-
 
 export default function HomePage() {
 
@@ -130,37 +112,27 @@ export default function HomePage() {
 
   const [carregandoOfertas, setCarregandoOfertas] = useState(true);
 
-
-
   useEffect(() => {
 
     let componenteAtivo = true;
-
-
 
     async function carregarOfertas() {
 
       setCarregandoOfertas(true);
 
-
-
       try {
 
         const ofertas = await getFeaturedExperiences();
 
-
-
         if (componenteAtivo) {
 
-          setOfertasEspeciais(embaralharOfertas(ofertas));
+          setOfertasEspeciais(ofertas);
 
         }
 
       } catch (error) {
 
         console.error("Erro ao carregar experiências AuraMeets:", error);
-
-
 
         if (componenteAtivo) {
 
@@ -180,11 +152,7 @@ export default function HomePage() {
 
     }
 
-
-
     void carregarOfertas();
-
-
 
     return () => {
 
@@ -194,8 +162,6 @@ export default function HomePage() {
 
   }, []);
 
-
-
   useEffect(() => {
 
     function controlarBotaoAtendente() {
@@ -204,13 +170,9 @@ export default function HomePage() {
 
     }
 
-
-
     controlarBotaoAtendente();
 
     window.addEventListener("scroll", controlarBotaoAtendente, { passive: true });
-
-
 
     return () => {
 
@@ -220,15 +182,11 @@ export default function HomePage() {
 
   }, []);
 
-
-
   function fecharMenu() {
 
     setMenuAberto(false);
 
   }
-
-
 
   return (
 
@@ -240,7 +198,7 @@ export default function HomePage() {
 
           href={
 
-            "https://wa.me/5551980339532?text=" +
+            "https\://wa.me/5551980339532?text=" +
 
             encodeURIComponent(
 
@@ -276,15 +234,11 @@ export default function HomePage() {
 
           </svg>
 
-
-
           <span>FALE COM ATENDENTE</span>
 
         </a>
 
       )}
-
-
 
       {/* CABEÇALHO */}
 
@@ -306,8 +260,6 @@ export default function HomePage() {
 
             <AuraLogo className="h-12 w-12" />
 
-
-
             <span className="text-[23px] font-extrabold tracking-[-0.04em]">
 
               <span className="text-[#7342ad]">Aura</span>
@@ -318,11 +270,7 @@ export default function HomePage() {
 
           </Link>
 
-
-
           <nav className="hidden items-center gap-8 text-[14px] font-bold text-[#101d3b] xl:flex">
-
-
 
             <a href="#terapeutas" className="transition hover:text-[#7342ad]">
 
@@ -330,15 +278,11 @@ export default function HomePage() {
 
             </a>
 
-
-
             <a href="#empresas" className="transition hover:text-[#7342ad]">
 
               Empresas
 
             </a>
-
-
 
             <a href="#acolhimento" className="transition hover:text-[#7342ad]">
 
@@ -346,11 +290,9 @@ export default function HomePage() {
 
             </a>
 
-
-
             <a
 
-              href="https://wa.me/5551980339532"
+              href="https\://wa.me/5551980339532"
 
               target="_blank"
 
@@ -366,8 +308,6 @@ export default function HomePage() {
 
           </nav>
 
-
-
           <div className="hidden items-center gap-4 lg:flex">
 
             <Link
@@ -382,8 +322,6 @@ export default function HomePage() {
 
             </Link>
 
-
-
             <Link
 
               href="/cadastro"
@@ -397,8 +335,6 @@ export default function HomePage() {
             </Link>
 
           </div>
-
-
 
           <button
 
@@ -426,8 +362,6 @@ export default function HomePage() {
 
               />
 
-
-
               <span
 
                 className={`absolute left-0 top-2 h-0.5 w-6 rounded bg-current transition ${
@@ -437,8 +371,6 @@ export default function HomePage() {
                 }`}
 
               />
-
-
 
               <span
 
@@ -456,15 +388,11 @@ export default function HomePage() {
 
         </div>
 
-
-
         {menuAberto && (
 
           <div className="border-t border-[#eee7f2] bg-white px-5 py-5 shadow-xl lg:hidden">
 
             <nav className="mx-auto flex max-w-[1560px] flex-col gap-1">
-
-
 
               <a
 
@@ -480,8 +408,6 @@ export default function HomePage() {
 
               </a>
 
-
-
               <a
 
                 href="#empresas"
@@ -495,8 +421,6 @@ export default function HomePage() {
                 Empresas
 
               </a>
-
-
 
               <a
 
@@ -512,11 +436,9 @@ export default function HomePage() {
 
               </a>
 
-
-
               <a
 
-                href="https://wa.me/5551980339532"
+                href="https\://wa.me/5551980339532"
 
                 target="_blank"
 
@@ -531,8 +453,6 @@ export default function HomePage() {
                 Fale com um atendente
 
               </a>
-
-
 
               <div className="mt-4 grid grid-cols-2 gap-3">
 
@@ -549,8 +469,6 @@ export default function HomePage() {
                   Entrar
 
                 </Link>
-
-
 
                 <Link
 
@@ -576,8 +494,6 @@ export default function HomePage() {
 
       </header>
 
-
-
       {/* ENTRADA PRINCIPAL */}
 
       <section className="relative min-h-[640px] overflow-hidden bg-[#24122f] sm:min-h-[720px] lg:min-h-[760px]">
@@ -592,11 +508,7 @@ export default function HomePage() {
 
         />
 
-
-
         <div className="absolute inset-0 bg-gradient-to-t from-[#1c1027]/60 via-transparent to-[#2b1736]/5" />
-
-
 
         {/* LOGO CENTRALIZADA */}
 
@@ -605,8 +517,6 @@ export default function HomePage() {
           <div className="flex flex-col items-center">
 
             <AuraLogo className="h-16 w-16 sm:h-20 sm:w-20" />
-
-
 
             <div className="mt-1 whitespace-nowrap text-[34px] font-extrabold tracking-[-0.05em] sm:text-[46px]">
 
@@ -620,8 +530,6 @@ export default function HomePage() {
 
         </div>
 
-
-
         {/* FRASE DE ACOLHIMENTO */}
 
         <h1 className="absolute inset-x-0 bottom-12 z-20 mx-auto max-w-5xl px-6 text-center text-[24px] font-black leading-tight text-white [text-shadow:0_4px_14px_rgba(0,0,0,0.85)] sm:bottom-16 sm:text-[32px] lg:bottom-20 lg:text-[38px]">
@@ -632,9 +540,7 @@ export default function HomePage() {
 
       </section>
 
-
-
-      {/* OFERTAS COM DESCONTO */}
+      {/* PRESENTES E DESCONTOS */}
 
       <section
 
@@ -654,25 +560,21 @@ export default function HomePage() {
 
                 <GiftIcon className="h-4 w-4" />
 
-                Ofertas com desconto
+                Presentes e descontos
 
               </div>
 
-
-
               <h2 className="mt-5 text-[34px] font-black leading-tight tracking-[-0.035em] text-[#101d3b] sm:text-[42px]">
 
-                Conheça nossos terapeutas e aproveite condições especiais
+                Conheça nossos terapeutas: presentes e descontos especiais
 
               </h2>
-
-
 
               <p className="mt-4 max-w-2xl text-[16px] font-medium leading-7 text-[#4d5870]">
 
                 Conheça o trabalho dos nossos terapeutas e acesse o perfil de cada profissional
 
-                para conferir os serviços disponíveis e os descontos especiais
+                para descobrir presentes e descontos especiais
 
                 definidos por ele.
 
@@ -680,11 +582,7 @@ export default function HomePage() {
 
             </div>
 
-
-
             </div>
-
-
 
           {carregandoOfertas ? (
 
@@ -718,7 +616,7 @@ export default function HomePage() {
 
                     oferta.description?.trim() ||
 
-                    "Conheça esta experiência, acesse o perfil do terapeuta e confira os descontos disponíveis para os serviços oferecidos."
+                    "Conheça esta experiência oferecida pelo terapeuta e fale diretamente com ele."
 
                   }
 
@@ -734,15 +632,9 @@ export default function HomePage() {
 
                   imageUrl={oferta.therapist_photo_url}
 
-                  profileHref={
-
-                    oferta.therapist_slug
-
-                      ? `/terapeuta/${oferta.therapist_slug}`
-
-                      : "/terapeutas"
-
-                  }
+                  profileHref={oferta.public_href}
+                  whatsappHref={oferta.whatsapp_href}
+                  offerType={oferta.offer_type === "presente" ? "presente" : "desconto"}
 
                 />
 
@@ -760,23 +652,17 @@ export default function HomePage() {
 
               </div>
 
-
-
               <p className="mt-5 text-sm font-extrabold uppercase tracking-[0.15em] text-[#7740aa]">
 
                 Novas ofertas em preparação
 
               </p>
 
-
-
               <h3 className="mt-3 text-[25px] font-black text-[#101d3b]">
 
                 Em breve, você encontrará novas ofertas com desconto aqui.
 
               </h3>
-
-
 
               <p className="mx-auto mt-3 max-w-3xl text-sm font-medium leading-7 text-[#5c667b]">
 
@@ -790,17 +676,13 @@ export default function HomePage() {
 
           )}
 
-
-
           <div className="mt-8 rounded-[24px] border border-[#e4d4ef] bg-white p-6 text-center shadow-[0_14px_35px_rgba(68,42,103,0.08)] sm:p-8">
 
             <p className="text-sm font-extrabold uppercase tracking-[0.15em] text-[#7740aa]">
 
-              Descontos definidos pelo terapeuta
+              Presentes e descontos definidos pelo terapeuta
 
             </p>
-
-
 
             <h3 className="mt-3 text-[25px] font-black text-[#101d3b]">
 
@@ -810,11 +692,9 @@ export default function HomePage() {
 
             </h3>
 
-
-
             <p className="mx-auto mt-3 max-w-3xl text-sm font-medium leading-7 text-[#5c667b]">
 
-              Cada terapeuta define os descontos disponíveis em seus serviços.
+              Cada terapeuta pode oferecer um presente e uma condição especial em seus serviços.
 
               Consulte o perfil profissional para conferir as condições atuais.
 
@@ -825,8 +705,6 @@ export default function HomePage() {
         </div>
 
       </section>
-
-
 
       {/* ACESSOS PRINCIPAIS */}
 
@@ -842,8 +720,6 @@ export default function HomePage() {
 
             </p>
 
-
-
             <h2 className="mt-3 text-[31px] font-black tracking-[-0.03em] text-[#111e3c]">
 
               Como o AuraMeets pode ajudar você?
@@ -851,8 +727,6 @@ export default function HomePage() {
             </h2>
 
           </div>
-
-
 
           <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
 
@@ -874,8 +748,6 @@ export default function HomePage() {
 
             />
 
-
-
             <AccessCard
 
               id="terapeutas"
@@ -893,8 +765,6 @@ export default function HomePage() {
               icon={<HandsHeartIcon className="h-10 w-10" />}
 
             />
-
-
 
             <AccessCard
 
@@ -914,8 +784,6 @@ export default function HomePage() {
 
             />
 
-
-
             <AccessCard
 
               id="acolhimento"
@@ -926,7 +794,7 @@ export default function HomePage() {
 
               buttonText="Receber Acolhimento"
 
-              href="https://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
+              href="https\://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
 
               external
 
@@ -937,8 +805,6 @@ export default function HomePage() {
             />
 
           </div>
-
-
 
           <div className="mt-6">
 
@@ -960,15 +826,11 @@ export default function HomePage() {
 
                   </p>
 
-
-
                   <h3 className="mt-3 text-[28px] font-black tracking-[-0.03em] text-[#101d3b] sm:text-[32px]">
 
                     Um espaço de escuta e orientação para compreender melhor o momento que você está vivendo.
 
                   </h3>
-
-
 
                   <p className="mt-4 text-[15px] font-medium leading-7 text-[#4d5870]">
 
@@ -977,8 +839,6 @@ export default function HomePage() {
                   </p>
 
                 </div>
-
-
 
                 <span className="inline-flex min-h-[52px] shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7e46b9] to-[#542c91] px-6 text-sm font-black text-white shadow-md transition group-hover:-translate-y-0.5">
 
@@ -998,8 +858,6 @@ export default function HomePage() {
 
       </section>
 
-
-
       {/* COMO FUNCIONA */}
 
       <section className="bg-[#fbf9fc] px-5 py-16 sm:px-8 lg:px-12">
@@ -1014,21 +872,15 @@ export default function HomePage() {
 
             </p>
 
-
-
             <h2 className="mt-3 text-[31px] font-black tracking-[-0.03em] text-[#111e3c]">
 
               Como funciona
 
             </h2>
 
-
-
             <div className="mx-auto mt-4 h-0.5 w-12 bg-[#7541ad]" />
 
           </div>
-
-
 
           <div className="mt-12 grid gap-9 md:grid-cols-2 xl:grid-cols-4">
 
@@ -1044,8 +896,6 @@ export default function HomePage() {
 
             />
 
-
-
             <Step
 
               number="2"
@@ -1058,8 +908,6 @@ export default function HomePage() {
 
             />
 
-
-
             <Step
 
               number="3"
@@ -1071,8 +919,6 @@ export default function HomePage() {
               icon={<PeopleIcon className="h-10 w-10" />}
 
             />
-
-
 
             <Step
 
@@ -1087,8 +933,6 @@ export default function HomePage() {
             />
 
           </div>
-
-
 
           <div
 
@@ -1106,8 +950,6 @@ export default function HomePage() {
 
               </div>
 
-
-
               <div>
 
                 <h3 className="text-[22px] font-black text-[#60309a]">
@@ -1115,8 +957,6 @@ export default function HomePage() {
                   Acolhimento Imediato
 
                 </h3>
-
-
 
                 <p className="mt-2 text-[14px] font-medium leading-6 text-[#172542]">
 
@@ -1130,8 +970,6 @@ export default function HomePage() {
 
             </div>
 
-
-
             <Feature
 
               icon={<ShieldIcon className="h-7 w-7" />}
@@ -1141,8 +979,6 @@ export default function HomePage() {
               description="Tudo é confidencial e seguro."
 
             />
-
-
 
             <Feature
 
@@ -1154,21 +990,15 @@ export default function HomePage() {
 
             />
 
-
-
             <div className="flex flex-col justify-center border-t border-[#eadff1] p-7 lg:border-l lg:border-t-0">
 
               <div className="flex items-center gap-4">
 
                 <CalendarIcon className="mt-0.5 h-7 w-7 shrink-0 text-[#7541ad]" />
 
-
-
                 <div>
 
                   <p className="font-black text-[#172542]">Disponível online</p>
-
-
 
                   <p className="mt-1 text-sm leading-5 text-[#4d5870]">
 
@@ -1180,11 +1010,9 @@ export default function HomePage() {
 
               </div>
 
-
-
               <a
 
-                href="https://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
+                href="https\://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
 
                 target="_blank"
 
@@ -1199,8 +1027,6 @@ export default function HomePage() {
                 Receber acolhimento agora
 
               </a>
-
-
 
               <p className="mt-3 flex items-center justify-center gap-2 text-[11px] text-[#697188]">
 
@@ -1218,8 +1044,6 @@ export default function HomePage() {
 
       </section>
 
-
-
       {/* CHAMADA PARA TERAPEUTAS */}
 
       <section className="bg-[#101426] px-5 py-16 text-white sm:px-8 sm:py-20 lg:px-12">
@@ -1234,8 +1058,6 @@ export default function HomePage() {
 
             </p>
 
-
-
             <h2 className="mt-4 text-[34px] font-black leading-tight tracking-[-0.035em] sm:text-[42px]">
 
               Apresente seu trabalho e crie ofertas que aproximam novos
@@ -1244,19 +1066,15 @@ export default function HomePage() {
 
             </h2>
 
-
-
             <p className="mt-5 text-[16px] font-medium leading-8 text-[#b9c2d5]">
 
-              Publique seu perfil, apresente seus serviços e defina descontos especiais
+              Publique seu perfil, apresente seus serviços e ofereça presentes e descontos especiais
 
               para atrair novos clientes.
 
             </p>
 
           </div>
-
-
 
           <Link
 
@@ -1276,8 +1094,6 @@ export default function HomePage() {
 
       </section>
 
-
-
       {/* RODAPÉ */}
 
       <footer className="border-t border-[#eee7f2] bg-[#fbf9fc] px-5 py-8 sm:px-8 lg:px-12">
@@ -1288,8 +1104,6 @@ export default function HomePage() {
 
             <AuraLogo className="h-10 w-10" />
 
-
-
             <span className="text-lg font-extrabold">
 
               <span className="text-[#7141a7]">Aura</span>
@@ -1299,8 +1113,6 @@ export default function HomePage() {
             </span>
 
           </div>
-
-
 
           <p className="text-sm text-[#687188]">
 
@@ -1319,10 +1131,6 @@ export default function HomePage() {
   );
 
 }
-
-
-
-
 
 function HeroTrustItem({ text }: { text: string }) {
 
@@ -1343,8 +1151,6 @@ function HeroTrustItem({ text }: { text: string }) {
   );
 
 }
-
-
 
 function OfferCard({
 
@@ -1369,7 +1175,8 @@ function OfferCard({
   imageUrl,
 
   profileHref,
-
+  whatsappHref,
+  offerType,
 }: OfferCardProps) {
 
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
@@ -1381,8 +1188,6 @@ function OfferCard({
     displayedSlots === 1 ? "Resta 1 vaga" : `Restam ${displayedSlots} vagas`;
 
   const hasLongDescription = description.trim().length > 0;
-
-
 
   return (
 
@@ -1414,8 +1219,6 @@ function OfferCard({
 
             <div className="absolute -bottom-14 -right-8 h-36 w-36 rounded-full border border-[#7541ad]/15" />
 
-
-
             <div className="absolute inset-0 flex items-center justify-center">
 
               <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-[#7440aa] to-[#a470cb] text-2xl font-black text-white shadow-xl transition-transform duration-700 motion-safe:group-hover:scale-105">
@@ -1430,21 +1233,15 @@ function OfferCard({
 
         )}
 
-
-
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#1f1230]/20 via-transparent to-transparent" />
 
-
-
-        <span className="absolute left-3 top-3 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-1.5 rounded-full border border-white/70 bg-[#2a1642]/85 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white shadow-md backdrop-blur">
+        <span className={`absolute left-3 top-3 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-1.5 rounded-full border border-white/70 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.1em] text-white shadow-md backdrop-blur ${offerType === "presente" ? "bg-[#177b4b]" : "bg-[#a77c23]"}`}>
 
           <GiftIcon className="h-3.5 w-3.5 shrink-0" />
 
           <span className="leading-4">{badge}</span>
 
         </span>
-
-
 
         <span className="absolute bottom-3 left-3 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#66359c] shadow-md">
 
@@ -1453,8 +1250,6 @@ function OfferCard({
         </span>
 
       </div>
-
-
 
       <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
 
@@ -1486,8 +1281,6 @@ function OfferCard({
 
           </div>
 
-
-
           <div className="min-w-0 flex-1 pt-1">
 
             <p className="break-words text-sm font-black leading-5 text-[#1c2944]">
@@ -1495,8 +1288,6 @@ function OfferCard({
               {therapistName}
 
             </p>
-
-
 
             <p className="mt-1 break-words text-xs font-bold leading-5 text-[#7541ad]">
 
@@ -1508,15 +1299,11 @@ function OfferCard({
 
         </div>
 
-
-
         <h3 className="mt-4 break-words text-[21px] font-black leading-[1.22] tracking-[-0.025em] text-[#101d3b]">
 
           {title}
 
         </h3>
-
-
 
         <p
 
@@ -1550,8 +1337,6 @@ function OfferCard({
 
         </p>
 
-
-
         {hasLongDescription && (
 
           <button
@@ -1572,8 +1357,6 @@ function OfferCard({
 
         )}
 
-
-
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
 
           <OfferInfo
@@ -1583,8 +1366,6 @@ function OfferCard({
             label={duration}
 
           />
-
-
 
           <OfferInfo
 
@@ -1596,25 +1377,20 @@ function OfferCard({
 
         </div>
 
-
-
         <div className="mt-auto grid gap-2 pt-5 sm:grid-cols-2">
 
-          <Link
-
-            href={profileHref}
-
-            className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7d45b5] to-[#57298f] px-4 text-center text-[13px] font-extrabold text-white shadow-md transition duration-300 hover:-translate-y-0.5 hover:shadow-lg"
-
-          >
-
-            QUERO DESCONTO
-
-            <ArrowIcon className="h-4 w-4 shrink-0" />
-
-          </Link>
-
-
+          {whatsappHref ? (
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer"
+              className={`inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl px-4 text-center text-[13px] font-extrabold text-white shadow-md transition hover:-translate-y-0.5 ${offerType === "presente" ? "bg-[#177b4b] hover:bg-[#12653e]" : "bg-[#b18730] hover:bg-[#987226]"}`}>
+              {offerType === "presente" ? "QUERO PRESENTE" : "QUERO DESCONTO"}
+              <ArrowIcon className="h-4 w-4 shrink-0" />
+            </a>
+          ) : (
+            <Link href={profileHref} className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[#7541ad] px-4 text-center text-[13px] font-extrabold text-white">
+              {offerType === "presente" ? "VER PRESENTE" : "VER DESCONTO"}
+              <ArrowIcon className="h-4 w-4 shrink-0" />
+            </Link>
+          )}
 
           <Link
 
@@ -1640,10 +1416,6 @@ function OfferCard({
 
 }
 
-
-
-
-
 function OfferCardSkeleton() {
 
   return (
@@ -1652,15 +1424,11 @@ function OfferCardSkeleton() {
 
       <div className="min-h-[240px] animate-pulse bg-[#e9def1] md:min-h-full" />
 
-
-
       <div className="animate-pulse p-5 sm:p-6">
 
         <div className="flex items-center gap-3">
 
           <div className="h-11 w-11 rounded-full bg-[#e9e3ed]" />
-
-
 
           <div className="flex-1">
 
@@ -1672,8 +1440,6 @@ function OfferCardSkeleton() {
 
         </div>
 
-
-
         <div className="mt-5 h-6 w-4/5 rounded bg-[#e9e3ed]" />
 
         <div className="mt-2 h-4 w-full rounded bg-[#f0ebf3]" />
@@ -1682,8 +1448,6 @@ function OfferCardSkeleton() {
 
         <div className="mt-2 h-4 w-8/12 rounded bg-[#f0ebf3]" />
 
-
-
         <div className="mt-5 grid grid-cols-2 gap-2">
 
           <div className="h-9 rounded-xl bg-[#f3eef5]" />
@@ -1691,8 +1455,6 @@ function OfferCardSkeleton() {
           <div className="h-9 rounded-xl bg-[#f3eef5]" />
 
         </div>
-
-
 
         <div className="mt-5 h-11 rounded-xl bg-[#ece4f1]" />
 
@@ -1703,8 +1465,6 @@ function OfferCardSkeleton() {
   );
 
 }
-
-
 
 function OfferInfo({
 
@@ -1733,8 +1493,6 @@ function OfferInfo({
   );
 
 }
-
-
 
 function AccessCard({
 
@@ -1800,8 +1558,6 @@ function AccessCard({
 
   };
 
-
-
   return (
 
     <article
@@ -1822,23 +1578,17 @@ function AccessCard({
 
       </div>
 
-
-
       <h2 className="mt-6 text-[25px] font-black tracking-[-0.03em] text-[#101d3b]">
 
         {title}
 
       </h2>
 
-
-
       <p className="mt-3 min-h-[58px] text-[15px] font-medium leading-6 text-[#172542]">
 
         {description}
 
       </p>
-
-
 
       {external ? (
 
@@ -1878,8 +1628,6 @@ function AccessCard({
 
       )}
 
-
-
       <LotusWatermark className="absolute -bottom-5 -right-4 h-28 w-28 opacity-[0.10]" />
 
     </article>
@@ -1887,8 +1635,6 @@ function AccessCard({
   );
 
 }
-
-
 
 function Step({ number, title, description, icon }: StepProps) {
 
@@ -1902,19 +1648,13 @@ function Step({ number, title, description, icon }: StepProps) {
 
       </div>
 
-
-
       <div className="flex gap-4">
 
         <div className="shrink-0 text-[#7844b1]">{icon}</div>
 
-
-
         <div>
 
           <h3 className="text-[15px] font-black text-[#101d3b]">{title}</h3>
-
-
 
           <p className="mt-2 text-sm font-medium leading-6 text-[#39445c]">
 
@@ -1931,8 +1671,6 @@ function Step({ number, title, description, icon }: StepProps) {
   );
 
 }
-
-
 
 function Feature({
 
@@ -1958,13 +1696,9 @@ function Feature({
 
       <div className="shrink-0 text-[#7541ad]">{icon}</div>
 
-
-
       <div>
 
         <p className="font-black text-[#172542]">{title}</p>
-
-
 
         <p className="mt-1 text-sm leading-5 text-[#4d5870]">{description}</p>
 
@@ -1975,8 +1709,6 @@ function Feature({
   );
 
 }
-
-
 
 function AuraLogo({ className = "" }: IconProps) {
 
@@ -2004,8 +1736,6 @@ function AuraLogo({ className = "" }: IconProps) {
 
       />
 
-
-
       <path
 
         d="M32 47c10-7 14-17 12-29-8 3-13 9-12 19"
@@ -2015,8 +1745,6 @@ function AuraLogo({ className = "" }: IconProps) {
         strokeWidth="2"
 
       />
-
-
 
       <path
 
@@ -2028,8 +1756,6 @@ function AuraLogo({ className = "" }: IconProps) {
 
       />
 
-
-
       <path
 
         d="M32 47c15-1 24-9 26-22-10-1-19 5-24 15"
@@ -2040,8 +1766,6 @@ function AuraLogo({ className = "" }: IconProps) {
 
       />
 
-
-
       <path
 
         d="M32 47C22 32 23 18 32 8c9 10 10 24 0 39Z"
@@ -2051,8 +1775,6 @@ function AuraLogo({ className = "" }: IconProps) {
         strokeWidth="2"
 
       />
-
-
 
       <path
 
@@ -2071,8 +1793,6 @@ function AuraLogo({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function LotusWatermark({ className = "" }: IconProps) {
 
@@ -2108,8 +1828,6 @@ function LotusWatermark({ className = "" }: IconProps) {
 
 }
 
-
-
 function UserIcon({ className = "" }: IconProps) {
 
   return (
@@ -2139,8 +1857,6 @@ function UserIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function HandsHeartIcon({ className = "" }: IconProps) {
 
@@ -2174,8 +1890,6 @@ function HandsHeartIcon({ className = "" }: IconProps) {
 
 }
 
-
-
 function BriefcaseIcon({ className = "" }: IconProps) {
 
   return (
@@ -2207,8 +1921,6 @@ function BriefcaseIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function HandshakeIcon({ className = "" }: IconProps) {
 
@@ -2248,8 +1960,6 @@ function HandshakeIcon({ className = "" }: IconProps) {
 
 }
 
-
-
 function MessageIcon({ className = "" }: IconProps) {
 
   return (
@@ -2279,8 +1989,6 @@ function MessageIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function BrainIcon({ className = "" }: IconProps) {
 
@@ -2313,8 +2021,6 @@ function BrainIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function PeopleIcon({ className = "" }: IconProps) {
 
@@ -2350,8 +2056,6 @@ function PeopleIcon({ className = "" }: IconProps) {
 
 }
 
-
-
 function CalendarIcon({ className = "" }: IconProps) {
 
   return (
@@ -2384,8 +2088,6 @@ function CalendarIcon({ className = "" }: IconProps) {
 
 }
 
-
-
 function ShieldIcon({ className = "" }: IconProps) {
 
   return (
@@ -2415,8 +2117,6 @@ function ShieldIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function BadgeIcon({ className = "" }: IconProps) {
 
@@ -2448,8 +2148,6 @@ function BadgeIcon({ className = "" }: IconProps) {
 
 }
 
-
-
 function HeartIcon({ className = "" }: IconProps) {
 
   return (
@@ -2477,8 +2175,6 @@ function HeartIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function LockIcon({ className = "" }: IconProps) {
 
@@ -2509,8 +2205,6 @@ function LockIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function GiftIcon({ className = "" }: IconProps) {
 
@@ -2543,8 +2237,6 @@ function GiftIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function UsersIcon({ className = "" }: IconProps) {
 
@@ -2580,8 +2272,6 @@ function UsersIcon({ className = "" }: IconProps) {
 
 }
 
-
-
 function ClockSmallIcon({ className = "" }: IconProps) {
 
   return (
@@ -2612,8 +2302,6 @@ function ClockSmallIcon({ className = "" }: IconProps) {
 
 }
 
-
-
 function VideoSmallIcon({ className = "" }: IconProps) {
 
   return (
@@ -2643,8 +2331,6 @@ function VideoSmallIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function WhatsAppIcon({ className = "" }: IconProps) {
 
@@ -2681,8 +2367,6 @@ function WhatsAppIcon({ className = "" }: IconProps) {
   );
 
 }
-
-
 
 function ArrowIcon({ className = "" }: IconProps) {
 
