@@ -1213,9 +1213,13 @@ function OfferCard({
         </div>
 
         <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
-          <Link href={profileHref} className={`${actionClass} bg-[#7541ad] hover:bg-[#603397]`}>QUERO AGENDAR</Link>
+          {discountHref || giftHref ? (
+            <a href={discountHref ?? giftHref ?? "#"} target="_blank" rel="noopener noreferrer" className={`${actionClass} bg-[#7541ad] hover:bg-[#603397]`}>QUERO AGENDAR</a>
+          ) : (
+            <Link href={profileHref} className={`${actionClass} bg-[#7541ad] hover:bg-[#603397]`}>QUERO AGENDAR</Link>
+          )}
           {giftHref && <a href={giftHref} target="_blank" rel="noopener noreferrer" className={`${actionClass} bg-[#177b4b] hover:bg-[#12653e]`}>QUERO PRESENTE</a>}
-          {discountHref && <a href={discountHref} target="_blank" rel="noopener noreferrer" className={`${actionClass} bg-[#b18730] hover:bg-[#987226]`}>QUERO DESCONTO</a>}
+          {discountHref && <Link href={profileHref} className={`${actionClass} bg-[#b18730] hover:bg-[#987226]`}>QUERO DESCONTO</Link>}
           <Link href={profileHref} className={`${actionClass} bg-[#18243e] hover:bg-[#263c63]`}>QUERO COMPRAR</Link>
         </div>
       </div>
