@@ -45,6 +45,12 @@ const menuItems: MenuItem[] = [
     icon: <HomeIcon />,
 
   },
+  {
+    label: "Guia do Terapeuta",
+    description: "Seu passo a passo",
+    href: "/dashboard-terapeuta/guia",
+    icon: <BookIcon />,
+  },
 
   {
 
@@ -746,6 +752,14 @@ function BriefcaseIcon() {
 
 }
 
+function BookIcon() {
+  return (
+    <IconBase>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.5c-2.5-1.6-5.5-1.7-9-1v13c3.5-.7 6.5-.6 9 1 2.5-1.6 5.5-1.7 9-1v-13c-3.5-.7-6.5-.6-9 1ZM12 6.5v13" />
+    </IconBase>
+  );
+}
+
 function GiftIcon() {
 
   return (
@@ -769,13 +783,21 @@ function GiftIcon() {
 }
 
 function DiscountIcon() {
+
   return (
+
     <IconBase>
+
       <path strokeLinecap="round" strokeLinejoin="round" d="M20 12.5V5a2 2 0 0 0-2-2h-7.5a2 2 0 0 0-1.4.6L3.6 9.1a2 2 0 0 0 0 2.8l8.5 8.5a2 2 0 0 0 2.8 0l5.5-5.5a2 2 0 0 0 .6-1.4Z" />
+
       <circle cx="16" cy="8" r="1" />
+
       <path strokeLinecap="round" d="m9 15 6-6M9.5 10h.01M14.5 15h.01" />
+
     </IconBase>
+
   );
+
 }
 
 function CalendarIcon() {
