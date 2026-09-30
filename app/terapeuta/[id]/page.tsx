@@ -578,7 +578,7 @@ export default async function TherapistPage({
                             )}
                           </strong>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
-                            <span className="whitespace-nowrap text-base font-bold text-white/75 sm:text-lg">
+                            <span className="inline-block rounded-xl border border-emerald-200 bg-[#E3F5E7] px-3 py-2 whitespace-nowrap text-2xl font-black text-[#176534] sm:text-3xl">
                               {formatCurrency(
                                 service.promotional_price,
                                 service.currency ||
@@ -598,7 +598,7 @@ export default async function TherapistPage({
                           </div>
                         </>
                       ) : (
-                        <strong className="mt-1 block whitespace-nowrap text-2xl font-black text-[#e1c56d] sm:text-3xl">
+                        <strong className="mt-1 inline-block rounded-xl border border-emerald-200 bg-[#E3F5E7] px-3 py-2 whitespace-nowrap text-2xl font-black text-[#176534] sm:text-3xl">
                           {formatCurrency(
                             service.price,
                             service.currency ||
