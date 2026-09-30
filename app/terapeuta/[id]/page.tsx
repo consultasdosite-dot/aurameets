@@ -236,7 +236,6 @@ export default async function TherapistPage({
     "email" in therapist && typeof therapist.email === "string"
       ? therapist.email.trim().toLowerCase()
       : "";
-
   // Busca o ID numérico do terapeuta. Caso o e-mail não esteja disponível
   // no perfil público, usa o nome exato como alternativa.
   const { data: therapistRecord, error: therapistLookupError } =
@@ -245,7 +244,6 @@ export default async function TherapistPage({
       .select("id")
       .eq(therapistEmail ? "email" : "name", therapistEmail || therapist.name)
       .maybeSingle();
-
   if (therapistLookupError) {
     console.error("Erro ao identificar terapeuta para ofertas:", therapistLookupError);
   } else if (therapistRecord && /^\d+$/.test(String(therapistRecord.id))) {
@@ -256,7 +254,6 @@ export default async function TherapistPage({
       .eq("approval_status", "approved")
       .eq("active", true)
       .in("offer_type", ["presente", "desconto"]);
-
     if (offersError) {
       console.error("Erro ao carregar ofertas do terapeuta:", offersError);
     } else {
@@ -310,28 +307,26 @@ export default async function TherapistPage({
     `Olá, ${name}! Vi seu perfil no AuraMeets e quero agendar um atendimento.`,
   );
   const scheduleHref = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}?text=${scheduleMessage}`
+    ? `https\://wa.me/${whatsappNumber}?text=${scheduleMessage}`
     : "#servicos";
-
   const whatsappMessage = encodeURIComponent(
     `Olá, ${name}! Vi seu perfil no AuraMeets e gostaria de conversar para saber mais sobre seu trabalho e seus serviços.`,
   );
   const whatsappHref = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`
+    ? `https\://wa.me/${whatsappNumber}?text=${whatsappMessage}`
     : "#servicos";
   const profileUrl =
-    `https://www.aurameets.com.br/terapeuta/${therapist.slug}`;
+    `https\://www.aurameets.com.br/terapeuta/${therapist.slug}`;
   const shareHref =
-    `https://wa.me/?text=${encodeURIComponent(
+    `https\://wa.me/?text=${encodeURIComponent(
       `Conheça o perfil profissional de ${name} no AuraMeets: ${profileUrl}`,
     )}`;
   const presentHref = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero meu presente")}`
+    ? `https\://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero meu presente")}`
     : "#servicos";
   const discountHref = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero desconto")}`
+    ? `https\://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero desconto")}`
     : "#servicos";
-
   const actions: {
     label: string;
     icon: IconName;
@@ -350,18 +345,17 @@ export default async function TherapistPage({
       ? [{ label: "Falar no WhatsApp", icon: "whatsapp" as IconName, href: whatsappHref, variant: "whatsapp" as const }]
       : []),
   ];
-
   const actionClasses: Record<(typeof actions)[number]["variant"], string> = {
-    schedule: "border-[#d4b452]/60 bg-gradient-to-br from-[#813587] to-[#542058] hover:border-[#f0da92]",
-    buy: "border-[#d4b452]/35 bg-gradient-to-br from-[#261529] to-[#151017] hover:border-[#d4b452]/65",
-    present: "border-emerald-300/50 bg-[#16834B] hover:bg-[#116A3C]",
-    discount: "border-[#edcf77]/60 bg-[#B78B32] hover:bg-[#977125]",
+    schedule: "border-[#8A35D1] bg-[#8A35D1] hover:bg-[#7428B7]",
+    buy: "border-[#2F80C9] bg-[#2F80C9] hover:bg-[#246EAF]",
+    present: "border-[#22AD70] bg-[#22AD70] hover:bg-[#188C59]",
+    discount: "border-[#F5AC12] bg-[#F5AC12] hover:bg-[#DB970C]",
     whatsapp: "border-emerald-400/50 bg-gradient-to-br from-[#25D366] to-[#128C7E] hover:border-emerald-300",
   };
   return (
     <main className="min-h-screen bg-[#080709] text-white selection:bg-[#d3b35a] selection:text-[#130d16]">
       <section className="relative overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%\_15%,rgba(145,63,156,0.38),transparent_34%),radial-gradient(circle_at_82%\_18%,rgba(212,178,79,0.18),transparent_27%),linear-gradient(145deg,#080709_10%,#171019_55%,#09070a_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%\\_15%,rgba(145,63,156,0.38),transparent_34%),radial-gradient(circle_at_82%\\_18%,rgba(212,178,79,0.18),transparent_27%),linear-gradient(145deg,#080709_10%,#171019_55%,#09070a_100%)]" />
         <div className="absolute -left-28 top-24 h-72 w-72 rounded-full border border-[#d6b85a]/10" />
         <div className="absolute -left-16 top-36 h-52 w-52 rounded-full border border-[#d6b85a]/10" />
         <div className="relative mx-auto max-w-6xl px-5 pb-12 pt-6 sm:px-8 lg:pb-16">
@@ -475,9 +469,9 @@ export default async function TherapistPage({
             >
               <Icon
                 name={action.icon}
-                className={`h-5 w-5 sm:h-6 sm:w-6 ${action.variant === "schedule" || action.variant === "buy" ? "text-[#f0da92]" : "text-white"}`}
+                className={`h-5 w-5 sm:h-6 sm:w-6 ${action.variant === "discount" ? "text-[#202020]" : "text-white"}`}
               />
-              <span className="text-[11px] font-extrabold uppercase tracking-[0.04em] text-white sm:text-sm sm:tracking-[0.08em]">
+              <span className={`text-[11px] font-extrabold uppercase tracking-[0.04em] sm:text-sm sm:tracking-[0.08em] ${action.variant === "discount" ? "text-[#202020]" : "text-white"}`}>
                 {action.label}
               </span>
             </Link>
@@ -525,7 +519,7 @@ export default async function TherapistPage({
                       className="absolute inset-0 h-full w-full object-cover object-center"
                     />
                   )}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%\_25%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(0deg,rgba(5,5,7,0.45),transparent)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%\\_25%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(0deg,rgba(5,5,7,0.45),transparent)]" />
                   <div className="absolute bottom-3 left-3 rounded-full border border-white/20 bg-black/40 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur sm:bottom-4 sm:left-5 sm:px-3 sm:py-1.5 sm:text-[10px] sm:tracking-[0.18em]">
                     {service.category ||
                       "Serviço AuraMeets"}

@@ -1214,13 +1214,13 @@ function OfferCard({
 
         <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
           {discountHref || giftHref ? (
-            <a href={discountHref ?? giftHref ?? "#"} target="_blank" rel="noopener noreferrer" className={`${actionClass} bg-[#7541ad] hover:bg-[#603397]`}>QUERO AGENDAR</a>
+            <a href={discountHref ?? giftHref ?? "#"} target="_blank" rel="noopener noreferrer" className={`${actionClass} bg-[#8A35D1] hover:bg-[#7428B5]`}>QUERO AGENDAR</a>
           ) : (
-            <Link href={profileHref} className={`${actionClass} bg-[#7541ad] hover:bg-[#603397]`}>QUERO AGENDAR</Link>
+            <Link href={profileHref} className={`${actionClass} bg-[#8A35D1] hover:bg-[#7428B5]`}>QUERO AGENDAR</Link>
           )}
-          {giftHref && <a href={giftHref} target="_blank" rel="noopener noreferrer" className={`${actionClass} bg-[#177b4b] hover:bg-[#12653e]`}>QUERO PRESENTE</a>}
-          {discountHref && <Link href={profileHref} className={`${actionClass} bg-[#b18730] hover:bg-[#987226]`}>QUERO DESCONTO</Link>}
-          <Link href={profileHref} className={`${actionClass} bg-[#18243e] hover:bg-[#263c63]`}>QUERO COMPRAR</Link>
+          {giftHref && <a href={giftHref} target="_blank" rel="noopener noreferrer" className={`${actionClass} bg-[#22AD70] hover:bg-[#198A59]`}>QUERO PRESENTE</a>}
+          {discountHref && <Link href={profileHref} className={`${actionClass} bg-[#F5AC12] text-[#202020] hover:bg-[#D9950E]`}>QUERO DESCONTO</Link>}
+          <Link href={profileHref} className={`${actionClass} bg-[#2F80C9] hover:bg-[#246BAA]`}>QUERO COMPRAR</Link>
         </div>
       </div>
     </article>
