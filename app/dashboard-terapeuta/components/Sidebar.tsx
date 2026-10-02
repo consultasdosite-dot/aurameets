@@ -99,19 +99,6 @@ const menuItems: MenuItem[] = [
     icon: <GiftIcon />,
 
   },
-
-  {
-
-    label: "Descontos",
-
-    description: "Ofertas promocionais",
-
-    href: "/dashboard-terapeuta/promocao",
-
-    icon: <DiscountIcon />,
-
-  },
-
   {
 
     label: "Agenda",
