@@ -8,6 +8,10 @@ import {
 
   getFeaturedExperiences,
 
+  getHomeTherapistsWithServices,
+
+  type HomeExperienceTherapist,
+
   getTherapistInitials,
 
   type FeaturedExperience,
@@ -75,8 +79,11 @@ type OfferCardProps = {
   imageUrl?: string | null;
 
   profileHref: string;
+
   giftHref: string | null;
+
   discountHref: string | null;
+
   offerType: "presente" | "desconto";
 
 };
@@ -103,6 +110,37 @@ function embaralharOfertas<T>(itens: T[]): T[] {
 
 }
 
+const TERAPEUTAS_PRIORITARIAS = ["alzira", "cristina", "renata martins", "milena"];
+
+function obterPrioridadeTerapeuta(nome: string): number {
+  const nomeNormalizado = nome
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+  const indice = TERAPEUTAS_PRIORITARIAS.findIndex((nomePrioritario) =>
+    nomeNormalizado.includes(nomePrioritario),
+  );
+
+  return indice === -1 ? TERAPEUTAS_PRIORITARIAS.length : indice;
+}
+
+function ordenarPorPrioridade<T>(itens: T[], obterNome: (item: T) => string): T[] {
+  return itens
+    .map((item, indiceOriginal) => ({ item, indiceOriginal }))
+    .sort((a, b) => {
+      const diferencaPrioridade =
+        obterPrioridadeTerapeuta(obterNome(a.item)) -
+        obterPrioridadeTerapeuta(obterNome(b.item));
+
+      return diferencaPrioridade !== 0
+        ? diferencaPrioridade
+        : a.indiceOriginal - b.indiceOriginal;
+    })
+    .map(({ item }) => item);
+}
+
 export default function HomePage() {
 
   const [menuAberto, setMenuAberto] = useState(false);
@@ -110,6 +148,8 @@ export default function HomePage() {
   const [mostrarAtendente, setMostrarAtendente] = useState(true);
 
   const [ofertasEspeciais, setOfertasEspeciais] = useState<FeaturedExperience[]>([]);
+
+  const [terapeutasComServicos, setTerapeutasComServicos] = useState<HomeExperienceTherapist[]>([]);
 
   const [carregandoOfertas, setCarregandoOfertas] = useState(true);
 
@@ -123,11 +163,22 @@ export default function HomePage() {
 
       try {
 
-        const ofertas = await getFeaturedExperiences();
+        const [ofertas, terapeutas] = await Promise.all([
+
+          getFeaturedExperiences(),
+
+          getHomeTherapistsWithServices(),
+
+        ]);
 
         if (componenteAtivo) {
 
-          setOfertasEspeciais(ofertas);
+          setOfertasEspeciais(
+            ordenarPorPrioridade(ofertas, (oferta) => oferta.therapist_name),
+          );
+          setTerapeutasComServicos(
+            ordenarPorPrioridade(terapeutas, (terapeuta) => terapeuta.name),
+          );
 
         }
 
@@ -138,6 +189,8 @@ export default function HomePage() {
         if (componenteAtivo) {
 
           setOfertasEspeciais([]);
+
+          setTerapeutasComServicos([]);
 
         }
 
@@ -601,7 +654,11 @@ export default function HomePage() {
 
             <div className="mt-9 grid gap-5 xl:grid-cols-2">
 
-              {ofertasEspeciais.map((oferta) => (
+              {ofertasEspeciais
+                .filter((oferta, index, lista) =>
+                  index === lista.findIndex((item) => item.therapist_id === oferta.therapist_id),
+                )
+                .map((oferta) => (
 
                 <OfferCard
 
@@ -634,8 +691,11 @@ export default function HomePage() {
                   imageUrl={oferta.therapist_photo_url}
 
                   profileHref={oferta.public_href}
+
                   giftHref={ofertasEspeciais.find((item) => item.therapist_id === oferta.therapist_id && item.offer_type === "presente")?.whatsapp_href ?? null}
+
                   discountHref={ofertasEspeciais.find((item) => item.therapist_id === oferta.therapist_id && item.offer_type === "desconto")?.whatsapp_href ?? null}
+
                   offerType={oferta.offer_type === "presente" ? "presente" : "desconto"}
 
                 />
@@ -644,7 +704,7 @@ export default function HomePage() {
 
             </div>
 
-          ) : (
+          ) : terapeutasComServicos.length === 0 ? (
 
             <div className="mt-10 rounded-[28px] border border-[#e4d4ef] bg-white p-7 text-center shadow-[0_14px_35px_rgba(68,42,103,0.08)] sm:p-10">
 
@@ -673,6 +733,58 @@ export default function HomePage() {
                 conforme os descontos definidos em seu próprio painel.
 
               </p>
+
+            </div>
+
+          ) : null}
+
+          {terapeutasComServicos.filter(
+
+            (terapeuta) => !ofertasEspeciais.some((oferta) => oferta.therapist_id === terapeuta.id),
+
+          ).length > 0 && (
+
+            <div className="mt-9 grid gap-5 xl:grid-cols-2">
+
+              {terapeutasComServicos
+
+                .filter((terapeuta) => !ofertasEspeciais.some((oferta) => oferta.therapist_id === terapeuta.id))
+
+                .map((terapeuta) => {
+
+                  const foto = terapeuta.profile_photo_url || terapeuta.photo_url;
+
+                  const perfil = terapeuta.slug?.trim()
+
+                    ? `/terapeuta/${encodeURIComponent(terapeuta.slug.trim())}`
+
+                    : `/terapeutas?therapistId=${encodeURIComponent(String(terapeuta.id))}`;
+
+                  return (
+
+                    <article key={terapeuta.id} className="flex items-center gap-4 rounded-[22px] border border-[#e5d8ef] bg-white p-5 shadow-[0_12px_34px_rgba(65,39,94,0.09)]">
+
+                      <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#f2e8fa] font-black text-[#7541ad]">
+
+                        {foto ? <img src={foto} alt={`Foto de ${terapeuta.name}`} loading="lazy" className="h-full w-full object-cover" /> : getTherapistInitials(terapeuta.name)}
+
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+
+                        <h3 className="text-lg font-black text-[#101d3b]">{terapeuta.name}</h3>
+
+                        <p className="mt-1 text-sm text-[#7541ad]">{terapeuta.speciality || "Terapeuta AuraMeets"}</p>
+
+                        <Link href={perfil} className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#2F80C9] px-5 py-2 text-sm font-black text-white hover:bg-[#246BAA]">VER PERFIL E SERVIÇOS</Link>
+
+                      </div>
+
+                    </article>
+
+                  );
+
+                })}
 
             </div>
 
@@ -1155,76 +1267,139 @@ function HeroTrustItem({ text }: { text: string }) {
 }
 
 function OfferCard({
+
   therapistName,
+
   specialty,
+
   title,
+
   description,
+
   slots,
+
   duration,
+
   serviceType,
+
   badge,
+
   initials,
+
   imageUrl,
+
   profileHref,
+
   giftHref,
+
   discountHref,
+
   offerType,
+
 }: OfferCardProps) {
+
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+
   const displayedSlots = Math.min(slots, 3);
+
   const slotsLabel = displayedSlots === 1 ? "Resta 1 vaga" : `Restam ${displayedSlots} vagas`;
+
   const shortDescription = description.trim();
+
   const actionClass = "flex min-h-[48px] items-center justify-center rounded-xl px-2 py-3 text-center text-[11px] font-black leading-tight text-white shadow-sm transition hover:-translate-y-0.5 sm:text-xs";
 
   return (
+
     <article className="group flex h-full flex-col overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.09)] transition hover:shadow-[0_18px_42px_rgba(65,39,94,0.14)] md:grid md:grid-cols-[36%_64%]">
+
       {/* No celular, uma única foto compacta; no computador, foto lateral. */}
+
       <div className="relative hidden min-h-[290px] overflow-hidden bg-gradient-to-br from-[#f4ecfa] to-[#eadcf5] md:block">
+
         {imageUrl ? (
+
           <img src={imageUrl} alt={`Foto de ${therapistName}`} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover object-[center_22%]" />
+
         ) : (
+
           <div className="absolute inset-0 flex items-center justify-center text-5xl font-black text-[#7541ad]">{initials}</div>
+
         )}
+
         <span className={`absolute left-3 top-3 rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-white ${offerType === "presente" ? "bg-[#177b4b]" : "bg-[#a77c23]"}`}>{badge}</span>
+
         <span className="absolute bottom-3 left-3 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-[#66359c]">{slotsLabel}</span>
+
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
+
         <div className="flex items-center gap-3">
+
           <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#f2e8fa] text-lg font-black text-[#7541ad] shadow-sm md:h-14 md:w-14 md:rounded-full">
+
             {imageUrl ? <img src={imageUrl} alt={`Foto de ${therapistName}`} loading="lazy" className="h-full w-full object-cover object-[center_22%]" /> : initials}
+
           </div>
+
           <div className="min-w-0 flex-1">
+
             <span className={`mb-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-black text-white md:hidden ${offerType === "presente" ? "bg-[#177b4b]" : "bg-[#a77c23]"}`}>{badge}</span>
+
             <p className="text-[15px] font-black leading-5 text-[#1c2944]">{therapistName}</p>
+
             <p className="mt-0.5 text-xs font-semibold leading-4 text-[#7541ad]">{specialty}</p>
+
           </div>
+
         </div>
 
         <h3 className="mt-3 text-[19px] font-black leading-snug tracking-tight text-[#101d3b] sm:text-[21px]">{title}</h3>
+
         <p className="mt-2 text-[13px] font-medium leading-5 text-[#5b6579]" style={descriptionExpanded ? undefined : {display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden"}}>{shortDescription}</p>
+
         {shortDescription.length > 125 && (
+
           <button type="button" onClick={() => setDescriptionExpanded((value) => !value)} className="mt-1 self-start text-xs font-bold text-[#7541ad] underline underline-offset-2">{descriptionExpanded ? "Ver menos" : "Ver mais"}</button>
+
         )}
+
         <div className="mt-3 flex flex-wrap gap-2">
+
           <span className="rounded-full bg-[#f8f5fa] px-3 py-1.5 text-[11px] font-bold text-[#4b5670]">{duration}</span>
+
           <span className="rounded-full bg-[#f8f5fa] px-3 py-1.5 text-[11px] font-bold text-[#4b5670]">{serviceType}</span>
+
           <span className="rounded-full bg-[#f8f5fa] px-3 py-1.5 text-[11px] font-bold text-[#66359c] md:hidden">{slotsLabel}</span>
+
         </div>
 
         <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
+
           {discountHref || giftHref ? (
+
             <a href={discountHref ?? giftHref ?? "#"} target="_blank" rel="noopener noreferrer" className={`${actionClass} bg-[#8A35D1] hover:bg-[#7428B5]`}>QUERO AGENDAR</a>
+
           ) : (
+
             <Link href={profileHref} className={`${actionClass} bg-[#8A35D1] hover:bg-[#7428B5]`}>QUERO AGENDAR</Link>
+
           )}
+
           {giftHref && <a href={giftHref} target="_blank" rel="noopener noreferrer" className={`${actionClass} bg-[#22AD70] hover:bg-[#198A59]`}>QUERO PRESENTE</a>}
+
           {discountHref && <Link href={profileHref} className={`${actionClass} bg-[#F5AC12] text-[#202020] hover:bg-[#D9950E]`}>QUERO DESCONTO</Link>}
+
           <Link href={profileHref} className={`${actionClass} bg-[#2F80C9] hover:bg-[#246BAA]`}>QUERO COMPRAR</Link>
+
         </div>
+
       </div>
+
     </article>
+
   );
+
 }
 
 function OfferCardSkeleton() {
