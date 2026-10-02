@@ -110,7 +110,7 @@ function embaralharOfertas<T>(itens: T[]): T[] {
 
 }
 
-const TERAPEUTAS_PRIORITARIAS = ["alzira", "cristina", "renata martins", "milena"];
+const TERAPEUTAS_PRIORITARIAS = ["alzira", "cristina", "renata martins", "milena", "fernanda", "pollyanna"];
 
 function obterPrioridadeTerapeuta(nome: string): number {
   const nomeNormalizado = nome
