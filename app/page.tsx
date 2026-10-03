@@ -110,35 +110,53 @@ function embaralharOfertas<T>(itens: T[]): T[] {
 
 }
 
-const TERAPEUTAS_PRIORITARIAS = ["alzira", "cristina", "renata martins", "milena", "fernanda", "pollyanna"];
+const TERAPEUTAS_PRIORITARIAS = [
+  "alzira",
+  "cristina",
+  "renata martins",
+  "milena",
+  "fernanda",
+  "pollyanna",
+  "ricardo",
+  "semiramis",
+];
 
-function obterPrioridadeTerapeuta(nome: string): number {
+function ehTerapeutaPrioritario(nome: string): boolean {
   const nomeNormalizado = nome
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
 
-  const indice = TERAPEUTAS_PRIORITARIAS.findIndex((nomePrioritario) =>
+  return TERAPEUTAS_PRIORITARIAS.some((nomePrioritario) =>
     nomeNormalizado.includes(nomePrioritario),
   );
-
-  return indice === -1 ? TERAPEUTAS_PRIORITARIAS.length : indice;
 }
 
-function ordenarPorPrioridade<T>(itens: T[], obterNome: (item: T) => string): T[] {
-  return itens
-    .map((item, indiceOriginal) => ({ item, indiceOriginal }))
-    .sort((a, b) => {
-      const diferencaPrioridade =
-        obterPrioridadeTerapeuta(obterNome(a.item)) -
-        obterPrioridadeTerapeuta(obterNome(b.item));
+function ordenarPorPrioridade<T>(
+  itens: T[],
+  obterNome: (item: T) => string,
+): T[] {
+  const prioritarios = itens.filter((item) =>
+    ehTerapeutaPrioritario(obterNome(item)),
+  );
 
-      return diferencaPrioridade !== 0
-        ? diferencaPrioridade
-        : a.indiceOriginal - b.indiceOriginal;
-    })
-    .map(({ item }) => item);
+  const demais = itens.filter(
+    (item) => !ehTerapeutaPrioritario(obterNome(item)),
+  );
+
+  const prioritariosEmbaralhados = [...prioritarios];
+
+  for (let i = prioritariosEmbaralhados.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [prioritariosEmbaralhados[i], prioritariosEmbaralhados[j]] = [
+      prioritariosEmbaralhados[j],
+      prioritariosEmbaralhados[i],
+    ];
+  }
+
+  return [...prioritariosEmbaralhados, ...demais];
 }
 
 export default function HomePage() {
