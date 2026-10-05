@@ -115,6 +115,7 @@ const TERAPEUTAS_PRIORITARIAS = [
   "cristina",
   "renata martins",
   "milena",
+  "mariangela",
   "fernanda",
   "pollyanna",
   "ricardo",
