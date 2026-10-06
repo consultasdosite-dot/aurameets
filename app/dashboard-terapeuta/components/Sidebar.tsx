@@ -267,15 +267,17 @@ export default function Sidebar({
 
             onClick={() => setMenuAberto((estadoAtual) => !estadoAtual)}
 
-            aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
+            aria-label={menuAberto ? "Fechar meu painel" : "Abrir meu painel"}
 
             aria-expanded={menuAberto}
 
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-purple-700 px-4 text-sm font-black text-white shadow-md transition hover:bg-purple-800"
 
           >
 
             {menuAberto ? <CloseIcon /> : <MenuIcon />}
+
+            <span>MEU PAINEL</span>
 
           </button>
 
