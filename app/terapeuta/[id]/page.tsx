@@ -397,10 +397,10 @@ export default async function TherapistPage({
             {services.map((service, index) => (
               <article
                 key={service.id}
-                className="group overflow-hidden rounded-[1.35rem] border border-[#E6E1EF] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#B68ED7] sm:rounded-[1.7rem] lg:grid lg:grid-cols-5 lg:items-start"
+                className="group overflow-hidden rounded-[1.35rem] border border-[#E6E1EF] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#B68ED7] sm:rounded-[1.7rem] lg:grid lg:grid-cols-5 lg:items-stretch"
               >
                 <div
-                  className={`relative aspect-[16/9] w-full self-start overflow-hidden bg-gradient-to-br sm:aspect-video lg:col-span-2 ${
+                  className={`relative aspect-[16/9] w-full self-start overflow-hidden bg-gradient-to-br sm:aspect-video lg:aspect-auto lg:self-stretch lg:col-span-2 ${
                     index % 3 === 0
                       ? "from-[#8d6a24] via-[#d8b95d] to-[#75500e]"
                       : index % 3 === 1
