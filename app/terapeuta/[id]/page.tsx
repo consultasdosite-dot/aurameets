@@ -5,6 +5,7 @@ import { getTherapistBySlug } from "@/lib/therapists";
 type IconName =
   | "calendar"
   | "bag"
+  | "cart"
   | "gift"
   | "ticket"
   | "share"
@@ -114,7 +115,7 @@ function ExpandableText({
       <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
         <span className="block group-open:hidden">
           <span
-            className={`overflow-hidden whitespace-pre-line ${className}`}
+            className={`overflow-hidden whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${className}`}
             style={{
               display: "-webkit-box",
               WebkitBoxOrient: "vertical",
@@ -131,7 +132,7 @@ function ExpandableText({
           Leia menos
         </span>
       </summary>
-      <p className={`mt-2 whitespace-pre-line ${className}`}>
+      <p className={`mt-2 whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${className}`}>
         {text}
       </p>
     </details>
@@ -149,6 +150,13 @@ function Icon({
       <>
         <rect x="3" y="5" width="18" height="16" rx="2" />
         <path d="M16 3v4M8 3v4M3 10h18" />
+      </>
+    ),
+    cart: (
+      <>
+        <circle cx="9" cy="20" r="1" />
+        <circle cx="19" cy="20" r="1" />
+        <path d="M2 3h2l2.5 12h13l2-9H5" />
       </>
     ),
     bag: (
@@ -231,7 +239,6 @@ export default async function TherapistPage({
   }
   // experiences.therapist_id é bigint (therapists.id), nunca o UUID profile_id.
   let hasPresent = false;
-  let hasDiscount = false;
   const therapistEmail =
     "email" in therapist && typeof therapist.email === "string"
       ? therapist.email.trim().toLowerCase()
@@ -261,7 +268,6 @@ export default async function TherapistPage({
         (offer) => offer.quantity_available === null || offer.quantity_available > 0,
       );
       hasPresent = availableOffers.some((offer) => offer.offer_type === "presente");
-      hasDiscount = availableOffers.some((offer) => offer.offer_type === "desconto");
     }
   } else {
     console.error("Não foi encontrado um ID numérico para as ofertas do terapeuta.");
@@ -303,197 +309,87 @@ export default async function TherapistPage({
     // Outros países: não força o DDI brasileiro
     whatsappNumber = whatsapp;
   }
-  const scheduleMessage = encodeURIComponent(
-    `Olá, ${name}! Vi seu perfil no AuraMeets e quero agendar um atendimento.`,
-  );
-  const scheduleHref = whatsappNumber
-    ? `https\://wa.me/${whatsappNumber}?text=${scheduleMessage}`
-    : "#servicos";
-  const whatsappMessage = encodeURIComponent(
-    `Olá, ${name}! Vi seu perfil no AuraMeets e gostaria de conversar para saber mais sobre seu trabalho e seus serviços.`,
-  );
-  const whatsappHref = whatsappNumber
-    ? `https\://wa.me/${whatsappNumber}?text=${whatsappMessage}`
-    : "#servicos";
-  const profileUrl =
-    `https\://www.aurameets.com.br/terapeuta/${therapist.slug}`;
-  const shareHref =
-    `https\://wa.me/?text=${encodeURIComponent(
-      `Conheça o perfil profissional de ${name} no AuraMeets: ${profileUrl}`,
-    )}`;
   const presentHref = whatsappNumber
-    ? `https\://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero meu presente")}`
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero meu presente")}`
     : "#servicos";
-  const discountHref = whatsappNumber
-    ? `https\://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero desconto")}`
-    : "#servicos";
-  const actions: {
-    label: string;
-    icon: IconName;
-    href: string;
-    variant: "schedule" | "buy" | "present" | "discount" | "whatsapp";
-  }[] = [
-    { label: "Quero agendar", icon: "calendar", href: scheduleHref, variant: "schedule" },
-    { label: "Quero comprar", icon: "bag", href: "#servicos", variant: "buy" },
-    ...(whatsappNumber && hasPresent
-      ? [{ label: "Quero presente", icon: "gift" as IconName, href: presentHref, variant: "present" as const }]
-      : []),
-    ...(whatsappNumber && hasDiscount
-      ? [{ label: "Quero desconto", icon: "ticket" as IconName, href: discountHref, variant: "discount" as const }]
-      : []),
-    ...(whatsappNumber
-      ? [{ label: "Falar no WhatsApp", icon: "whatsapp" as IconName, href: whatsappHref, variant: "whatsapp" as const }]
-      : []),
-  ];
-  const actionClasses: Record<(typeof actions)[number]["variant"], string> = {
-    schedule: "border-[#8A35D1] bg-[#8A35D1] hover:bg-[#7428B7]",
-    buy: "border-[#2F80C9] bg-[#2F80C9] hover:bg-[#246EAF]",
-    present: "border-[#22AD70] bg-[#22AD70] hover:bg-[#188C59]",
-    discount: "border-[#F5AC12] bg-[#F5AC12] hover:bg-[#DB970C]",
-    whatsapp: "border-emerald-400/50 bg-gradient-to-br from-[#25D366] to-[#128C7E] hover:border-emerald-300",
-  };
+  // A única ação no topo é a experiência presente, quando disponível.
   return (
-    <main className="min-h-screen bg-[#080709] text-white selection:bg-[#d3b35a] selection:text-[#130d16]">
-      <section className="relative overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%\\_15%,rgba(145,63,156,0.38),transparent_34%),radial-gradient(circle_at_82%\\_18%,rgba(212,178,79,0.18),transparent_27%),linear-gradient(145deg,#080709_10%,#171019_55%,#09070a_100%)]" />
-        <div className="absolute -left-28 top-24 h-72 w-72 rounded-full border border-[#d6b85a]/10" />
-        <div className="absolute -left-16 top-36 h-52 w-52 rounded-full border border-[#d6b85a]/10" />
-        <div className="relative mx-auto max-w-6xl px-5 pb-12 pt-6 sm:px-8 lg:pb-16">
-          <div className="mb-10 flex items-center justify-between">
-            <a
-              href="#"
-              className="flex items-center gap-3"
-              aria-label="AuraMeets"
-            >
-              <span className="grid h-11 w-11 place-items-center rounded-2xl border border-[#d7ba61]/40 bg-[#702a78]/60 text-[#e5cc78] shadow-[0_0_30px_rgba(140,51,151,0.25)]">
-                <span className="text-xl">◇</span>
-              </span>
-              <span>
-                <strong className="block font-serif text-2xl tracking-wide text-[#e2c66e]">
-                  AuraMeets
-                </strong>
-                <small className="block text-[8px] uppercase tracking-[0.3em] text-white/55">
-                  Conexões que transformam
-                </small>
-              </span>
-            </a>
-            <a
-              href={shareHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white/80 backdrop-blur transition hover:border-[#d7ba61]/60 hover:text-[#e5cc78]"
-            >
-              <Icon
-                name="share"
-                className="h-4 w-4"
-              />
-              <span className="hidden sm:inline">
-                Compartilhar perfil
-              </span>
-            </a>
-          </div>
-          <div className="grid items-center gap-8 md:grid-cols-[260px_1fr] lg:gap-14">
+    <main className="min-h-screen bg-[#F7F8FC] text-[#17213B] selection:bg-[#EAD5FF] selection:text-[#351454]">
+      <header className="w-full bg-[#0A1034]">
+        <img
+          src="/cabecalho-perfil-terapeuta-aurameets.png"
+          alt="AuraMeets — Terapeuta qualificado com segurança"
+          className="block h-auto w-full"
+        />
+      </header>
+      <section className="mx-auto max-w-6xl px-5 pb-7 pt-8 sm:px-8 sm:pt-12">
+        <div className="rounded-[1.7rem] border border-[#E7E0F0] bg-white p-5 shadow-sm sm:p-9">
+          <div className="grid items-center gap-8 md:grid-cols-[240px_1fr] lg:gap-12">
             <div className="mx-auto md:mx-0">
               <div className="relative h-52 w-52 sm:h-60 sm:w-60">
-                <div className="absolute inset-0 rounded-[2.4rem] bg-gradient-to-br from-[#e2c66e] via-[#7f327f] to-[#251129] p-[2px] shadow-[0_25px_70px_rgba(0,0,0,0.5)]">
-                  <div className="grid h-full w-full place-items-center overflow-hidden rounded-[2.3rem] bg-gradient-to-br from-[#2a172d] to-[#0e0a10]">
+                <div className="h-full w-full rounded-[2.4rem] bg-gradient-to-br from-[#E2C66E] via-[#8A35D1] to-[#3B1A6B] p-[2px]">
+                  <div className="grid h-full w-full place-items-center overflow-hidden rounded-[2.3rem] bg-[#F3EAF9]">
                     {photo ? (
-                      <img
-                        src={photo}
-                        alt={`Foto profissional de ${name}`}
-                        className="h-full w-full object-cover object-top"
-                      />
+                      <img src={photo} alt={`Foto profissional de ${name}`} className="h-full w-full object-cover object-top" />
                     ) : (
-                      <span className="font-serif text-6xl text-[#e4ca78]">
-                        {getInitials(name)}
-                      </span>
+                      <span className="font-serif text-6xl text-[#7436A6]">{getInitials(name)}</span>
                     )}
                   </div>
                 </div>
-                <span className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d9bd66]/40 bg-[#171019] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#e2c66e] shadow-xl">
-                  <Icon
-                    name="check"
-                    className="h-3.5 w-3.5"
-                  />
+                <span className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#E1D3EF] bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6B299D] shadow-sm">
+                  <Icon name="check" className="h-3.5 w-3.5" />
                   Profissional verificada
                 </span>
               </div>
             </div>
-            <div className="text-center md:text-left">
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.3em] text-[#d6b85e]">
-                Perfil profissional AuraMeets
-              </p>
-              <h1 className="font-serif text-4xl font-medium leading-[1.05] sm:text-5xl lg:text-6xl">
-                {name}
-              </h1>
-              <p className="mt-4 text-base font-semibold text-[#c78dcc] sm:text-lg">
-                {headline}
-              </p>
+            <div className="min-w-0 text-center md:text-left">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#7D36B5]">Perfil profissional AuraMeets</p>
+              <h1 className="font-serif text-4xl font-medium leading-tight text-[#1D1538] sm:text-5xl">{name}</h1>
+              <p className="mt-3 text-base font-semibold text-[#8241B2] sm:text-lg">{headline}</p>
               <div className="mx-auto mt-4 max-w-2xl md:mx-0">
                 <ExpandableText
-                  text={
-                    therapist.bio ||
-                    "Conheça este profissional e encontre a experiência ideal para o seu momento."
-                  }
-                  className="text-sm leading-7 text-white/58 sm:text-base"
+                  text={therapist.bio || "Conheça este profissional e encontre a experiência ideal para o seu momento."}
+                  className="text-sm leading-7 text-[#47516A] sm:text-base"
                 />
               </div>
               <div className="mt-5 flex flex-wrap justify-center gap-2 md:justify-start">
-                {[
-                  therapist.service_type,
-                  location,
-                ]
-                  .filter(Boolean)
-                  .map((item) => (
-                    <span
-                      key={String(item)}
-                      className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/60"
-                    >
-                      {item}
-                    </span>
-                  ))}
+                {[therapist.service_type, location].filter(Boolean).map((item) => (
+                  <span key={String(item)} className="rounded-full border border-[#E5DCF0] bg-[#F9F5FD] px-3 py-1.5 text-xs text-[#694D80]">{item}</span>
+                ))}
               </div>
             </div>
           </div>
-        </div>
-      </section>
-      <section className="relative z-10 mx-auto -mt-1 max-w-6xl px-5 sm:px-8">
-        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-2 rounded-[1.5rem] border border-white/10 bg-[#100d12]/90 p-2 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:gap-3 sm:p-3">
-          {actions.map((action) => (
-            <Link
-              key={action.label}
-              href={action.href}
-              target={action.href.startsWith("http") ? "_blank" : undefined}
-              rel={action.href.startsWith("http") ? "noopener noreferrer" : undefined}
-              className={`group flex min-h-20 flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center shadow-lg transition duration-300 hover:-translate-y-0.5 sm:min-h-24 sm:px-4 ${action.variant === "whatsapp" ? "col-span-2 min-h-14 flex-row sm:min-h-16" : ""} ${actionClasses[action.variant]}`}
-            >
-              <Icon
-                name={action.icon}
-                className={`h-5 w-5 sm:h-6 sm:w-6 ${action.variant === "discount" ? "text-[#202020]" : "text-white"}`}
-              />
-              <span className={`text-[11px] font-extrabold uppercase tracking-[0.04em] sm:text-sm sm:tracking-[0.08em] ${action.variant === "discount" ? "text-[#202020]" : "text-white"}`}>
-                {action.label}
-              </span>
-            </Link>
-          ))}
+          {hasPresent && whatsappNumber && (
+            <div className="mt-10 flex justify-center border-t border-[#ECE6F2] pt-6">
+              <Link
+                href={presentHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-14 items-center justify-center gap-3 rounded-xl bg-[#16A34A] px-7 py-4 text-center text-sm font-extrabold uppercase tracking-wide text-white transition hover:bg-[#12813C]"
+              >
+                <Icon name="gift" className="h-6 w-6" />
+                Experiência Presente
+              </Link>
+            </div>
+          )}
         </div>
       </section>
       <section
         id="servicos"
-        className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20"
+        className="mx-auto max-w-6xl px-5 pb-16 pt-6 sm:px-8 sm:pb-20"
       >
         <div className="mb-9 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#cfae52]">
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#7D36B5]">
               Atendimentos e experiências
             </p>
             <h2 className="mt-2 font-serif text-3xl sm:text-4xl">
-              Serviços disponíveis
+              Serviços oferecidos
             </h2>
           </div>
-          <p className="max-w-md text-sm leading-6 text-white/50">
+          <p className="max-w-md text-sm leading-6 text-[#59647B]">
             Escolha a experiência ideal para o seu momento e
-            fale diretamente com a profissional.
+            contrate o serviço desejado.
           </p>
         </div>
         {services.length > 0 ? (
@@ -501,7 +397,7 @@ export default async function TherapistPage({
             {services.map((service, index) => (
               <article
                 key={service.id}
-                className="group overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#111014] transition duration-300 hover:-translate-y-1 hover:border-[#d1ae50]/35 sm:rounded-[1.7rem] lg:grid lg:grid-cols-5 lg:items-start"
+                className="group overflow-hidden rounded-[1.35rem] border border-[#E6E1EF] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#B68ED7] sm:rounded-[1.7rem] lg:grid lg:grid-cols-5 lg:items-start"
               >
                 <div
                   className={`relative aspect-[16/9] w-full self-start overflow-hidden bg-gradient-to-br sm:aspect-video lg:col-span-2 ${
@@ -519,14 +415,14 @@ export default async function TherapistPage({
                       className="absolute inset-0 h-full w-full object-cover object-center"
                     />
                   )}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%\\_25%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(0deg,rgba(5,5,7,0.45),transparent)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_25%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(0deg,rgba(5,5,7,0.45),transparent)]" />
                   <div className="absolute bottom-3 left-3 rounded-full border border-white/20 bg-black/40 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur sm:bottom-4 sm:left-5 sm:px-3 sm:py-1.5 sm:text-[10px] sm:tracking-[0.18em]">
                     {service.category ||
                       "Serviço AuraMeets"}
                   </div>
                 </div>
                 <div className="flex flex-col justify-between p-4 sm:p-6 lg:col-span-3 lg:p-8">
-                  <h3 className="font-serif text-[1.55rem] leading-tight text-white sm:text-2xl">
+                  <h3 className="font-serif text-[1.55rem] leading-tight text-[#1D1538] sm:text-2xl">
                     {service.name}
                   </h3>
                   <div className="mt-2 sm:mt-3 sm:min-h-[96px]">
@@ -535,92 +431,62 @@ export default async function TherapistPage({
                         service.description ||
                         "Conheça esta experiência oferecida pelo profissional."
                       }
-                      className="text-[13px] leading-5 text-white/55 sm:text-sm sm:leading-6"
+                      className="text-[13px] leading-5 text-[#59647B] sm:text-sm sm:leading-6"
                     />
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-2 text-[10px] text-white/50 sm:mt-5 sm:text-[11px]">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#59647B] sm:mt-5">
                     {service.duration_minutes && (
-                      <span className="rounded-full bg-white/[0.05] px-2.5 py-1.5 sm:px-3">
+                      <span className="rounded-full border border-[#E6E1EF] bg-[#F6F3FA] px-3 py-2">
                         {service.duration_minutes} minutos
                       </span>
                     )}
-                    <span className="rounded-full bg-white/[0.05] px-2.5 py-1.5 sm:px-3">
-                      {getDeliveryLabel(service)}
-                    </span>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4 sm:mt-6 sm:gap-4 sm:pt-5">
-                    <div className="min-w-0">
-                      <span className="block text-[9px] uppercase tracking-widest text-white/35 sm:text-[10px]">
-                        Investimento
-                      </span>
-                      {service.promotional_price !==
-                        null &&
-                      Number.isFinite(
-                        Number(
-                          service.promotional_price,
-                        ),
-                      ) &&
-                      Number(
-                        service.promotional_price,
-                      ) < Number(service.price) ? (
-                        <>
-                          <strong className="mt-1 block whitespace-nowrap text-2xl font-black text-[#e1c56d] line-through decoration-2 sm:text-3xl">
-                            {formatCurrency(
-                              service.price,
-                              service.currency ||
-                                "BRL",
-                            )}
-                          </strong>
-                          <div className="mt-1 flex flex-wrap items-center gap-2">
-                            <span className="inline-block rounded-xl border border-emerald-200 bg-[#E3F5E7] px-3 py-2 whitespace-nowrap text-2xl font-black text-[#176534] sm:text-3xl">
-                              {formatCurrency(
-                                service.promotional_price,
-                                service.currency ||
-                                  "BRL",
-                              )}
-                            </span>
-                            {getDiscountPercentage(
-                              service,
-                            ) !== null && (
-                              <span className="inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-emerald-300 sm:text-[11px]">
-                                {getDiscountPercentage(
-                                  service,
-                                )}
-                                % OFF
-                              </span>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <strong className="mt-1 inline-block rounded-xl border border-emerald-200 bg-[#E3F5E7] px-3 py-2 whitespace-nowrap text-2xl font-black text-[#176534] sm:text-3xl">
-                          {formatCurrency(
-                            service.price,
-                            service.currency ||
-                              "BRL",
-                          )}
-                        </strong>
-                      )}
+                    <div className="w-full rounded-xl border border-[#C4A0EA] bg-[#F3E8FF] px-4 py-3 text-[#35165A]">
+                      <p className="text-base font-extrabold uppercase leading-6 tracking-wide text-[#581C87]">
+                        FORMA DE ENTREGA
+                      </p>
+                      <p className="mt-1 break-words text-base font-semibold leading-6 sm:text-lg">
+                        {getDeliveryLabel(service)}
+                      </p>
                     </div>
-                    <Link
-                      href={`/comprar?servico=${encodeURIComponent(
-                        service.id,
-                      )}`}
-                      className="shrink-0 rounded-full bg-[#7e327f] px-4 py-2.5 text-[11px] font-extrabold uppercase tracking-wide text-white transition hover:bg-[#a24ba5] sm:px-5 sm:py-3 sm:text-xs sm:tracking-wider"
-                    >
-                      Quero comprar
-                    </Link>
+                  </div>
+                  <div className="mt-4 border-t border-[#E8E2F0] pt-4 sm:mt-6 sm:pt-5">
+                    <span className="block text-[9px] uppercase tracking-widest text-[#667086] sm:text-[10px]">
+                      Investimento
+                    </span>
+                    {getDiscountPercentage(service) !== null && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <strong className="text-lg font-black text-[#8B7498] line-through decoration-2 sm:text-xl">
+                          {formatCurrency(service.price, service.currency || "BRL")}
+                        </strong>
+                        <span className="inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-emerald-700 sm:text-[11px]">
+                          {getDiscountPercentage(service)}% OFF
+                        </span>
+                      </div>
+                    )}
+                    <div className="mt-3 grid grid-cols-2 items-stretch gap-2 sm:gap-4">
+                      <strong className="flex min-h-14 min-w-0 items-center justify-center rounded-xl border border-emerald-200 bg-[#E3F5E7] px-1 py-2 text-center text-[clamp(0.9rem,3.5vw,1.5rem)] font-black leading-tight text-[#176534] sm:px-2 sm:text-2xl">
+                        {formatCurrency(getFinalPrice(service), service.currency || "BRL")}
+                      </strong>
+                      <Link
+                        href={`/comprar?servico=${encodeURIComponent(service.id)}`}
+                        className="inline-flex min-h-14 min-w-0 items-center justify-center gap-2 rounded-xl bg-[#FFD32A] px-2 py-2 text-center text-[10px] font-extrabold uppercase leading-tight tracking-wide text-black transition hover:bg-[#F2C400] sm:px-4 sm:text-sm"
+                      >
+                        <Icon name="cart" className="h-5 w-5 shrink-0 text-black" />
+                        Quero contratar
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </article>
             ))}
           </div>
         ) : (
-          <div className="rounded-[1.7rem] border border-dashed border-white/15 bg-white/[0.03] p-8 text-center text-white/50">
+          <div className="rounded-[1.7rem] border border-dashed border-[#D9C5EE] bg-white p-8 text-center text-[#59647B]">
             Este profissional ainda não publicou serviços.
           </div>
         )}
       </section>
-      <footer className="border-t border-white/10 px-5 py-8 text-center text-xs text-white/35">
+      <footer className="border-t border-[#E8E2F0] bg-white px-5 py-8 text-center text-xs text-[#667086]">
         AuraMeets · Conecta · Transforma · Realiza
       </footer>
     </main>
