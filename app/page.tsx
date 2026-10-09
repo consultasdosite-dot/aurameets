@@ -111,54 +111,87 @@ function embaralharOfertas<T>(itens: T[]): T[] {
 }
 
 const TERAPEUTAS_PRIORITARIAS = [
+
   "alzira",
+
   "cristina",
+
   "renata martins",
+
   "milena",
+
   "mariangela",
+
   "fernanda",
+
   "pollyanna",
+
   "ricardo",
+
   "pedro",
+
   "semiramis",
+
 ];
 
 function ehTerapeutaPrioritario(nome: string): boolean {
+
   const nomeNormalizado = nome
+
     .normalize("NFD")
+
     .replace(/[\u0300-\u036f]/g, "")
+
     .toLowerCase()
+
     .trim();
 
   return TERAPEUTAS_PRIORITARIAS.some((nomePrioritario) =>
+
     nomeNormalizado.includes(nomePrioritario),
+
   );
+
 }
 
 function ordenarPorPrioridade<T>(
+
   itens: T[],
+
   obterNome: (item: T) => string,
+
 ): T[] {
+
   const prioritarios = itens.filter((item) =>
+
     ehTerapeutaPrioritario(obterNome(item)),
+
   );
 
   const demais = itens.filter(
+
     (item) => !ehTerapeutaPrioritario(obterNome(item)),
+
   );
 
   const prioritariosEmbaralhados = [...prioritarios];
 
   for (let i = prioritariosEmbaralhados.length - 1; i > 0; i--) {
+
     const j = Math.floor(Math.random() * (i + 1));
 
     [prioritariosEmbaralhados[i], prioritariosEmbaralhados[j]] = [
+
       prioritariosEmbaralhados[j],
+
       prioritariosEmbaralhados[i],
+
     ];
+
   }
 
   return [...prioritariosEmbaralhados, ...demais];
+
 }
 
 export default function HomePage() {
@@ -194,10 +227,15 @@ export default function HomePage() {
         if (componenteAtivo) {
 
           setOfertasEspeciais(
+
             ordenarPorPrioridade(ofertas, (oferta) => oferta.therapist_name),
+
           );
+
           setTerapeutasComServicos(
+
             ordenarPorPrioridade(terapeutas, (terapeuta) => terapeuta.name),
+
           );
 
         }
@@ -272,7 +310,7 @@ export default function HomePage() {
 
           href={
 
-            "https://wa.me/5551980339532?text=" +
+            "https\://wa.me/5551980339532?text=" +
 
             encodeURIComponent(
 
@@ -366,7 +404,7 @@ export default function HomePage() {
 
             <a
 
-              href="https://wa.me/5551980339532"
+              href="https\://wa.me/5551980339532"
 
               target="_blank"
 
@@ -512,7 +550,7 @@ export default function HomePage() {
 
               <a
 
-                href="https://wa.me/5551980339532"
+                href="https\://wa.me/5551980339532"
 
                 target="_blank"
 
@@ -675,9 +713,13 @@ export default function HomePage() {
             <div className="mt-9 grid gap-5 xl:grid-cols-2">
 
               {ofertasEspeciais
+
                 .filter((oferta, index, lista) =>
+
                   index === lista.findIndex((item) => item.therapist_id === oferta.therapist_id),
+
                 )
+
                 .map((oferta) => (
 
                 <OfferCard
@@ -782,15 +824,24 @@ export default function HomePage() {
 
                   return (
 
-                    <Link href={perfil} key={terapeuta.id} aria-label={`Ver perfil de ${terapeuta.name}`} className="group flex items-center gap-4 rounded-[22px] border border-[#e5d8ef] bg-white p-5 shadow-[0_12px_34px_rgba(65,39,94,0.09)] transition hover:shadow-[0_18px_42px_rgba(65,39,94,0.14)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7541ad]">
+                    <Link href={perfil} key={terapeuta.id} aria-label={`Ver perfil de ${terapeuta.name}`} className="group flex cursor-pointer items-center gap-4 rounded-[22px] border border-[#e5d8ef] bg-white p-5 shadow-[0_12px_34px_rgba(65,39,94,0.09)] transform-gpu transition-all duration-200 hover:scale-[1.025] hover:-translate-y-1 active:scale-[0.985] hover:border-[#9862c9] hover:shadow-[0_18px_42px_rgba(101,55,156,0.22)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7541ad]">
+
                       <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#f2e8fa] font-black text-[#7541ad]">
+
                         {foto ? <img src={foto} alt={`Foto de ${terapeuta.name}`} loading="lazy" className="h-full w-full object-cover" /> : getTherapistInitials(terapeuta.name)}
+
                       </div>
+
                       <div className="min-w-0 flex-1">
+
                         <h3 className="text-lg font-black text-[#101d3b]">{terapeuta.name}</h3>
+
                         <p className="mt-1 text-sm text-[#7541ad]">{terapeuta.speciality || "Terapeuta AuraMeets"}</p>
-                        <span className="mt-3 inline-block text-sm font-extrabold text-[#7541ad] underline underline-offset-2">VER MAIS</span>
+
+                        <span className="mt-3 inline-block text-sm font-extrabold text-[#7541ad] underline underline-offset-2 group-hover:text-[#542c91]">VER MAIS</span>
+
                       </div>
+
                     </Link>
 
                   );
@@ -919,7 +970,7 @@ export default function HomePage() {
 
               buttonText="Receber Acolhimento"
 
-              href="https://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
+              href="https\://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
 
               external
 
@@ -1137,7 +1188,7 @@ export default function HomePage() {
 
               <a
 
-                href="https://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
+                href="https\://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
 
                 target="_blank"
 
@@ -1278,53 +1329,97 @@ function HeroTrustItem({ text }: { text: string }) {
 }
 
 function resumirProposta(texto: string, limite = 180): string {
+
   const limpo = texto.trim().replace(/\s+/g, " ");
+
   if (limpo.length <= limite) return limpo;
+
   const trecho = limpo.slice(0, limite + 1);
+
   const ultimoEspaco = trecho.lastIndexOf(" ");
+
   return `${(ultimoEspaco > limite * 0.6 ? trecho.slice(0, ultimoEspaco) : trecho.slice(0, limite)).trimEnd()}…`;
+
 }
 
 function OfferCard({
+
   therapistName,
+
   specialty,
+
   title,
+
   description,
+
   initials,
+
   imageUrl,
+
   profileHref,
+
 }: OfferCardProps) {
+
   const resumo = resumirProposta(description, 180);
 
   return (
+
     <Link
+
       href={profileHref}
+
       aria-label={`Ver perfil de ${therapistName}`}
-      className="group grid h-full overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.09)] transition hover:shadow-[0_18px_42px_rgba(65,39,94,0.14)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7541ad] md:grid-cols-[36%_64%]"
+
+      className="group grid h-full cursor-pointer overflow-hidden rounded-[22px] border border-[#e5d8ef] bg-white shadow-[0_12px_34px_rgba(65,39,94,0.09)] transform-gpu transition-all duration-200 hover:scale-[1.025] hover:-translate-y-1 active:scale-[0.985] hover:border-[#9862c9] hover:shadow-[0_18px_42px_rgba(101,55,156,0.22)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7541ad] md:grid-cols-[36%_64%]"
+
     >
+
       <div className="relative hidden min-h-[290px] overflow-hidden bg-gradient-to-br from-[#f4ecfa] to-[#eadcf5] md:block">
+
         {imageUrl ? (
+
           <img src={imageUrl} alt={`Foto de ${therapistName}`} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover object-[center_22%]" />
+
         ) : (
+
           <div className="absolute inset-0 flex items-center justify-center text-5xl font-black text-[#7541ad]">{initials}</div>
+
         )}
+
       </div>
+
       <div className="flex min-w-0 flex-col p-4 sm:p-5">
+
         <div className="flex items-center gap-3">
+
           <div className="flex h-[76px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#f2e8fa] text-lg font-black text-[#7541ad] shadow-sm md:h-14 md:w-14 md:rounded-full">
+
             {imageUrl ? <img src={imageUrl} alt={`Foto de ${therapistName}`} loading="lazy" className="h-full w-full object-cover object-[center_22%]" /> : initials}
+
           </div>
+
           <div className="min-w-0 flex-1">
+
             <p className="text-[15px] font-black leading-5 text-[#1c2944]">{therapistName}</p>
+
             <p className="mt-0.5 text-xs font-semibold leading-4 text-[#7541ad]">{specialty}</p>
+
           </div>
+
         </div>
+
         <h3 className="mt-3 text-[19px] font-black leading-snug tracking-tight text-[#101d3b] sm:text-[21px]">{title}</h3>
+
         <p className="mt-2 min-h-[100px] break-words whitespace-pre-line text-[13px] font-medium leading-5 text-[#5b6579]">{resumo}</p>
+
         <span className="mt-auto pt-3 text-sm font-extrabold text-[#7541ad] underline underline-offset-2 group-hover:text-[#542c91]">VER MAIS</span>
+
       </div>
+
     </Link>
+
   );
+
 }
 
 function OfferCardSkeleton() {
