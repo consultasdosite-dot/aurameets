@@ -310,7 +310,7 @@ export default function HomePage() {
 
           href={
 
-            "https\://wa.me/5551980339532?text=" +
+            "https://wa.me/5551980339532?text=" +
 
             encodeURIComponent(
 
@@ -970,7 +970,7 @@ export default function HomePage() {
 
               buttonText="Receber Acolhimento"
 
-              href="https\://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
+              href="https://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
 
               external
 
@@ -1188,7 +1188,7 @@ export default function HomePage() {
 
               <a
 
-                href="https\://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
+                href="https://wa.me/5551980339532?text=Ol%C3%A1%2C%20Oscar.%20Vim%20pelo%20AuraMeets%20e%20preciso%20de%20acolhimento.%20Gostaria%20de%20conversar%20sobre%20meu%20momento."
 
                 target="_blank"
 

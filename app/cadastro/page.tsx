@@ -1422,13 +1422,13 @@ export default function CadastroPage() {
 
               <Link
 
-                href="/terapeutas/cristina-pacheco"
+                href="/terapeutas/oscar-ahumada"
 
                 className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-purple-400/50 bg-purple-400/10 px-5 text-sm font-black text-purple-200 transition hover:bg-purple-400/20"
 
               >
 
-                VER PERFIL MODELO — CRISTINA PACHECO
+                VER PERFIL MODELO — OSCAR AHUMADA
 
               </Link>
 
