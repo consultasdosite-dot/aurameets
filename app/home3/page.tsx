@@ -40,13 +40,26 @@ const depoimentosIlustrativos = [
 const terapeutasSelecionados = [
   { nome: "Alzira", busca: ["alzira"] },
   { nome: "Renata Martins", busca: ["renata martins"] },
-  { nome: "Pedro", busca: ["pedro"] },
-  { nome: "Renatta", busca: ["renatta godoi", "renata godoi", "renatta"] },
+  { nome: "Renatta Godoi", busca: ["renatta godoi", "renata godoi"] },
+  { nome: "Semiramis", busca: ["semiramis"] },
   { nome: "Milena", busca: ["milena"] },
   { nome: "Pollyanna", busca: ["pollyanna"] },
-  { nome: "Eunice", busca: ["eunice"] },
+  { nome: "Pedro", busca: ["pedro"] },
+  { nome: "Ricardo", busca: ["ricardo"] },
+  { nome: "Tyemi", busca: ["tyemi"] },
   { nome: "Oscar", busca: ["oscar ahumada", "oscar"] },
+  { nome: "Eunice", busca: ["eunice"] },
+  { nome: "Kassia", busca: ["kassia", "kássia"] },
 ];
+
+function embaralharTerapeutas<T>(itens: T[]): T[] {
+  const resultado = [...itens];
+  for (let i = resultado.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [resultado[i], resultado[j]] = [resultado[j], resultado[i]];
+  }
+  return resultado;
+}
 
 type TerapeutaDestaque = { nome: string; foto: string | null; perfil: string | null };
 
@@ -58,7 +71,7 @@ function montarDestaques(
   terapeutas: HomeExperienceTherapist[],
   ofertas: FeaturedExperience[],
 ): TerapeutaDestaque[] {
-  return terapeutasSelecionados.map((selecionado) => {
+  return embaralharTerapeutas(terapeutasSelecionados.map((selecionado) => {
     const corresponde = (nome: string) => {
       const normalizado = normalizarNome(nome);
       return selecionado.busca.some((busca) =>
@@ -74,7 +87,7 @@ function montarDestaques(
         : `/terapeutas?therapistId=${encodeURIComponent(String(terapeuta.id))}`
       : oferta?.public_href || null;
     return { nome: terapeuta?.name || oferta?.therapist_name || selecionado.nome, foto, perfil };
-  });
+  }).filter((item) => item.perfil));
 }
 
 function Icone({ tipo }: { tipo: "pessoas" | "coracao" | "escudo" }) {
@@ -88,7 +101,7 @@ export default function Home3() {
   const [mostrarTodosDepoimentos, setMostrarTodosDepoimentos] = useState(false);
   const [fala, setFala] = useState("");
   const [terapeutasDestaque, setTerapeutasDestaque] = useState<TerapeutaDestaque[]>(
-    terapeutasSelecionados.map((item) => ({ nome: item.nome, foto: null, perfil: null })),
+    [],
   );
   const [carregandoTerapeutas, setCarregandoTerapeutas] = useState(true);
 
