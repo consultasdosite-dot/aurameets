@@ -50,7 +50,7 @@ function embaralharTerapeutas<T>(itens: T[]): T[] {
   return resultado;
 }
 
-type TerapeutaDestaque = { nome: string; foto: string | null; perfil: string | null };
+type TerapeutaDestaque = { nome: string; profissao: string | null; foto: string | null; perfil: string | null };
 
 function normalizarNome(nome: string) {
   return nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -75,7 +75,8 @@ function montarDestaques(
         ? `/terapeuta/${encodeURIComponent(terapeuta.slug.trim())}`
         : `/terapeutas?therapistId=${encodeURIComponent(String(terapeuta.id))}`
       : oferta?.public_href || null;
-    return { nome: terapeuta?.name || oferta?.therapist_name || selecionado.nome, foto, perfil };
+    const profissao = terapeuta?.speciality?.trim() || oferta?.therapist?.speciality?.trim() || null;
+    return { nome: terapeuta?.name || oferta?.therapist_name || selecionado.nome, profissao, foto, perfil };
   }).filter((item) => item.perfil));
 }
 
@@ -153,10 +154,8 @@ export default function Home3() {
 
         <nav className={menuAberto ? "navegacao aberta" : "navegacao"}>
           <Link href="/quem-somos">Quem Somos</Link>
-          <a href="#como-funciona">Como Funciona</a>
-          <Link href="/">Nossos Terapeutas</Link>
-          <a href="#areas">Áreas de Atendimento</a>
-          <a href="#fala-sistemica">Fala Sistêmica</a>
+          <Link href="/dashboard-terapeuta">ÁREA DO TERAPEUTA</Link>
+          <Link href="/admin">ADMINISTRAÇÃO</Link>
           <a
             href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Olá! Estou visitando o AuraMeets e gostaria de falar com um atendente.")}`}
             className="navDestaque"
@@ -253,6 +252,7 @@ export default function Home3() {
                     )}
                   </span>
                   <strong>{terapeuta.nome.trim().split(/\s+/).slice(0, 2).map((parte) => parte.charAt(0).toLocaleUpperCase("pt-BR") + parte.slice(1).toLocaleLowerCase("pt-BR")).join(" ")}</strong>
+                  {terapeuta.profissao && <span className="profissaoTerapeuta">{terapeuta.profissao}</span>}
                   <small>{terapeuta.perfil ? "Ver perfil →" : carregandoTerapeutas ? "Carregando..." : "Perfil indisponível"}</small>
                 </>
               );
@@ -268,7 +268,7 @@ export default function Home3() {
             })}
           </div>
           <div className="todosTerapeutasAcao">
-            <Link href="/" className="botaoContorno">
+            <Link href="/terapeutas" className="botaoContorno">
               VER TODOS OS TERAPEUTAS <span>→</span>
             </Link>
           </div>
@@ -674,6 +674,7 @@ export default function Home3() {
           object-fit: cover;
         }
         .home3 .cartaoTerapeuta strong { font-size: 13px; }
+        .home3 .profissaoTerapeuta { font-size: 11px; color: #626a79; line-height: 1.3; overflow-wrap: anywhere; }
         .home3 .cartaoTerapeuta small { font-size: 11px; color: #2678d9; }
         .home3 .guia {
           display: grid;
@@ -1010,7 +1011,7 @@ export default function Home3() {
             display: none;
           }
           .home3 .terapeutasDestaque { padding: 30px 12px; }
-          .home3 .gradeTerapeutas { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+          .home3 .gradeTerapeutas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
           .home3 .cartaoTerapeuta { padding: 12px 2px; gap: 6px; }
           .home3 .fotoTerapeuta { width: min(70px, 100%); height: auto; aspect-ratio: 1; }
           .home3 .cartaoTerapeuta strong { font-size: 11px; overflow-wrap: anywhere; }
