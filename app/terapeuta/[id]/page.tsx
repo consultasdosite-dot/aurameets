@@ -239,6 +239,7 @@ export default async function TherapistPage({
   }
   // experiences.therapist_id é bigint (therapists.id), nunca o UUID profile_id.
   let hasPresent = false;
+  let presentDetails: { title: string; description: string | null } | null = null;
   const therapistEmail =
     "email" in therapist && typeof therapist.email === "string"
       ? therapist.email.trim().toLowerCase()
@@ -256,7 +257,7 @@ export default async function TherapistPage({
   } else if (therapistRecord && /^\d+$/.test(String(therapistRecord.id))) {
     const { data: offers, error: offersError } = await supabase
       .from("experiences")
-      .select("offer_type,quantity_available")
+      .select("offer_type,quantity_available,title,description")
       .eq("therapist_id", therapistRecord.id)
       .eq("approval_status", "approved")
       .eq("active", true)
@@ -267,7 +268,11 @@ export default async function TherapistPage({
       const availableOffers = (offers ?? []).filter(
         (offer) => offer.quantity_available === null || offer.quantity_available > 0,
       );
-      hasPresent = availableOffers.some((offer) => offer.offer_type === "presente");
+      const presentOffer = availableOffers.find((offer) => offer.offer_type === "presente");
+      hasPresent = Boolean(presentOffer);
+      if (presentOffer) {
+        presentDetails = { title: presentOffer.title, description: presentOffer.description };
+      }
     }
   } else {
     console.error("Não foi encontrado um ID numérico para as ofertas do terapeuta.");
@@ -360,7 +365,7 @@ export default async function TherapistPage({
             </div>
           </div>
           {hasPresent && whatsappNumber && (
-            <div className="mt-10 flex justify-center border-t border-[#ECE6F2] pt-6">
+            <div className="mt-10 flex flex-col items-center gap-4 border-t border-[#ECE6F2] pt-6 text-center">
               <Link
                 href={presentHref}
                 target="_blank"
@@ -370,6 +375,14 @@ export default async function TherapistPage({
                 <Icon name="gift" className="h-6 w-6" />
                 Experiência Presente
               </Link>
+              {presentDetails && (
+                <div className="max-w-2xl">
+                  <h2 className="font-serif text-2xl text-[#1D1538]">{presentDetails.title}</h2>
+                  {presentDetails.description && (
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#47516A]">{presentDetails.description}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

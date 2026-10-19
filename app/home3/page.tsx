@@ -50,6 +50,8 @@ const terapeutasSelecionados = [
   { nome: "Oscar", busca: ["oscar ahumada", "oscar"] },
   { nome: "Eunice", busca: ["eunice"] },
   { nome: "Kassia", busca: ["kassia", "kássia"] },
+  { nome: "Fernanda", busca: ["fernanda"] },
+  { nome: "Danyela", busca: ["danyela"] },
 ];
 
 function embaralharTerapeutas<T>(itens: T[]): T[] {
@@ -146,11 +148,11 @@ export default function Home3() {
     <main className="home3">
       <header className="topo">
         <Link href="/home3" className="marca">
-          <span className="marcaIcone">✧</span>
-          <span>
-            <strong>AuraMeets</strong>
-            <small>Conexões que acolhem</small>
-          </span>
+          <img
+            src="/logo-aurameets-home3.png"
+            alt="AuraMeets"
+            className="marcaLogo"
+          />
         </Link>
 
         <button
@@ -169,8 +171,13 @@ export default function Home3() {
           <Link href="/">Nossos Terapeutas</Link>
           <a href="#areas">Áreas de Atendimento</a>
           <a href="#fala-sistemica">Fala Sistêmica</a>
-          <a href="#comecar" className="navDestaque">
-            Começar agora
+          <a
+            href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent("Olá! Estou visitando o AuraMeets e gostaria de falar com um atendente.")}`}
+            className="navDestaque"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            FALE COM ATENDENTE
           </a>
         </nav>
       </header>
@@ -264,36 +271,11 @@ export default function Home3() {
               );
             })}
           </div>
-        </section>
-
-        <section className="depoimentosExemplos" id="depoimentos" aria-labelledby="titulo-depoimentos">
-          <div className="tituloCentral">
-            <span className="sobretitulo">HISTÓRIAS E REFLEXÕES</span>
-            <h2 id="titulo-depoimentos">Veja os depoimentos</h2>
-            <p>Textos ilustrativos sobre acolhimento e autoconhecimento.</p>
+          <div className="todosTerapeutasAcao">
+            <Link href="/" className="botaoContorno">
+              VER TODOS OS TERAPEUTAS <span>→</span>
+            </Link>
           </div>
-          <div className="listaDepoimentos">
-            {depoimentosIlustrativos.slice(0, mostrarTodosDepoimentos ? 10 : 1).map((depoimento, indice) => (
-              <article className="depoimentoExemplo" key={indice}>
-                <span className="aspasDepoimento" aria-hidden="true">“</span>
-                <div>
-                  <strong>Depoimento ilustrativo {String(indice + 1).padStart(2, "0")}</strong>
-                  <p>“{depoimento}”</p>
-                  <small>Exemplo fictício — não é uma avaliação de cliente.</small>
-                </div>
-              </article>
-            ))}
-          </div>
-          <button
-            type="button"
-            className="botaoDepoimentos"
-            onClick={() => setMostrarTodosDepoimentos((anterior) => !anterior)}
-            aria-expanded={mostrarTodosDepoimentos}
-            aria-controls="depoimentos"
-          >
-            {mostrarTodosDepoimentos ? "VER MENOS" : "VER MAIS DEPOIMENTOS"}
-            <span aria-hidden="true">{mostrarTodosDepoimentos ? " ↑" : " ↓"}</span>
-          </button>
         </section>
 
         <section className="guia bloco" id="guia">
@@ -318,24 +300,6 @@ export default function Home3() {
               <span>✓ Reflita sobre o que procura</span>
               <span>✓ Solicite acolhimento</span>
             </div>
-          </div>
-        </section>
-
-        <section className="escolhaDireta bloco">
-          <div>
-            <span className="sobretitulo">SUA ESCOLHA, SEU CAMINHO</span>
-            <h2>Prefere escolher diretamente?</h2>
-            <p>
-              Conheça os terapeutas do AuraMeets, explore seus
-              perfis e descubra os serviços oferecidos.
-              Você não precisa responder ao guia.
-            </p>
-            <Link href="/" className="botaoContorno">
-              VER TODOS OS TERAPEUTAS <span>→</span>
-            </Link>
-          </div>
-          <div className="simboloEscolha" aria-hidden="true">
-            ♡
           </div>
         </section>
 
@@ -371,11 +335,6 @@ export default function Home3() {
             ))}
           </div>
 
-          <p className="avisoAreas">
-            Nesta versão de teste, as categorias levam à lista
-            geral de terapeutas. Os filtros específicos serão
-            conectados posteriormente.
-          </p>
         </section>
 
         <section className="comoFunciona" id="como-funciona">
@@ -466,22 +425,36 @@ export default function Home3() {
           </div>
         </section>
 
-        <section className="conviteFinal bloco">
-          <span className="sobretitulo">O PRÓXIMO PASSO É SEU</span>
-          <h2>Seu caminho pode começar aqui.</h2>
-          <p>
-            Escolha livremente um profissional ou utilize
-            nossa Jornada Expressa para começar com acolhimento.
-          </p>
-          <div className="acoesFinais">
-            <Link href="/" className="botaoPrincipal">
-              CONHECER TERAPEUTAS <span>→</span>
-            </Link>
-            <Link href="/jornada" className="botaoContorno">
-              FAZER O GUIA RÁPIDO <span>→</span>
-            </Link>
+        <section className="depoimentosExemplos" id="depoimentos" aria-labelledby="titulo-depoimentos">
+          <div className="tituloCentral">
+            <span className="sobretitulo">HISTÓRIAS E REFLEXÕES</span>
+            <h2 id="titulo-depoimentos">Veja os depoimentos</h2>
+            <p>Textos ilustrativos sobre acolhimento e autoconhecimento.</p>
           </div>
+          <div className="listaDepoimentos">
+            {depoimentosIlustrativos.slice(0, mostrarTodosDepoimentos ? 10 : 1).map((depoimento, indice) => (
+              <article className="depoimentoExemplo" key={indice}>
+                <span className="aspasDepoimento" aria-hidden="true">“</span>
+                <div>
+                  <strong>Depoimento ilustrativo {String(indice + 1).padStart(2, "0")}</strong>
+                  <p>“{depoimento}”</p>
+                  <small>Exemplo fictício — não é uma avaliação de cliente.</small>
+                </div>
+              </article>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="botaoDepoimentos"
+            onClick={() => setMostrarTodosDepoimentos((anterior) => !anterior)}
+            aria-expanded={mostrarTodosDepoimentos}
+            aria-controls="depoimentos"
+          >
+            {mostrarTodosDepoimentos ? "VER MENOS" : "VER MAIS DEPOIMENTOS"}
+            <span aria-hidden="true">{mostrarTodosDepoimentos ? " ↑" : " ↓"}</span>
+          </button>
         </section>
+
       </div>
 
       <footer className="rodape">
@@ -522,20 +495,11 @@ export default function Home3() {
           gap: 10px;
           color: #7735c5;
         }
-        .home3 .marcaIcone {
-          font-size: 46px;
-          line-height: 1;
-          color: #7735c5;
-        }
-        .home3 .marca strong {
+        .home3 .marcaLogo {
           display: block;
-          font-family: Georgia, serif;
-          font-size: 27px;
-        }
-        .home3 .marca small {
-          display: block;
-          font-size: 11px;
-          color: #596479;
+          width: min(240px, 60vw);
+          height: auto;
+          object-fit: contain;
         }
         .home3 .navegacao {
           display: flex;
@@ -701,8 +665,13 @@ export default function Home3() {
         }
         .home3 .gradeTerapeutas {
           display: grid;
-          grid-template-columns: repeat(8, minmax(0, 1fr));
+          grid-template-columns: repeat(7, minmax(0, 1fr));
           gap: 13px;
+        }
+        .home3 .todosTerapeutasAcao {
+          display: flex;
+          justify-content: center;
+          margin-top: 26px;
         }
         .home3 .cartaoTerapeuta {
           display: flex;
@@ -1079,14 +1048,14 @@ export default function Home3() {
             font-size: 15px;
           }
           .home3 .heroConteudo { width: 68%; }
-          .home3 .gradeTerapeutas { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+          .home3 .gradeTerapeutas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
           .home3 .gradeAreas {
             grid-template-columns: repeat(3, 1fr);
           }
         }
         @media (max-width: 767px) {
           .home3 .conteudo { padding: 0 12px; }
-          .home3 .marca strong { font-size: 23px; }
+          .home3 .marcaLogo { width: min(205px, 58vw); }
           .home3 .hero {
             min-height: auto;
             display: flex;
@@ -1144,7 +1113,7 @@ export default function Home3() {
             display: none;
           }
           .home3 .terapeutasDestaque { padding: 30px 12px; }
-          .home3 .gradeTerapeutas { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+          .home3 .gradeTerapeutas { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
           .home3 .cartaoTerapeuta { padding: 12px 2px; gap: 6px; }
           .home3 .fotoTerapeuta { width: min(70px, 100%); height: auto; aspect-ratio: 1; }
           .home3 .cartaoTerapeuta strong { font-size: 11px; overflow-wrap: anywhere; }
