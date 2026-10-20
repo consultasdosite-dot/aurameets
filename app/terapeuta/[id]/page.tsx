@@ -98,6 +98,15 @@ function getDeliveryLabel(service: Service) {
   if (formatos.has("audio")) {
     labels.push("Áudio");
   }
+  if (formatos.has("relatorio_pdf")) {
+    labels.push("Relatório em PDF");
+  }
+  if (formatos.has("relatorio_audio")) {
+    labels.push("Relatório + Áudio");
+  }
+  if (formatos.has("relatorio_consulta")) {
+    labels.push("Relatório + Consulta");
+  }
   if (labels.length === 0) {
     return "Consulte a forma de entrega";
   }
