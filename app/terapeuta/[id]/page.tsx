@@ -59,6 +59,9 @@ function getFinalPrice(service: Service) {
     : service.price;
 }
 function getDiscountPercentage(service: Service) {
+  if (service.promotional_price === null || service.promotional_price === "") {
+    return null;
+  }
   const originalPrice = Number(service.price);
   const promotionalPrice = Number(service.promotional_price);
   if (
