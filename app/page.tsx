@@ -271,7 +271,7 @@ export default function Home3() {
             <p>Escolha um profissional e conheça sua trajetória e seus serviços.</p>
           </div>
           <div className="gradeTerapeutas">
-            {terapeutasDestaque.map((terapeuta) => {
+            {terapeutasDestaque.filter((terapeuta) => !normalizarNome(terapeuta.nome).startsWith("alzira")).map((terapeuta) => {
               const conteudo = (
                 <>
                   <span className="fotoTerapeuta">
