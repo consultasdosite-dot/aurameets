@@ -38,7 +38,6 @@ const terapeutasSelecionados = [
   { nome: "Eunice", busca: ["eunice"] },
   { nome: "Kassia", busca: ["kassia", "kássia"] },
   { nome: "Fernanda", busca: ["fernanda"] },
-  { nome: "Danyela", busca: ["danyela"] },
 ];
 
 function embaralharTerapeutas<T>(itens: T[]): T[] {
@@ -60,7 +59,7 @@ function montarDestaques(
   terapeutas: HomeExperienceTherapist[],
   ofertas: FeaturedExperience[],
 ): TerapeutaDestaque[] {
-  return embaralharTerapeutas(terapeutasSelecionados.map((selecionado) => {
+  const destaques = terapeutasSelecionados.map((selecionado) => {
     const corresponde = (nome: string) => {
       const normalizado = normalizarNome(nome);
       return selecionado.busca.some((busca) =>
@@ -77,7 +76,14 @@ function montarDestaques(
       : oferta?.public_href || null;
     const profissao = terapeuta?.speciality?.trim() || oferta?.therapist?.speciality?.trim() || null;
     return { nome: terapeuta?.name || oferta?.therapist_name || selecionado.nome, profissao, foto, perfil };
-  }).filter((item) => item.perfil));
+  }).filter((item) => item.perfil);
+
+  const alzira = destaques.find((item) => normalizarNome(item.nome).startsWith("alzira"));
+  const renata = destaques.find((item) => normalizarNome(item.nome).startsWith("renata martins"));
+  const primeiros = [alzira, renata].filter((item): item is TerapeutaDestaque => Boolean(item));
+  const restantes = destaques.filter((item) => item !== alzira && item !== renata);
+
+  return [...embaralharTerapeutas(primeiros), ...embaralharTerapeutas(restantes)];
 }
 
 function Icone({ tipo }: { tipo: "pessoas" | "coracao" | "escudo" }) {
@@ -190,11 +196,11 @@ export default function Home3() {
             </p>
 
             <div className="heroAcoes">
-  <Link href="#terapeutas-destaque" className="botaoPrincipal">
+  <Link href="#terapeutas-destaque" className="botaoPrincipal" onClick={(evento) => { evento.preventDefault(); document.getElementById("terapeutas-destaque")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
     CONHECER TERAPEUTAS <span>→</span>
   </Link>
 
-  <Link href="/jornada" className="botaoSecundario">
+  <Link href="/jornada" className="botaoSecundario botaoJornada">
     DESCUBRA POR ONDE COMEÇAR
   </Link>
 
@@ -202,7 +208,7 @@ export default function Home3() {
     href="https://wa.me/5551980339532?text=Ol%C3%A1%21%20Vim%20pelo%20AuraMeets%20e%20gostaria%20de%20falar%20com%20um%20atendente."
     target="_blank"
     rel="noopener noreferrer"
-    className="botaoSecundario"
+    className="botaoSecundario botaoAtendente"
   >
     FALE COM ATENDENTE
   </a>
@@ -234,6 +240,30 @@ export default function Home3() {
           </div>
         </section>
 
+        {(() => {
+          const alzira = terapeutasDestaque.find((item) => normalizarNome(item.nome).startsWith("alzira"));
+          if (!alzira?.perfil) return null;
+          return (
+            <section className="experienciaPresenteDia" aria-label="Experiência Presente do Dia">
+              <div className="experienciaDiaFoto">
+                {alzira.foto ? <img src={alzira.foto} alt="Foto de Alzira" /> : <span aria-hidden="true">✧</span>}
+              </div>
+              <div className="experienciaDiaTexto">
+                <span className="sobretitulo">SEGUNDA-FEIRA • 26/10/2026</span>
+                <h2>EXPERIÊNCIA PRESENTE DO DIA</h2>
+                <div className="experienciaDiaVoucher" aria-label="Voucher presente de Cartas de Odu com Alzira">
+                  <span className="experienciaDiaSelo">VOUCHER PRESENTE • AURAMEETS</span>
+                  <strong>CARTAS DE ODU</strong>
+                  <span>Autoconhecimento e Orientação</span>
+                  <p>Descubra o que as Cartas de Odu podem revelar sobre o momento que você está vivendo, trazendo clareza sobre seus desafios e orientação para escolhas mais conscientes.</p>
+                  <small>Com Alzira • Segunda-feira, 26/10/2026</small>
+                </div>
+                <a href={`https://wa.me/5543999880296?text=${encodeURIComponent("Olá, Alzira! Conheci sua experiência Cartas de Odu no AuraMeets e gostaria de solicitar meu voucher.")}`} target="_blank" rel="noopener noreferrer" className="botaoPrincipal botaoVoucher">QUERO VOUCHER <span>→</span></a>
+              </div>
+            </section>
+          );
+        })()}
+
         <section className="terapeutasDestaque" id="terapeutas-destaque">
           <div className="tituloCentral">
             <span className="sobretitulo">CONEXÕES QUE ACOLHEM</span>
@@ -253,7 +283,7 @@ export default function Home3() {
                   </span>
                   <strong>{terapeuta.nome.trim().split(/\s+/).slice(0, 2).map((parte) => parte.charAt(0).toLocaleUpperCase("pt-BR") + parte.slice(1).toLocaleLowerCase("pt-BR")).join(" ")}</strong>
                   {terapeuta.profissao && <span className="profissaoTerapeuta">{terapeuta.profissao}</span>}
-                  <small>{terapeuta.perfil ? "Ver perfil →" : carregandoTerapeutas ? "Carregando..." : "Perfil indisponível"}</small>
+                  <small>{terapeuta.perfil ? "CONHECER PROFISSIONAL →" : carregandoTerapeutas ? "Carregando..." : "Perfil indisponível"}</small>
                 </>
               );
               return terapeuta.perfil ? (
@@ -480,7 +510,7 @@ export default function Home3() {
         .home3 .navegacao .navDestaque {
           padding: 12px 21px;
           border-radius: 30px;
-          background: #7735c5;
+          background: #25D366;
           color: white;
         }
         .home3 .menuMobile { display: none; }
@@ -587,6 +617,21 @@ export default function Home3() {
           border: 1px solid #7735c5;
           color: #7735c5;
         }
+        .home3 .heroAcoes .botaoJornada {
+          background: #981F50;
+          border-color: #981F50;
+          color: #ffffff;
+        }
+        .home3 .experienciaPresenteDia .botaoVoucher {
+          background: #25D366;
+          border-color: #25D366;
+          color: #ffffff;
+        }
+        .home3 .heroAcoes .botaoAtendente {
+          background: #25D366;
+          border-color: #25D366;
+          color: #ffffff;
+        }
         .home3 .beneficios {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
@@ -623,6 +668,64 @@ export default function Home3() {
           padding: 44px;
           border-radius: 18px;
         }
+        .home3 .experienciaPresenteDia {
+          display: flex;
+          align-items: center;
+          gap: 28px;
+          margin: 18px 0 8px;
+          padding: 26px;
+          border: 1px solid #e6c887;
+          border-radius: 20px;
+          background: linear-gradient(120deg, #fff9e9, #f1e7ff);
+        }
+        .home3 .experienciaDiaFoto {
+          flex: 0 0 160px;
+          width: 160px;
+          height: 160px;
+          overflow: hidden;
+          border-radius: 18px;
+          background: #e1c9ff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 65px;
+          color: #7735c5;
+        }
+        .home3 .experienciaDiaFoto img { width: 100%; height: 100%; object-fit: cover; }
+        .home3 .experienciaDiaTexto { flex: 1; min-width: 0; }
+        .home3 .experienciaDiaTexto h2 {
+          display: block;
+          width: 100%;
+          margin: 16px 0 20px;
+          padding: 18px 16px;
+          border-radius: 14px;
+          background: #7735C5;
+          color: #ffffff;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: clamp(22px, 3vw, 32px);
+          font-weight: 900;
+          line-height: 1.25;
+          text-align: center;
+          letter-spacing: 0.02em;
+        }
+        .home3 .experienciaDiaVoucher {
+          display: flex; flex-direction: column; gap: 9px;
+          padding: 22px; margin: 18px 0;
+          border: 1px solid #d5b66e; border-radius: 17px;
+          background: linear-gradient(135deg, #fffdf7, #f8ebd1);
+          box-shadow: 0 8px 22px #76591a14;
+        }
+        .home3 .experienciaDiaSelo { font-size: 11px; font-weight: 800; letter-spacing: 1.6px; color: #956719; }
+        .home3 .experienciaDiaVoucher strong { font-family: Georgia, serif; font-size: clamp(24px, 3vw, 34px); color: #583282; }
+        .home3 .experienciaDiaVoucher > span:not(.experienciaDiaSelo) { font-weight: 700; color: #25344d; }
+        .home3 .experienciaDiaVoucher p { margin: 5px 0; font-size: 14px; }
+        .home3 .experienciaDiaVoucher small { font-weight: 700; color: #79582d; }
+        .home3 .experienciaDiaTexto > .botaoPrincipal:not(.botaoVoucher) { background: #7735c5; color: #fff; }
+
+        @media (max-width: 767px) {
+          .home3 .experienciaPresenteDia { flex-direction: column; padding: 20px; text-align: center; }
+          .home3 .experienciaDiaFoto { flex-basis: 140px; width: 140px; height: 140px; }
+        }
         .home3 .terapeutasDestaque {
           padding: 45px 22px;
           margin: 14px 0 24px;
@@ -631,8 +734,8 @@ export default function Home3() {
         }
         .home3 .gradeTerapeutas {
           display: grid;
-          grid-template-columns: repeat(7, minmax(0, 1fr));
-          gap: 13px;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 20px;
         }
         .home3 .todosTerapeutasAcao {
           display: flex;
@@ -642,40 +745,67 @@ export default function Home3() {
         .home3 .cartaoTerapeuta {
           display: flex;
           flex-direction: column;
-          align-items: center;
-          gap: 8px;
-          padding: 17px 6px;
+          align-items: stretch;
+          gap: 0;
+          padding: 0 0 20px;
+          overflow: hidden;
           background: #fff;
-          border-radius: 17px;
+          border: 1px solid #eadff4;
+          border-radius: 20px;
           text-align: center;
           color: #25305a;
-          box-shadow: 0 6px 18px #60249a12;
+          box-shadow: 0 10px 26px #60249a16;
+          transition: transform .2s ease, box-shadow .2s ease;
         }
         .home3 a.cartaoTerapeuta:hover {
           transform: translateY(-3px);
-          box-shadow: 0 9px 24px #60249a30;
+          box-shadow: 0 12px 28px #60249a30;
         }
         .home3 .fotoTerapeuta {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 70px;
-          height: 70px;
-          border-radius: 50%;
+          width: 100%;
+          height: 220px;
           overflow: hidden;
           background: linear-gradient(135deg, #7735c5, #ef649a);
           color: #fff;
-          font-size: 36px;
-          border: 3px solid #fff;
+          font-size: 54px;
         }
         .home3 .fotoTerapeuta img {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center 25%;
         }
-        .home3 .cartaoTerapeuta strong { font-size: 13px; }
-        .home3 .profissaoTerapeuta { font-size: 11px; color: #626a79; line-height: 1.3; overflow-wrap: anywhere; }
-        .home3 .cartaoTerapeuta small { font-size: 11px; color: #2678d9; }
+        .home3 .cartaoTerapeuta strong {
+          margin: 18px 12px 10px;
+          font-size: 20px;
+          line-height: 1.3;
+        }
+        .home3 .profissaoTerapeuta {
+          display: block;
+          align-self: center;
+          max-width: calc(100% - 30px);
+          padding: 9px 17px;
+          border-radius: 20px;
+          background: #f0e4ff;
+          color: #6931a5;
+          font-size: 14px;
+          font-weight: 800;
+          line-height: 1.4;
+          overflow-wrap: anywhere;
+        }
+        .home3 .cartaoTerapeuta small {
+          align-self: center;
+          margin: 18px 12px 0;
+          padding: 12px 20px;
+          border-radius: 24px;
+          background: #7735c5;
+          color: white;
+          font-size: 12px;
+          font-weight: 800;
+        }
         .home3 .guia {
           display: grid;
           grid-template-columns: 1.15fr 1fr;
@@ -1011,11 +1141,11 @@ export default function Home3() {
             display: none;
           }
           .home3 .terapeutasDestaque { padding: 30px 12px; }
-          .home3 .gradeTerapeutas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
-          .home3 .cartaoTerapeuta { padding: 12px 2px; gap: 6px; }
-          .home3 .fotoTerapeuta { width: min(70px, 100%); height: auto; aspect-ratio: 1; }
-          .home3 .cartaoTerapeuta strong { font-size: 11px; overflow-wrap: anywhere; }
-          .home3 .cartaoTerapeuta small { font-size: 10px; }
+          .home3 .gradeTerapeutas { grid-template-columns: 1fr; gap: 18px; }
+          .home3 .cartaoTerapeuta { padding-bottom: 22px; }
+          .home3 .fotoTerapeuta { height: 270px; }
+          .home3 .cartaoTerapeuta strong { font-size: 22px; }
+          .home3 .cartaoTerapeuta small { font-size: 12px; }
           .home3 .gradeAreas {
             grid-template-columns: repeat(2, 1fr);
           }
