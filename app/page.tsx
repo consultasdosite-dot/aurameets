@@ -196,7 +196,7 @@ export default function Home3() {
             </p>
 
             <div className="heroAcoes">
-  <Link href="#terapeutas-destaque" className="botaoPrincipal" onClick={(evento) => { evento.preventDefault(); document.getElementById("terapeutas-destaque")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>
+  <Link href="/terapeutas" className="botaoPrincipal">
     CONHECER TERAPEUTAS <span>→</span>
   </Link>
 
@@ -409,15 +409,11 @@ export default function Home3() {
 
         <section className="falaSistemica bloco" id="fala-sistemica">
           <div className="falaConteudo">
-            <span className="sobretitulo">UMA EXPERIÊNCIA GRATUITA</span>
-            <h2>Fala Sistêmica</h2>
-            <h3>Um espaço para expressar o que você está vivendo.</h3>
-            <p>
-              Compartilhe, com suas próprias palavras, o que
-              está acontecendo em sua vida. Sua mensagem será
-              encaminhada pelo WhatsApp para Oscar Ahumada,
-              que poderá preparar uma Fala Sistêmica personalizada.
-            </p>
+            <span className="sobretitulo fsSubtitulo">UMA EXPERIÊNCIA</span>
+            <h2 className="fsTitulo">Fala Sistêmica <span className="fsGratuita">(gratuita)</span></h2>
+            <p className="fsDestaque">Suas palavras podem ajudar a mudar a forma como você vê e vive suas experiências.</p>
+            <p>A Fala Sistêmica é um texto personalizado, criado a partir do que você está vivendo, para ser lido durante 21 dias.</p>
+            <p>Essa prática convida você a reconhecer e ressignificar crenças limitantes, fortalecer novos pensamentos e desenvolver uma postura mais consciente diante da vida.</p>
 
             <label htmlFor="mensagem-fala">
               O que você gostaria de compartilhar?
@@ -679,9 +675,9 @@ export default function Home3() {
           background: linear-gradient(120deg, #fff9e9, #f1e7ff);
         }
         .home3 .experienciaDiaFoto {
-          flex: 0 0 160px;
-          width: 160px;
-          height: 160px;
+          flex: 0 0 220px;
+          width: 220px;
+          height: 220px;
           overflow: hidden;
           border-radius: 18px;
           background: #e1c9ff;
@@ -724,7 +720,7 @@ export default function Home3() {
 
         @media (max-width: 767px) {
           .home3 .experienciaPresenteDia { flex-direction: column; padding: 20px; text-align: center; }
-          .home3 .experienciaDiaFoto { flex-basis: 140px; width: 140px; height: 140px; }
+          .home3 .experienciaDiaFoto { flex-basis: 270px; width: 100%; max-width: 340px; height: 270px; }
         }
         .home3 .terapeutasDestaque {
           padding: 45px 22px;
@@ -973,6 +969,21 @@ export default function Home3() {
           align-items: center;
           gap: 35px;
           background: linear-gradient(115deg, #ffe2df, #e1d2ff);
+        }
+        .home3 .falaSistemica {
+          border-radius: 30px;
+          background: linear-gradient(125deg, #fce0e2 0%, #f4dced 48%, #e5d4fa 100%);
+        }
+        .home3 .falaConteudo .fsSubtitulo { font-size: 15px; letter-spacing: 3px; color: #8545b7; }
+        .home3 .falaConteudo .fsTitulo { font-size: clamp(36px, 6vw, 54px); font-weight: 400; margin: 12px 0 26px; line-height: 1.2; }
+        .home3 .falaConteudo .fsGratuita { display: inline-block; font-family: Arial, sans-serif; font-size: .38em; font-weight: 400; color: #8956b5; white-space: nowrap; }
+        .home3 .falaConteudo p { font-size: 18px; line-height: 1.65; margin: 0 0 22px; }
+        .home3 .falaConteudo .fsDestaque { font-size: 22px; line-height: 1.5; }
+        @media (max-width: 600px) {
+          .home3 .falaConteudo .fsSubtitulo { font-size: 12px; letter-spacing: 2px; }
+          .home3 .falaConteudo .fsTitulo { font-size: clamp(30px, 8vw, 42px); }
+          .home3 .falaConteudo p { font-size: 16px; }
+          .home3 .falaConteudo .fsDestaque { font-size: 19px; }
         }
         .home3 .falaConteudo h3 {
           margin: 12px 0;
