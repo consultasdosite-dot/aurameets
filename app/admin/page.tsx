@@ -152,6 +152,27 @@ export default function AdminPage() {
     }
   }
 
+  const [saindo, setSaindo] = useState(false);
+
+  async function sairDoPainel() {
+    if (saindo) return;
+    setSaindo(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        setErro("Não foi possível encerrar a sessão. Tente novamente.");
+        return;
+      }
+      router.replace("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Erro ao sair do painel administrativo:", error);
+      setErro("Não foi possível encerrar a sessão. Tente novamente.");
+    } finally {
+      setSaindo(false);
+    }
+  }
+
   function formatarData(data: string | null) {
     if (!data) {
       return "Data não informada";
@@ -237,6 +258,15 @@ export default function AdminPage() {
             Gerenciar terapeutas
             <ArrowIcon className="h-4 w-4" />
           </Link>
+
+          <button
+            type="button"
+            onClick={sairDoPainel}
+            disabled={saindo}
+            className="inline-flex items-center justify-center rounded-xl border border-red-400/30 bg-red-400/10 px-5 py-3 text-sm font-bold text-red-200 transition hover:bg-red-400/20 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saindo ? "Saindo..." : "SAIR"}
+          </button>
         </div>
       </section>
 

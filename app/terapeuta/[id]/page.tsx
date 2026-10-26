@@ -14,6 +14,12 @@ type IconName =
 type PageProps = {
   params: Promise<{ id: string }>;
 };
+type Testimonial = {
+  id: string;
+  client_name: string;
+  testimonial: string;
+};
+
 type Service = {
   id: string;
   name: string;
@@ -123,7 +129,7 @@ function ExpandableText({
   className?: string;
 }) {
   return (
-    <details className="group">
+    <details className="group text-center">
       <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
         <span className="block group-open:hidden">
           <span
@@ -249,6 +255,23 @@ export default async function TherapistPage({
       services = (data ?? []) as Service[];
     }
   }
+  // Depoimentos públicos vinculados ao UUID de autenticação do terapeuta.
+  let testimonials: Testimonial[] = [];
+  if (therapist.profile_id) {
+    const { data, error } = await supabase
+      .from("therapist_testimonials")
+      .select("id,client_name,testimonial")
+      .eq("therapist_id", therapist.profile_id)
+      .eq("status", "approved")
+      .eq("publication_authorized", true)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("Erro ao carregar depoimentos públicos:", error);
+    } else {
+      testimonials = (data ?? []) as Testimonial[];
+    }
+  }
+
   // experiences.therapist_id é bigint (therapists.id), nunca o UUID profile_id.
   let hasPresent = false;
   let presentDetails: { title: string; description: string | null } | null = null;
@@ -329,191 +352,180 @@ export default async function TherapistPage({
   const presentHref = whatsappNumber
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Olá, sou visitante do AuraMeets e quero meu presente")}`
     : "#servicos";
-  // A única ação no topo é a experiência presente, quando disponível.
+  const whatsappHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Olá! Conheci seu perfil no AuraMeets e gostaria de conversar sobre seus atendimentos.`)}`
+    : "";
+  const specialties = (therapist.speciality ?? "")
+    .split(/[,;•]/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+
   return (
-    <main className="min-h-screen bg-[#F7F8FC] text-[#17213B] selection:bg-[#EAD5FF] selection:text-[#351454]">
-      <header className="w-full bg-[#0A1034]">
-        <img
-          src="/cabecalho-perfil-terapeuta-aurameets.png"
-          alt="AuraMeets — Terapeuta qualificado com segurança"
-          className="block h-auto w-full"
-        />
+    <main className="min-h-screen bg-[#FCFBFF] text-[#201936] selection:bg-[#E8D8FA]">
+      <header className="bg-[#090E2E]">
+        <div className="mx-auto max-w-6xl">
+          <img
+            src="/cabecalho-perfil-terapeuta-aurameets.png"
+            alt="AuraMeets — Terapeuta qualificado com segurança"
+            className="block h-auto w-full object-contain"
+          />
+        </div>
       </header>
-      <section className="mx-auto max-w-6xl px-5 pb-7 pt-8 sm:px-8 sm:pt-12">
-        <div className="rounded-[1.7rem] border border-[#E7E0F0] bg-white p-5 shadow-sm sm:p-9">
-          <div className="grid items-center gap-8 md:grid-cols-[240px_1fr] lg:gap-12">
-            <div className="mx-auto md:mx-0">
-              <div className="relative h-52 w-52 sm:h-60 sm:w-60">
-                <div className="h-full w-full rounded-[2.4rem] bg-gradient-to-br from-[#E2C66E] via-[#8A35D1] to-[#3B1A6B] p-[2px]">
-                  <div className="grid h-full w-full place-items-center overflow-hidden rounded-[2.3rem] bg-[#F3EAF9]">
-                    {photo ? (
-                      <img src={photo} alt={`Foto profissional de ${name}`} className="h-full w-full object-cover object-top" />
-                    ) : (
-                      <span className="font-serif text-6xl text-[#7436A6]">{getInitials(name)}</span>
-                    )}
-                  </div>
-                </div>
-                <span className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#E1D3EF] bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#6B299D] shadow-sm">
-                  <Icon name="check" className="h-3.5 w-3.5" />
-                  Profissional verificada
-                </span>
-              </div>
-            </div>
-            <div className="min-w-0 text-center md:text-left">
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#7D36B5]">Perfil profissional AuraMeets</p>
-              <h1 className="font-serif text-4xl font-medium leading-tight text-[#1D1538] sm:text-5xl">{name}</h1>
-              <p className="mt-3 text-base font-semibold text-[#8241B2] sm:text-lg">{headline}</p>
-              <div className="mx-auto mt-4 max-w-2xl md:mx-0">
-                <ExpandableText
-                  text={therapist.bio || "Conheça este profissional e encontre a experiência ideal para o seu momento."}
-                  className="text-sm leading-7 text-[#47516A] sm:text-base"
-                />
-              </div>
-              <div className="mt-5 flex flex-wrap justify-center gap-2 md:justify-start">
-                {[therapist.service_type, location].filter(Boolean).map((item) => (
-                  <span key={String(item)} className="rounded-full border border-[#E5DCF0] bg-[#F9F5FD] px-3 py-1.5 text-xs text-[#694D80]">{item}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-          {hasPresent && whatsappNumber && (
-            <div className="mt-10 flex flex-col items-center gap-4 border-t border-[#ECE6F2] pt-6 text-center">
-              <Link
-                href={presentHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-14 items-center justify-center gap-3 rounded-xl bg-[#16A34A] px-7 py-4 text-center text-sm font-extrabold uppercase tracking-wide text-white transition hover:bg-[#12813C]"
-              >
-                <Icon name="gift" className="h-6 w-6" />
-                Experiência Presente
-              </Link>
-              {presentDetails && (
-                <div className="max-w-2xl">
-                  <h2 className="font-serif text-2xl text-[#1D1538]">{presentDetails.title}</h2>
-                  {presentDetails.description && (
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#47516A]">{presentDetails.description}</p>
+
+      <section className="mx-auto max-w-6xl px-5 pb-8 pt-9 sm:px-8 sm:pt-14">
+        <div className="grid items-center gap-8 md:grid-cols-[minmax(0,300px)_minmax(0,1fr)] md:gap-14">
+          <div className="mx-auto w-full max-w-[215px] sm:max-w-[260px] md:max-w-[300px]">
+            <div className="relative">
+              <div className="aspect-[4/4.5] overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#E3C474] via-[#9D57CB] to-[#512481] p-[2px] shadow-[0_18px_48px_rgba(53,27,85,0.12)]">
+                <div className="grid h-full w-full place-items-center overflow-hidden rounded-[calc(2rem-2px)] bg-[#EEE6F7]">
+                  {photo ? (
+                    <img src={photo} alt={`Foto profissional de ${name}`} className="h-full w-full object-cover object-top" />
+                  ) : (
+                    <span className="font-serif text-6xl text-[#7935C5]">{getInitials(name)}</span>
                   )}
                 </div>
-              )}
+              </div>
+              <span className="absolute -bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#E8D9F2] bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[#7433A9] shadow-sm">
+                  <Icon name="check" className="h-4 w-4" /> Profissional verificado
+                </span>
             </div>
-          )}
+          </div>
+          <div className="min-w-0 pt-4 text-center md:pt-0 md:text-left">
+            <h1 className="font-serif text-[clamp(2.3rem,5vw,4.25rem)] leading-[1.12] tracking-tight text-[#201536]">{name}</h1>
+            <p className="mt-3 text-lg font-semibold text-[#7935C5] sm:text-xl">{headline}</p>
+            <div className="mx-auto mt-5 max-w-[65ch] md:mx-0">
+              <ExpandableText
+                text={therapist.bio || "Conheça este profissional e encontre a experiência ideal para o seu momento."}
+                className="text-sm leading-7 text-[#50556C] sm:text-base"
+              />
+            </div>
+            <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-[#5C5570] md:justify-start">
+              {[location, therapist.service_type].filter(Boolean).map((item) => <span key={String(item)}>{item}</span>)}
+            </div>
+          </div>
         </div>
       </section>
-      <section
-        id="servicos"
-        className="mx-auto max-w-6xl px-5 pb-16 pt-6 sm:px-8 sm:pb-20"
-      >
-        <div className="mb-9 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#7D36B5]">
-              Atendimentos e experiências
-            </p>
-            <h2 className="mt-2 font-serif text-3xl sm:text-4xl">
-              Serviços oferecidos
-            </h2>
-          </div>
-          <p className="max-w-md text-sm leading-6 text-[#59647B]">
-            Escolha a experiência ideal para o seu momento e
-            contrate o serviço desejado.
-          </p>
+
+      <nav aria-label="Navegação do perfil" className="sticky top-0 z-30 border-y border-[#ECE5F1] bg-white/95 backdrop-blur-md">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 items-center justify-items-center gap-x-3 gap-y-3 px-4 py-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-10 sm:px-8">
+          {[
+            { label: "Quem sou", href: "#quem-sou" },
+            { label: "Especialidades", href: "#especialidades" },
+            { label: "Serviços", href: "#servicos" },
+            ...(testimonials.length ? [{ label: "Depoimentos", href: "#depoimentos" }] : []),
+          ].map((item) => (
+            <a key={item.href} href={item.href} className="w-full rounded-lg bg-gradient-to-r from-[#6D28D9] via-[#7C3AED] to-[#9333EA] px-2 py-3 text-center text-[11px] font-bold uppercase tracking-[0.04em] text-white transition hover:from-[#5B21B6] hover:via-[#6D28D9] hover:to-[#7E22CE] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7935C5] sm:w-auto sm:px-5 sm:text-sm sm:tracking-[0.08em]">{item.label}</a>
+          ))}
         </div>
-        {services.length > 0 ? (
-          <div className="grid gap-4 sm:gap-6">
-            {services.map((service, index) => (
-              <article
-                key={service.id}
-                className="group overflow-hidden rounded-[1.35rem] border border-[#E6E1EF] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#B68ED7] sm:rounded-[1.7rem] lg:grid lg:grid-cols-5 lg:items-stretch"
-              >
-                <div
-                  className={`relative aspect-[16/9] w-full self-start overflow-hidden bg-gradient-to-br sm:aspect-video lg:aspect-auto lg:self-stretch lg:col-span-2 ${
-                    index % 3 === 0
-                      ? "from-[#8d6a24] via-[#d8b95d] to-[#75500e]"
-                      : index % 3 === 1
-                        ? "from-[#5d2469] via-[#a95bb2] to-[#33113c]"
-                        : "from-[#19394d] via-[#3f8191] to-[#10232d]"
-                  }`}
-                >
-                  {service.cover_photo_url && (
-                    <img
-                      src={service.cover_photo_url}
-                      alt={`Imagem de ${service.name}`}
-                      className="absolute inset-0 h-full w-full object-cover object-center"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_25%,rgba(255,255,255,0.26),transparent_26%),linear-gradient(0deg,rgba(5,5,7,0.45),transparent)]" />
-                  <div className="absolute bottom-3 left-3 rounded-full border border-white/20 bg-black/40 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur sm:bottom-4 sm:left-5 sm:px-3 sm:py-1.5 sm:text-[10px] sm:tracking-[0.18em]">
-                    {service.category ||
-                      "Serviço AuraMeets"}
+      </nav>
+
+      {(whatsappNumber || hasPresent) && (
+        <div className="mx-auto flex max-w-6xl flex-col justify-center gap-3 px-5 pb-8 pt-7 sm:flex-row sm:px-8">
+          {whatsappNumber && (
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#0DBE65] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#099F54]">
+              <Icon name="whatsapp" className="h-5 w-5" /> Falar com o terapeuta
+            </a>
+          )}
+          {hasPresent && whatsappNumber && (
+            <a href={presentHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#7935C5] bg-white px-6 py-3 text-sm font-bold text-[#7935C5] transition hover:bg-[#F5ECFC]">
+              <Icon name="gift" className="h-5 w-5" /> Experiência Presente
+            </a>
+          )}
+        </div>
+      )}
+      {hasPresent && presentDetails && whatsappNumber && (
+        <div className="mx-auto max-w-3xl px-5 pb-7 text-center">
+          <h2 className="font-serif text-xl text-[#201536]">{presentDetails.title}</h2>
+          {presentDetails.description && <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#50556C]">{presentDetails.description}</p>}
+        </div>
+      )}
+
+      <section id="quem-sou" className="mx-auto max-w-6xl scroll-mt-24 border-t border-[#EAE4F0] px-5 py-10 sm:px-8 sm:py-14">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#AE7B28]">Quem sou</p>
+        <h2 className="mt-2 font-serif text-3xl text-[#201536] sm:text-4xl">Conheça minha trajetória</h2>
+        <div className="mt-5 max-w-4xl">
+          <ExpandableText text={therapist.bio || "Conheça este profissional e encontre a experiência ideal para o seu momento."} className="text-base leading-8 text-[#50556C]" />
+        </div>
+      </section>
+
+      <section id="especialidades" className="mx-auto max-w-6xl scroll-mt-24 border-t border-[#EAE4F0] px-5 py-10 sm:px-8 sm:py-12">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#AE7B28]">Áreas de atuação</p>
+        <h2 className="mt-2 font-serif text-3xl text-[#201536] sm:text-4xl">Especialidades</h2>
+        <div className="mt-6 flex flex-wrap gap-3">
+          {(specialties.length ? specialties : [headline]).map((specialty, index) => (
+            <span key={`${specialty}-${index}`} className="rounded-full border border-[#E5D7F0] bg-white px-5 py-2.5 text-sm font-semibold text-[#6C329E] sm:text-base">{specialty}</span>
+          ))}
+        </div>
+      </section>
+
+      <section id="servicos" className="mx-auto max-w-6xl scroll-mt-24 border-t border-[#EAE4F0] px-5 py-10 sm:px-8 sm:py-14">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#AE7B28]">Atendimentos e experiências</p>
+        <h2 className="mt-2 font-serif text-3xl text-[#201536] sm:text-4xl">Serviços oferecidos</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-[#59647B]">Conheça os serviços e escolha o atendimento que combina com seu momento.</p>
+        {services.length ? (
+          <div className="mt-8 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
+            {services.map((service) => (
+              <article key={service.id} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#EBE5F0] bg-white shadow-[0_8px_30px_rgba(32,21,54,0.045)]">
+                {service.cover_photo_url && (
+                  <div className="aspect-[16/9] overflow-hidden bg-[#F3EAF9]">
+                    <img src={service.cover_photo_url} alt={`Imagem de ${service.name}`} className="h-full w-full object-cover" loading="lazy" />
                   </div>
-                </div>
-                <div className="flex flex-col justify-between p-4 sm:p-6 lg:col-span-3 lg:p-8">
-                  <h3 className="font-serif text-[1.55rem] leading-tight text-[#1D1538] sm:text-2xl">
-                    {service.name}
-                  </h3>
-                  <div className="mt-2 sm:mt-3 sm:min-h-[96px]">
-                    <ExpandableText
-                      text={
-                        service.description ||
-                        "Conheça esta experiência oferecida pelo profissional."
-                      }
-                      className="text-[13px] leading-5 text-[#59647B] sm:text-sm sm:leading-6"
-                    />
+                )}
+                <div className="flex flex-1 flex-col p-5 sm:p-6">
+                  {service.category && <p className="text-xs font-bold uppercase tracking-wider text-[#A36D22]">{service.category}</p>}
+                  <h3 className="mt-2 font-serif text-2xl leading-snug text-[#201536]">{service.name}</h3>
+                  {service.description && <div className="mt-3"><ExpandableText text={service.description} className="text-sm leading-6 text-[#59647B]" /></div>}
+                  <div className="mt-5 space-y-2 text-sm text-[#5B5369]">
+                    {service.duration_minutes && <p>{service.duration_minutes} minutos</p>}
+                    <p className="font-semibold text-[#5A337A]">{getDeliveryLabel(service)}</p>
                   </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#59647B] sm:mt-5">
-                    {service.duration_minutes && (
-                      <span className="rounded-full border border-[#E6E1EF] bg-[#F6F3FA] px-3 py-2">
-                        {service.duration_minutes} minutos
-                      </span>
-                    )}
-                    <div className="w-full rounded-xl border border-[#C4A0EA] bg-[#F3E8FF] px-4 py-3 text-[#35165A]">
-                      <p className="text-base font-extrabold uppercase leading-6 tracking-wide text-[#581C87]">
-                        FORMA DE ENTREGA
-                      </p>
-                      <p className="mt-1 break-words text-base font-semibold leading-6 sm:text-lg">
-                        {getDeliveryLabel(service)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 border-t border-[#E8E2F0] pt-4 sm:mt-6 sm:pt-5">
-                    <span className="block text-[9px] uppercase tracking-widest text-[#667086] sm:text-[10px]">
-                      Investimento
-                    </span>
+                  <div className="mt-auto pt-6">
                     {getDiscountPercentage(service) !== null && (
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <strong className="text-lg font-black text-[#8B7498] line-through decoration-2 sm:text-xl">
-                          {formatCurrency(service.price, service.currency || "BRL")}
-                        </strong>
-                        <span className="inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-emerald-700 sm:text-[11px]">
-                          {getDiscountPercentage(service)}% OFF
-                        </span>
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className="text-sm text-[#8B7498] line-through">{formatCurrency(service.price, service.currency || "BRL")}</span>
+                        <span className="rounded-full bg-[#E8F7ED] px-2 py-1 text-xs font-bold text-[#13703A]">{getDiscountPercentage(service)}% OFF</span>
                       </div>
                     )}
-                    <div className="mt-3 grid grid-cols-2 items-stretch gap-2 sm:gap-4">
-                      <strong className="flex min-h-14 min-w-0 items-center justify-center rounded-xl border border-emerald-200 bg-[#E3F5E7] px-1 py-2 text-center text-[clamp(0.9rem,3.5vw,1.5rem)] font-black leading-tight text-[#176534] sm:px-2 sm:text-2xl">
-                        {formatCurrency(getFinalPrice(service), service.currency || "BRL")}
-                      </strong>
-                      <Link
-                        href={`/comprar?servico=${encodeURIComponent(service.id)}`}
-                        className="inline-flex min-h-14 min-w-0 items-center justify-center gap-2 rounded-xl bg-[#FFD32A] px-2 py-2 text-center text-[10px] font-extrabold uppercase leading-tight tracking-wide text-black transition hover:bg-[#F2C400] sm:px-4 sm:text-sm"
-                      >
-                        <Icon name="cart" className="h-5 w-5 shrink-0 text-black" />
-                        Quero contratar
-                      </Link>
-                    </div>
+                    <p className="text-2xl font-extrabold text-[#7935C5]">{formatCurrency(getFinalPrice(service), service.currency || "BRL")}</p>
+                    <Link href={`/comprar?servico=${encodeURIComponent(service.id)}`} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#7935C5] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#6323A8]">
+                      <Icon name="cart" className="h-5 w-5" /> Quero contratar
+                    </Link>
                   </div>
                 </div>
               </article>
             ))}
           </div>
         ) : (
-          <div className="rounded-[1.7rem] border border-dashed border-[#D9C5EE] bg-white p-8 text-center text-[#59647B]">
-            Este profissional ainda não publicou serviços.
-          </div>
+          <p className="mt-6 text-sm text-[#59647B]">Este profissional ainda não publicou serviços.</p>
         )}
       </section>
-      <footer className="border-t border-[#E8E2F0] bg-white px-5 py-8 text-center text-xs text-[#667086]">
-        AuraMeets · Conecta · Transforma · Realiza
-      </footer>
+
+      {testimonials.length > 0 && (
+        <section id="depoimentos" aria-labelledby="titulo-depoimentos" className="mx-auto max-w-6xl scroll-mt-24 border-t border-[#EAE4F0] px-5 py-10 sm:px-8 sm:py-14">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#AE7B28]">Experiências compartilhadas</p>
+          <h2 id="titulo-depoimentos" className="mt-2 font-serif text-3xl text-[#201536] sm:text-4xl">Depoimentos</h2>
+          <p className="mt-3 text-xs leading-6 text-[#667086]">Depoimentos informados pelo terapeuta e autorizados para publicação. Não são avaliações verificadas pelo AuraMeets.</p>
+          <div className="mt-7 grid gap-5 md:grid-cols-2">
+            {testimonials.map((item) => (
+              <blockquote key={item.id} className="border-l-2 border-[#D7B474] bg-white px-5 py-6 sm:px-7">
+                <p className="whitespace-pre-wrap break-words font-serif text-lg leading-8 text-[#352A48]">“{item.testimonial}”</p>
+                <footer className="mt-4 text-sm font-semibold text-[#7935C5]">{item.client_name}</footer>
+              </blockquote>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {whatsappNumber && (
+        <section id="contato" className="scroll-mt-24 border-t border-[#EAE4F0] bg-[#F5F0FA] px-5 py-12 text-center sm:py-16">
+          <h2 className="font-serif text-3xl text-[#201536] sm:text-4xl">Vamos conversar?</h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[#59647B]">Entre em contato para saber mais sobre os atendimentos.</p>
+          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#0DBE65] px-8 py-3 text-sm font-bold text-white transition hover:bg-[#099F54]">
+            <Icon name="whatsapp" className="h-5 w-5" /> Falar pelo WhatsApp
+          </a>
+        </section>
+      )}
+      <footer className="border-t border-[#EAE4F0] bg-white px-5 py-7 text-center text-xs text-[#667086]">AuraMeets · Conecta · Transforma · Realiza</footer>
     </main>
   );
 }

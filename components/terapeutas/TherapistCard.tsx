@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -60,16 +59,14 @@ export default function TherapistCard({
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-[#E7D8F2] bg-white shadow-md transition hover:-translate-y-1 hover:border-[#A66AD6] hover:shadow-xl">
-      <div className="relative flex min-h-56 items-center justify-center overflow-hidden bg-gradient-to-br from-[#F8EDFC] to-[#EBDDF7] p-6">
+      <div className="relative flex h-64 items-center justify-center overflow-hidden bg-gradient-to-br from-[#F8EDFC] to-[#EBDDF7] sm:h-72">
         {possuiFoto ? (
-          <div className="relative h-40 w-40 overflow-hidden rounded-full border-2 border-[#A66AD6] bg-white shadow-[0_12px_35px_rgba(100,45,145,0.15)]">
-            <img
-              src={therapist.foto}
-              alt={`Foto de perfil de ${therapist.nome}`}
-              className="h-full w-full object-cover object-center"
-              loading="lazy"
-            />
-          </div>
+          <img
+            src={therapist.foto}
+            alt={`Foto de perfil de ${therapist.nome}`}
+            className="h-full w-full object-cover object-center"
+            loading="lazy"
+          />
         ) : (
           <div className="flex h-28 w-28 items-center justify-center rounded-full border border-[#D7B9EB] bg-[#F3E8FF] text-4xl font-black uppercase text-[#7935C5]">
             {initials || "AM"}
@@ -92,7 +89,7 @@ export default function TherapistCard({
           {nomeExibido}
         </h2>
 
-        <p className="mt-2 text-sm font-semibold leading-6 text-[#7935C5]">
+        <p className="mt-2 text-lg font-bold leading-7 text-[#7935C5]">
           {therapist.especialidades.join(" • ")}
         </p>
 
