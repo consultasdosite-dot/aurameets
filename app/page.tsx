@@ -241,24 +241,25 @@ export default function Home3() {
         </section>
 
         {(() => {
-          const alzira = terapeutasDestaque.find((item) => normalizarNome(item.nome).startsWith("alzira"));
-          if (!alzira?.perfil) return null;
+          const renata = terapeutasDestaque.find((item) => normalizarNome(item.nome).startsWith("renata martins"));
+          if (!renata?.perfil) return null;
           return (
             <section className="experienciaPresenteDia" aria-label="Experiência Presente do Dia">
               <div className="experienciaDiaFoto">
-                {alzira.foto ? <img src={alzira.foto} alt="Foto de Alzira" /> : <span aria-hidden="true">✧</span>}
+                {renata.foto ? <img src={renata.foto} alt="Foto de Renata Martins" /> : <span aria-hidden="true">✧</span>}
               </div>
               <div className="experienciaDiaTexto">
-                <span className="sobretitulo">SEGUNDA-FEIRA • 26/10/2026</span>
+                <span className="sobretitulo">TERÇA-FEIRA • 27/10/2026</span>
                 <h2>EXPERIÊNCIA PRESENTE DO DIA</h2>
-                <div className="experienciaDiaVoucher" aria-label="Voucher presente de Cartas de Odu com Alzira">
+                <div className="experienciaDiaVoucher" aria-label="Voucher presente Raio-X Sistêmico com Renata Martins">
                   <span className="experienciaDiaSelo">VOUCHER PRESENTE • AURAMEETS</span>
-                  <strong>CARTAS DE ODU</strong>
-                  <span>Autoconhecimento e Orientação</span>
-                  <p>Descubra o que as Cartas de Odu podem revelar sobre o momento que você está vivendo, trazendo clareza sobre seus desafios e orientação para escolhas mais conscientes.</p>
-                  <small>Com Alzira • Segunda-feira, 26/10/2026</small>
+                  <strong>RAIO-X SISTÊMICO</strong>
+                  <span>Clareza profunda para desatar o que está travado.</span>
+                  <p>Uma experiência de autoconhecimento que convida você a identificar padrões, compreender bloqueios e encontrar novos caminhos para transformar aquilo que parece não avançar em sua vida.</p>
+                  <small>Com Renata Martins • Terça-feira, 27/10/2026</small>
+                  <Link href={renata.perfil} className="experienciaDiaPerfil">CONHECER PERFIL DA RENATA →</Link>
                 </div>
-                <a href={`https://wa.me/5543999880296?text=${encodeURIComponent("Olá, Alzira! Conheci sua experiência Cartas de Odu no AuraMeets e gostaria de solicitar meu voucher.")}`} target="_blank" rel="noopener noreferrer" className="botaoPrincipal botaoVoucher">QUERO VOUCHER <span>→</span></a>
+                <Link href={renata.perfil} className="botaoPrincipal botaoVoucher">QUERO VOUCHER <span>→</span></Link>
               </div>
             </section>
           );
@@ -271,7 +272,7 @@ export default function Home3() {
             <p>Escolha um profissional e conheça sua trajetória e seus serviços.</p>
           </div>
           <div className="gradeTerapeutas">
-            {terapeutasDestaque.filter((terapeuta) => !normalizarNome(terapeuta.nome).startsWith("alzira")).map((terapeuta) => {
+            {terapeutasDestaque.map((terapeuta) => {
               const conteudo = (
                 <>
                   <span className="fotoTerapeuta">
@@ -716,6 +717,7 @@ export default function Home3() {
         .home3 .experienciaDiaVoucher > span:not(.experienciaDiaSelo) { font-weight: 700; color: #25344d; }
         .home3 .experienciaDiaVoucher p { margin: 5px 0; font-size: 14px; }
         .home3 .experienciaDiaVoucher small { font-weight: 700; color: #79582d; }
+        .home3 .experienciaDiaPerfil { align-self: flex-start; font-size: 13px; font-weight: 800; color: #7735c5; text-decoration: underline; }
         .home3 .experienciaDiaTexto > .botaoPrincipal:not(.botaoVoucher) { background: #7735c5; color: #fff; }
 
         @media (max-width: 767px) {
