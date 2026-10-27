@@ -21,6 +21,17 @@ type TerapeutaRecente = {
   created_at: string | null;
 };
 
+type AvaliacaoExperiencia = {
+  id: string | number;
+  visitante_nome: string | null;
+  visitante_whatsapp: string | null;
+  terapeuta: string | null;
+  servico: string | null;
+  avaliacao: string | null;
+  comentario: string | null;
+  created_at: string | null;
+};
+
 const dashboardInicial: DashboardData = {
   terapeutas: 0,
   clientes: 0,
@@ -40,6 +51,8 @@ export default function AdminPage() {
   const [terapeutasRecentes, setTerapeutasRecentes] = useState<
     TerapeutaRecente[]
   >([]);
+  const [avaliacoesExperiencias, setAvaliacoesExperiencias] = useState<AvaliacaoExperiencia[]>([]);
+  const [erroAvaliacoes, setErroAvaliacoes] = useState("");
 
   useEffect(() => {
     carregarPainel();
@@ -85,6 +98,7 @@ export default function AdminPage() {
         solicitacoesResultado,
         especialidadesResultado,
         terapeutasRecentesResultado,
+        avaliacoesResultado,
       ] = await Promise.all([
         supabase
           .from("therapists")
@@ -111,6 +125,12 @@ export default function AdminPage() {
           .select("id,name,email,phone,created_at")
           .order("created_at", { ascending: false })
           .limit(6),
+
+        supabase
+          .from("avaliacoes_experiencias")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(30),
       ]);
 
       const errosConsultas = [
@@ -141,6 +161,17 @@ export default function AdminPage() {
       setTerapeutasRecentes(
         (terapeutasRecentesResultado.data as TerapeutaRecente[] | null) ?? []
       );
+
+      if (avaliacoesResultado.error) {
+        console.error("Erro ao carregar avaliações das experiências:", avaliacoesResultado.error);
+        setErroAvaliacoes("Não foi possível consultar as avaliações. Verifique as permissões da tabela no Supabase.");
+        setAvaliacoesExperiencias([]);
+      } else {
+        setErroAvaliacoes("");
+        setAvaliacoesExperiencias(
+          ((avaliacoesResultado.data ?? []) as AvaliacaoExperiencia[])
+        );
+      }
     } catch (error) {
       console.error("Erro inesperado ao carregar o painel:", error);
 
@@ -465,6 +496,52 @@ export default function AdminPage() {
             </div>
           </article>
         </div>
+      </section>
+
+      {/* AVALIAÇÕES DAS EXPERIÊNCIAS */}
+      <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-amber-300">Feedback dos visitantes</p>
+            <h2 className="mt-1 text-xl font-bold text-white sm:text-2xl">Avaliações das Experiências</h2>
+            <p className="mt-2 text-sm text-slate-400">Últimas 30 avaliações registradas.</p>
+          </div>
+          <button
+            type="button"
+            onClick={carregarPainel}
+            className="rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+          >
+            Atualizar avaliações
+          </button>
+        </div>
+
+        {erroAvaliacoes ? (
+          <p className="mt-5 rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{erroAvaliacoes}</p>
+        ) : avaliacoesExperiencias.length === 0 ? (
+          <p className="mt-5 rounded-xl border border-white/10 p-5 text-sm text-slate-400">Nenhuma avaliação encontrada.</p>
+        ) : (
+          <div className="mt-5 space-y-3">
+            {avaliacoesExperiencias.map((item, indice) => (
+              <article key={item.id ?? indice} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-bold text-white">{item.avaliacao || "Avaliação não informada"}</p>
+                  <span className="text-xs text-slate-400">{formatarData(item.created_at)}</span>
+                </div>
+                <div className="mt-3 grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
+                  <p><span className="text-slate-500">Visitante: </span>{item.visitante_nome || "Não informado"}</p>
+                  <p><span className="text-slate-500">WhatsApp: </span>{item.visitante_whatsapp || "Não informado"}</p>
+                  <p><span className="text-slate-500">Terapeuta: </span>{item.terapeuta || "Não informado"}</p>
+                  <p><span className="text-slate-500">Experiência: </span>{item.servico || "Não informada"}</p>
+                </div>
+                {item.comentario?.trim() && (
+                  <p className="mt-3 whitespace-pre-wrap break-words rounded-xl bg-white/[0.05] p-3 text-sm leading-6 text-slate-200">
+                    <span className="font-semibold text-amber-300">Comentário: </span>{item.comentario}
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* AÇÕES RÁPIDAS */}

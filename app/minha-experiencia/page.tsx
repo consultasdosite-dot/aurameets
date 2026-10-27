@@ -25,6 +25,7 @@ function MinhaExperienciaConteudo() {
   const [avaliacaoEscolhida, setAvaliacaoEscolhida] =
     useState<Avaliacao | null>(null);
   const [erro, setErro] = useState("");
+  const [comentario, setComentario] = useState("");
 
   const [modalIndicacaoAberto, setModalIndicacaoAberto] =
     useState(false);
@@ -58,6 +59,7 @@ function MinhaExperienciaConteudo() {
         terapeuta,
         servico,
         avaliacao,
+        comentario: comentario.trim() || null,
         origem: "presente",
       });
 
@@ -222,6 +224,24 @@ function MinhaExperienciaConteudo() {
                     autoComplete="tel"
                     disabled={enviando}
                     className="min-h-12 rounded-xl border border-slate-200 bg-white px-4 font-semibold outline-none focus:border-[#7342ad] disabled:opacity-60"
+                  />
+                </div>
+              )}
+
+              {!avaliado && (
+                <div className="mx-auto mt-5 max-w-2xl">
+                  <label htmlFor="comentario-experiencia" className="block text-sm font-bold text-[#24122f]">
+                    Quer contar um pouco mais sobre sua experiência? (Opcional)
+                  </label>
+                  <textarea
+                    id="comentario-experiencia"
+                    value={comentario}
+                    onChange={(event) => setComentario(event.target.value)}
+                    placeholder="Escreva aqui o que sentiu, o que mais gostou ou o que poderia ser melhor."
+                    rows={3}
+                    maxLength={2000}
+                    disabled={enviando}
+                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none focus:border-[#7342ad] disabled:opacity-60"
                   />
                 </div>
               )}

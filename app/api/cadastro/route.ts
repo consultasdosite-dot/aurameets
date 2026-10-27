@@ -316,7 +316,7 @@ function obterExtensaoDaFoto(foto: File) {
 
 }
 
-function criarSlug(nome: string, authUserId: string) {
+function criarSlug(nome: string) {
 
   const nomeNormalizado = nome
 
@@ -330,7 +330,7 @@ function criarSlug(nome: string, authUserId: string) {
 
     .replace(/^-|-$/g, "");
 
-  return `${nomeNormalizado}-${authUserId.slice(0, 8)}`;
+  return nomeNormalizado;
 
 }
 
@@ -892,6 +892,25 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = criarSupabaseAdmin();
 
+    // O endereço público usa apenas o nome; não acrescenta códigos ou números.
+    const slug = criarSlug(nome);
+    const { data: slugExistente, error: erroConsultaSlug } = await supabaseAdmin
+      .from("therapists")
+      .select("id")
+      .eq("slug", slug)
+      .limit(1);
+
+    if (erroConsultaSlug) {
+      throw new Error(`Não foi possível verificar o endereço do perfil: ${erroConsultaSlug.message}`);
+    }
+
+    if (slugExistente && slugExistente.length > 0) {
+      return NextResponse.json(
+        { error: "Já existe um terapeuta com esse nome profissional. Entre em contato com a administração para definir um endereço exclusivo." },
+        { status: 409 },
+      );
+    }
+
     /*
 
      * 1. CRIAR USUÁRIO
@@ -1079,10 +1098,6 @@ export async function POST(request: Request) {
      * 4. CRIAR TERAPEUTA
 
      */
-
-    const slug =
-
-      criarSlug(nome, authUserId);
 
     const serviceType =
 
