@@ -27,6 +27,7 @@ const abordagens = [
 const terapeutasSelecionados = [
   { nome: "Alzira", busca: ["alzira"] },
   { nome: "Renata Martins", busca: ["renata martins"] },
+  { nome: "Adriana Klein", busca: ["adriana klein"] },
   { nome: "Renatta Godoi", busca: ["renatta godoi", "renata godoi"] },
   { nome: "Semiramis", busca: ["semiramis"] },
   { nome: "Milena", busca: ["milena"] },
@@ -38,6 +39,7 @@ const terapeutasSelecionados = [
   { nome: "Eunice", busca: ["eunice"] },
   { nome: "Kassia", busca: ["kassia", "kássia"] },
   { nome: "Fernanda", busca: ["fernanda"] },
+  { nome: "Kelly", busca: ["kelly"] },
 ];
 
 function embaralharTerapeutas<T>(itens: T[]): T[] {
@@ -80,10 +82,11 @@ function montarDestaques(
 
   const alzira = destaques.find((item) => normalizarNome(item.nome).startsWith("alzira"));
   const renata = destaques.find((item) => normalizarNome(item.nome).startsWith("renata martins"));
+  const addriana = destaques.find((item) => normalizarNome(item.nome).startsWith("addriana klein"));
   const primeiros = [alzira, renata].filter((item): item is TerapeutaDestaque => Boolean(item));
-  const restantes = destaques.filter((item) => item !== alzira && item !== renata);
+  const restantes = destaques.filter((item) => item !== alzira && item !== renata && item !== addriana);
 
-  return [...embaralharTerapeutas(primeiros), ...embaralharTerapeutas(restantes)];
+  return [...embaralharTerapeutas(primeiros), ...(addriana ? [addriana] : []), ...embaralharTerapeutas(restantes)];
 }
 
 function Icone({ tipo }: { tipo: "pessoas" | "coracao" | "escudo" }) {
