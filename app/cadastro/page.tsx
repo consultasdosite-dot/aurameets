@@ -44,7 +44,7 @@ export default function CadastroPage() {
 
   const [pais, setPais] = useState("BR");
 
-  const [ddi, setDdi] = useState("+55");
+  const [ddiOutroPais, setDdiOutroPais] = useState("");
 
   const [especialidade, setEspecialidade] = useState("");
 
@@ -81,6 +81,8 @@ export default function CadastroPage() {
   const [valorMensal, setValorMensal] = useState(80);
 
   const valorAPagar = valorInicial ?? primeiraMensalidade();
+
+  const ddi = pais === "OTHER" ? ddiOutroPais : (paises.find(item => item.codigo === pais)?.ddi ?? "");
 
   const telefoneInternacional = `${ddi}${telefone.replace(/\D/g, "").replace(/^0+/, "")}`;
 
@@ -292,9 +294,11 @@ export default function CadastroPage() {
 
             <div><label className={labelClass} htmlFor="email">E-mail</label><input className={inputClass} id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" required /></div>
 
-            <div><label className={labelClass} htmlFor="pais">País</label><select className={inputClass} id="pais" value={pais} onChange={e => { const p = paises.find(i => i.codigo === e.target.value); setPais(e.target.value); setDdi(p?.ddi ?? ""); setTelefone(""); setEstado(""); }}>{paises.map(p => <option key={p.codigo} value={p.codigo}>{p.nome} {p.ddi}</option>)}</select></div>
+            <div><label className={labelClass} htmlFor="pais">País</label><select className={inputClass} id="pais" value={pais} onChange={e => { setPais(e.target.value); setDdiOutroPais(""); setTelefone(""); setEstado(""); }}>{paises.map(p => <option key={p.codigo} value={p.codigo}>{p.nome} {p.ddi}</option>)}</select></div>
 
-            <div><label className={labelClass} htmlFor="telefone">WhatsApp</label><div className="flex gap-2"><input className={`${inputClass} w-24 shrink-0`} aria-label="DDI" value={ddi} onChange={e => setDdi(e.target.value.replace(/[^+\d]/g, ""))} placeholder="+55" /><input className={inputClass} id="telefone" type="tel" value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="DDD e número" autoComplete="tel-national" required /></div></div>
+            <div><label className={labelClass} htmlFor="telefone">WhatsApp</label><input className={inputClass} id="telefone" type="tel" value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="DDD e número" autoComplete="tel-national" required /><p className="mt-1 text-xs text-slate-500">Código internacional {ddi || "a informar"} aplicado automaticamente conforme o país.</p></div>
+
+            {pais === "OTHER" && <div><label className={labelClass} htmlFor="ddi-outro">Código internacional do país (DDI)</label><input className={inputClass} id="ddi-outro" type="tel" value={ddiOutroPais} onChange={e => setDdiOutroPais(e.target.value.replace(/[^+\d]/g, ""))} placeholder="Ex.: +52" required /></div>}
 
             <div><label className={labelClass} htmlFor="especialidade">Especialidade principal</label><select className={inputClass} id="especialidade" value={especialidade} onChange={e => setEspecialidade(e.target.value)} required><option value="">Selecione</option>{specialties.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
 
