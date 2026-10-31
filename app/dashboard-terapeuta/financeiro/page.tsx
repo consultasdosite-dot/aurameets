@@ -204,7 +204,7 @@ function parseCurrencyInput(value: string) {
 
     .replace(/\s/g, "")
 
-    .replace(/**\.**/g, "")
+    .replace(/\./g, "")
 
     .replace(",", ".");
 
