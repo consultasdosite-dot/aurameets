@@ -374,6 +374,14 @@ export default function Home3() {
               <span className="conviteTerapeutaTexto">Faça parte do AuraMeets e apresente seus serviços a novos clientes.</span>
               <small>QUERO ME CADASTRAR →</small>
             </Link>
+            <Link href="/cadastro" className="cartaoTerapeuta conviteTerapeuta" style={{ order: posicaoConvite + 0.5 }} aria-label="Este espaço pode ser seu. Quero me cadastrar como terapeuta no AuraMeets">
+              <span className="fotoTerapeuta">
+                <img src="/consultorio-cadastro-2.png" alt="Consultório terapêutico acolhedor" />
+              </span>
+              <strong>ESTE ESPAÇO PODE SER SEU!</strong>
+              <span className="conviteTerapeutaTexto">Faça parte do AuraMeets e apresente seus serviços a novos clientes.</span>
+              <small>QUERO ME CADASTRAR →</small>
+            </Link>
           </div>
           <div className="todosTerapeutasAcao">
             <Link href="/terapeutas" className="botaoContorno">
