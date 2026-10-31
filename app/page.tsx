@@ -320,15 +320,15 @@ export default function Home3() {
               <div className="experienciaDiaTexto">
                 <span className="sobretitulo">{experiencia.data}</span>
                 <h2>EXPERIÊNCIA PRESENTE DO DIA</h2>
-                <div className="experienciaDiaVoucher" aria-label={`Voucher presente ${experiencia.titulo} com ${experiencia.nome}`}>
-                  <span className="experienciaDiaSelo">VOUCHER PRESENTE • AURAMEETS</span>
+                <div className="experienciaDiaVoucher" aria-label={`Vale Consulta presente ${experiencia.titulo} com ${experiencia.nome}`}>
+                  <span className="experienciaDiaSelo">VALE CONSULTA • AURAMEETS</span>
                   <strong>{experiencia.titulo}</strong>
                   {dataBrasilia === "2026-10-27" && <span>Clareza profunda para desatar o que está travado.</span>}
                   <p>{experiencia.descricao}</p>
                   <small>Com {experiencia.nome} • {experiencia.data.toLowerCase()}</small>
                   <Link href={terapeuta.perfil} className="experienciaDiaPerfil">CONHECER PERFIL DE {experiencia.nome.toLocaleUpperCase("pt-BR")} →</Link>
                 </div>
-                <Link href={terapeuta.perfil} className="botaoPrincipal botaoVoucher">QUERO VOUCHER <span>→</span></Link>
+                <Link href={terapeuta.perfil} className="botaoPrincipal botaoVoucher">QUERO VALE CONSULTA <span>→</span></Link>
               </div>
             </section>
           );

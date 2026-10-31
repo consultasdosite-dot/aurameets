@@ -5,58 +5,6 @@ import Link from "next/link";
 
 const STORAGE_KEY = "aurameets-guia-terapeuta-v1";
 
-const PROMPT_APRESENTACAO = `Olá, ChatGPT!
-
-Você será AURA, minha assistente profissional do AuraMeets.
-
-Sou terapeuta e quero preparar os textos do meu minissite profissional na plataforma AuraMeets.
-
-Ajude-me a construir:
-1. Minha apresentação profissional.
-2. Minha história e trajetória.
-3. Minhas especialidades.
-4. As descrições dos meus atendimentos.
-5. A apresentação dos meus cursos e eventos.
-6. Textos para divulgar meu trabalho.
-
-REGRAS IMPORTANTES:
-- Faça apenas UMA PERGUNTA POR VEZ.
-- Use linguagem simples, acolhedora e profissional.
-- Aguarde minha resposta antes de continuar.
-- Não invente informações, formações ou experiências.
-- Não prometa curas ou resultados garantidos.
-- Ajude-me a transformar minhas respostas em textos claros e atraentes.
-- Ao concluir cada seção, entregue o texto pronto para copiar no AuraMeets.
-- Não peça senhas, documentos pessoais ou informações confidenciais.
-
-Apresente-se como AURA, minha assistente do AuraMeets, e faça sua primeira pergunta.`;
-
-const PROMPT_FOTOS = `Olá, ChatGPT!
-
-Você será AURA, minha assistente de imagem profissional do AuraMeets.
-
-Sou terapeuta e quero preparar fotografias padronizadas para meu minissite.
-
-Ajude-me com:
-1. Foto principal do perfil — formato quadrado 1:1.
-2. Capa do minissite — formato horizontal 16:9.
-3. Fotografias dos serviços — formato horizontal 16:9.
-4. Galeria profissional — formato quadrado 1:1.
-5. Imagens de cursos e eventos — formato horizontal 16:9.
-
-REGRAS IMPORTANTES:
-- Faça apenas UMA PERGUNTA POR VEZ.
-- Explique tudo de maneira simples.
-- Oriente sobre iluminação, enquadramento, roupas e fundos.
-- Preserve minha aparência real e minha identidade.
-- Não invente consultórios, certificados ou experiências profissionais.
-- Não altere características físicas de maneira enganosa.
-- Se eu enviar uma fotografia, ajude-me a prepará-la para uso profissional.
-- Antes de utilizar fotografias de outras pessoas, lembre-me de obter autorização.
-- Não solicite documentos pessoais nem informações confidenciais.
-
-Apresente-se como AURA, minha assistente de imagem do AuraMeets, e faça sua primeira pergunta.`;
-
 const etapas = [
   {
     titulo: "Complete seu perfil",
@@ -148,7 +96,7 @@ const etapas = [
 export default function GuiaTerapeutaPage() {
   const [concluidas, setConcluidas] = useState<number[]>([]);
   const [carregado, setCarregado] = useState(false);
-  const [aviso, setAviso] = useState("");
+  const [etapaAberta, setEtapaAberta] = useState<number | null>(null);
 
   useEffect(() => {
     try {
@@ -190,30 +138,13 @@ export default function GuiaTerapeutaPage() {
         // A marcação permanece disponível durante esta visita.
       }
 
+      if (!anteriores.includes(indice)) {
+        const seguinte = etapas.findIndex((etapa, posicao) => !etapa.opcional && !proximas.includes(posicao));
+        setEtapaAberta(seguinte >= 0 ? seguinte : null);
+      }
+
       return proximas;
     });
-  }
-
-  async function abrirAura(prompt: string) {
-    setAviso("");
-
-    try {
-      await navigator.clipboard.writeText(prompt);
-
-      setAviso(
-        "Prompt copiado! Cole o texto na conversa do ChatGPT para começar."
-      );
-    } catch {
-      setAviso(
-        "Não foi possível copiar automaticamente. Copie o texto manualmente para usar no ChatGPT."
-      );
-    }
-
-    window.open(
-      "https://chatgpt.com/",
-      "_blank",
-      "noopener,noreferrer"
-    );
   }
 
   const etapasObrigatorias = etapas
@@ -229,10 +160,18 @@ export default function GuiaTerapeutaPage() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-4xl space-y-7">
-        <section className="rounded-3xl bg-gradient-to-br from-slate-950 via-purple-950 to-violet-800 p-6 text-white shadow-xl sm:p-9">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-purple-200">
+    <main className="min-h-screen bg-white px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-4xl space-y-8">
+        <div className="overflow-hidden">
+          <img
+            src="/aurameets-guia.png"
+            alt="AuraMeets — Guia do Terapeuta"
+            className="block h-auto w-full"
+          />
+        </div>
+
+        <section className="border-b border-purple-200 pb-7 text-slate-900">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-purple-700">
             AuraMeets • Consultório Digital
           </p>
 
@@ -240,13 +179,13 @@ export default function GuiaTerapeutaPage() {
             Guia do Terapeuta
           </h1>
 
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-purple-100 sm:text-base">
-            Bem-vindo! Siga as seis etapas principais, no seu ritmo, para
-            preparar seu perfil, apresentar seus serviços e começar a receber
-            solicitações. Presentes e descontos são opcionais.
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+            Siga as seis etapas principais. Abra uma etapa, leia a orientação e
+            acesse o campo indicado para preencher. Marque como concluída
+            quando terminar. Presentes, descontos e depoimentos são opcionais.
           </p>
 
-          <div className="mt-7 rounded-2xl border border-white/20 bg-white/10 p-4">
+          <div className="mt-7">
             <div className="flex items-center justify-between gap-3 text-sm font-semibold">
               <span>Seu progresso</span>
 
@@ -258,7 +197,7 @@ export default function GuiaTerapeutaPage() {
             </div>
 
             <div
-              className="mt-3 h-3 overflow-hidden rounded-full bg-white/20"
+              className="mt-3 h-3 overflow-hidden rounded-full bg-purple-100"
               role="progressbar"
               aria-label="Progresso do guia"
               aria-valuenow={percentual}
@@ -271,106 +210,42 @@ export default function GuiaTerapeutaPage() {
               />
             </div>
 
-            <p className="mt-2 text-right text-xs text-purple-100">
+            <p className="mt-2 text-right text-xs text-slate-600">
               {percentual}% concluído
             </p>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-violet-200 bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-purple-700">
-            Sua assistente profissional
-          </p>
-
-          <h2 className="mt-3 text-2xl font-extrabold text-slate-950 sm:text-3xl">
-            AURA — Vamos criar seu minissite?
-          </h2>
-
-          <p className="mt-3 text-sm leading-7 text-slate-600">
-            Você não precisa fazer tudo sozinho. A AURA vai ajudar a preparar
-            sua apresentação profissional e suas fotografias, com orientações
-            simples e uma pergunta por vez.
-          </p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-purple-200 bg-purple-50 p-5">
-              <h3 className="text-lg font-bold text-purple-950">
-                Minha apresentação profissional
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-slate-700">
-                Prepare sua biografia, conte sua história e apresente seus
-                atendimentos de forma acolhedora e profissional.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => abrirAura(PROMPT_APRESENTACAO)}
-                className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-purple-700 px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-purple-800"
-              >
-                CRIAR MINHA APRESENTAÇÃO
-              </button>
-            </div>
-
-            <div className="rounded-2xl border border-violet-200 bg-violet-50 p-5">
-              <h3 className="text-lg font-bold text-purple-950">
-                Minhas fotografias profissionais
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-slate-700">
-                Receba ajuda para escolher, preparar e padronizar as fotos do
-                seu perfil, serviços e minissite.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => abrirAura(PROMPT_FOTOS)}
-                className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-purple-700 px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-purple-800"
-              >
-                PREPARAR MINHAS FOTOS
-              </button>
-            </div>
-          </div>
-
-          {aviso && (
-            <p
-              role="status"
-              className="mt-5 rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-semibold text-purple-900"
-            >
-              {aviso}
-            </p>
-          )}
-
-          <p className="mt-4 text-xs leading-6 text-slate-500">
-            O ChatGPT será aberto em outra aba. O texto de orientação será
-            copiado para você colar na conversa. O acesso ao ChatGPT pode
-            exigir uma conta.
-          </p>
-        </section>
-
-        <section className="space-y-4" aria-label="Etapas do guia">
+        <section className="divide-y divide-purple-100" aria-label="Etapas do guia">
           {etapas.map((etapa, indice) => {
             const concluida = concluidas.includes(indice);
+            const aberta = etapaAberta === indice || (etapaAberta === null && !concluida && indice === etapas.findIndex((item, posicao) => !item.opcional && !concluidas.includes(posicao)));
 
             return (
               <article
                 key={etapa.titulo}
-                className={`rounded-3xl border bg-white p-5 shadow-sm sm:p-6 ${
-                  concluida
-                    ? "border-emerald-300"
-                    : "border-slate-200"
-                }`}
+                className="py-6"
               >
                 <div className="flex items-start gap-4">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-purple-100 text-lg font-extrabold text-purple-700">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-purple-100 text-lg font-extrabold text-purple-700">
                     {indice + 1}
                   </span>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-lg font-bold text-slate-950 sm:text-xl">
-                        {etapa.titulo}
-                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => setEtapaAberta(aberta ? -1 : indice)}
+                        aria-expanded={aberta}
+                        className="flex flex-1 items-center justify-between gap-3 text-left"
+                      >
+                        <h2 className="text-lg font-bold text-slate-950 sm:text-xl">
+                          {etapa.titulo}
+                        </h2>
+                        <span className="shrink-0 text-xl font-bold text-purple-700" aria-hidden="true">
+                          {aberta ? "−" : "+"}
+                        </span>
+                      </button>
 
                       {etapa.opcional && (
                         <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-amber-800">
@@ -379,15 +254,35 @@ export default function GuiaTerapeutaPage() {
                       )}
                     </div>
 
-                    <p className="mt-2 text-sm leading-7 text-slate-600">
-                      {etapa.descricao}
-                    </p>
+                    {concluida && (
+                      <p className="mt-2 text-sm font-bold text-emerald-700">ETAPA CONCLUÍDA</p>
+                    )}
 
-                    <p className="mt-3 rounded-xl bg-violet-50 px-4 py-3 text-sm leading-6 text-violet-900">
+                    {aberta && (
+                      <>
+                        <p className="mt-2 text-sm leading-7 text-slate-600">
+                          {etapa.descricao}
+                        </p>
+                        {indice === 0 && (
+                          <div className="mt-5 border-l-4 border-purple-700 bg-purple-50 px-5 py-4">
+                            <h3 className="text-lg font-extrabold text-purple-950">
+                              QUAL É O SEU PROPÓSITO COM A SUA ESPECIALIDADE?
+                            </h3>
+                            <p className="mt-3 text-sm leading-7 text-slate-700">
+                              Explique por que escolheu sua especialidade e como deseja ajudar as pessoas.
+                              Escreva com suas próprias palavras.
+                            </p>
+                            <p className="mt-2 text-sm font-semibold text-purple-900">
+                              Inclua essa resposta na sua apresentação profissional ao abrir Meu Perfil.
+                            </p>
+                          </div>
+                        )}
+
+                        <p className="mt-3 border-l-2 border-violet-200 pl-4 text-sm leading-6 text-violet-900">
                       <strong>Dica:</strong> {etapa.dica}
                     </p>
 
-                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
                       <Link
                         href={etapa.href}
                         className="inline-flex min-h-11 items-center justify-center rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-purple-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-700"
@@ -407,7 +302,9 @@ export default function GuiaTerapeutaPage() {
                           ? "Etapa concluída"
                           : "Marcar como concluída"}
                       </label>
-                    </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </article>
@@ -415,7 +312,7 @@ export default function GuiaTerapeutaPage() {
           })}
         </section>
 
-        <section className="rounded-3xl border border-purple-200 bg-purple-50 p-6">
+        <section className="border-t border-purple-200 pt-7">
           <h2 className="text-xl font-bold text-slate-950">
             Precisa de orientação?
           </h2>

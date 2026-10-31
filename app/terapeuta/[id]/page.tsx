@@ -2,15 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getTherapistBySlug } from "@/lib/therapists";
-type IconName =
-  | "calendar"
-  | "bag"
-  | "cart"
-  | "gift"
-  | "ticket"
-  | "share"
-  | "whatsapp"
-  | "check";
 type PageProps = {
   params: Promise<{ id: string }>;
 };
@@ -128,12 +119,17 @@ function ExpandableText({
   text: string;
   className?: string;
 }) {
+  const isLong = text.length > 210 || text.split("\n").length > 4;
+  if (!isLong) {
+    return <p className={`whitespace-pre-wrap break-words ${className}`}>{text}</p>;
+  }
+
   return (
-    <details className="group text-center">
+    <details className="group">
       <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
         <span className="block group-open:hidden">
           <span
-            className={`overflow-hidden whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${className}`}
+            className={`block overflow-hidden whitespace-pre-wrap break-words ${className}`}
             style={{
               display: "-webkit-box",
               WebkitBoxOrient: "vertical",
@@ -142,90 +138,19 @@ function ExpandableText({
           >
             {text}
           </span>
-          <span className="mt-3 inline-flex text-xs font-extrabold uppercase tracking-[0.12em] text-[#d9bd66] transition hover:text-[#f1dc92]">
+          <span className="mt-2 inline-block text-sm font-bold uppercase tracking-wide text-[#7232a6]">
             Leia mais
           </span>
         </span>
-        <span className="mt-3 hidden text-xs font-extrabold uppercase tracking-[0.12em] text-[#d9bd66] transition hover:text-[#f1dc92] group-open:inline-flex">
+        <span className="hidden text-sm font-bold uppercase tracking-wide text-[#7232a6] group-open:inline-block">
           Leia menos
         </span>
       </summary>
-      <p className={`mt-2 whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${className}`}>
-        {text}
-      </p>
+      <p className={`mt-3 whitespace-pre-wrap break-words ${className}`}>{text}</p>
     </details>
   );
 }
-function Icon({
-  name,
-  className = "h-6 w-6",
-}: {
-  name: IconName;
-  className?: string;
-}) {
-  const paths: Record<IconName, React.ReactNode> = {
-    calendar: (
-      <>
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M16 3v4M8 3v4M3 10h18" />
-      </>
-    ),
-    cart: (
-      <>
-        <circle cx="9" cy="20" r="1" />
-        <circle cx="19" cy="20" r="1" />
-        <path d="M2 3h2l2.5 12h13l2-9H5" />
-      </>
-    ),
-    bag: (
-      <>
-        <path d="M6 8h12l1 13H5L6 8Z" />
-        <path d="M9 9V6a3 3 0 0 1 6 0v3" />
-      </>
-    ),
-    gift: (
-      <>
-        <rect x="3" y="8" width="18" height="13" rx="2" />
-        <path d="M12 8v13M3 12h18M12 8H8.5a2.5 2.5 0 1 1 2.2-3.7L12 8Zm0 0h3.5a2.5 2.5 0 1 0-2.2-3.7L12 8Z" />
-      </>
-    ),
-    ticket: (
-      <>
-        <path d="M3 7a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-3a2 2 0 0 0 0-4V7Z" />
-        <path d="M13 5v2M13 10v2M13 15v4" />
-      </>
-    ),
-    share: (
-      <>
-        <circle cx="18" cy="5" r="3" />
-        <circle cx="6" cy="12" r="3" />
-        <circle cx="18" cy="19" r="3" />
-        <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
-      </>
-    ),
-    whatsapp: (
-      <>
-        <path d="M20.5 11.7a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5l1.4-4.4A8.4 8.4 0 1 1 20.5 11.7Z" />
-        <path d="M8.2 7.7c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.8 1.8c.1.3.1.5-.1.7l-.6.8c-.2.2-.2.4-.1.6.5 1 1.3 1.8 2.2 2.4.8.5 1.4.7 1.7.8.3.1.5 0 .7-.2l.9-1.1c.2-.3.5-.3.8-.2l1.8.9c.3.1.5.3.5.5 0 .3-.1 1.4-.8 2-.6.6-1.5.9-2.4.8-1.2-.1-2.7-.6-4.5-1.8-2.6-1.7-4.3-4.4-4.4-4.6-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2.1.9-2.5Z" />
-      </>
-    ),
-    check: <path d="m5 12 4 4L19 6" />,
-  };
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {paths[name]}
-    </svg>
-  );
-}
+
 export default async function TherapistPage({
   params,
 }: PageProps) {
@@ -355,177 +280,118 @@ export default async function TherapistPage({
   const whatsappHref = whatsappNumber
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Olá! Conheci seu perfil no AuraMeets e gostaria de conversar sobre seus atendimentos.`)}`
     : "";
-  const specialties = (therapist.speciality ?? "")
-    .split(/[,;•]/)
-    .map((value) => value.trim())
-    .filter(Boolean);
+  const purpose = therapist.bio || "Conheça este profissional e encontre a experiência ideal para o seu momento.";
+  const presentAvailable = hasPresent && presentDetails !== null;
 
   return (
-    <main className="min-h-screen bg-[#FCFBFF] text-[#201936] selection:bg-[#E8D8FA]">
-      <header className="bg-[#090E2E]">
-        <div className="mx-auto max-w-6xl">
-          <img
-            src="/cabecalho-perfil-terapeuta-aurameets.png"
-            alt="AuraMeets — Terapeuta qualificado com segurança"
-            className="block h-auto w-full object-contain"
-          />
-        </div>
-      </header>
-
-      <section className="mx-auto max-w-6xl px-5 pb-8 pt-9 sm:px-8 sm:pt-14">
-        <div className="grid items-center gap-8 md:grid-cols-[minmax(0,300px)_minmax(0,1fr)] md:gap-14">
-          <div className="mx-auto w-full max-w-[215px] sm:max-w-[260px] md:max-w-[300px]">
-            <div className="relative">
-              <div className="aspect-[4/4.5] overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#E3C474] via-[#9D57CB] to-[#512481] p-[2px] shadow-[0_18px_48px_rgba(53,27,85,0.12)]">
-                <div className="grid h-full w-full place-items-center overflow-hidden rounded-[calc(2rem-2px)] bg-[#EEE6F7]">
-                  {photo ? (
-                    <img src={photo} alt={`Foto profissional de ${name}`} className="h-full w-full object-cover object-top" />
-                  ) : (
-                    <span className="font-serif text-6xl text-[#7935C5]">{getInitials(name)}</span>
-                  )}
-                </div>
-              </div>
-              <span className="absolute -bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#E8D9F2] bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[#7433A9] shadow-sm">
-                  <Icon name="check" className="h-4 w-4" /> Profissional verificado
-                </span>
-            </div>
-          </div>
-          <div className="min-w-0 pt-4 text-center md:pt-0 md:text-left">
-            <h1 className="font-serif text-[clamp(2.3rem,5vw,4.25rem)] leading-[1.12] tracking-tight text-[#201536]">{name}</h1>
-            <p className="mt-3 text-lg font-semibold text-[#7935C5] sm:text-xl">{headline}</p>
-            <div className="mx-auto mt-5 max-w-[65ch] md:mx-0">
-              <ExpandableText
-                text={therapist.bio || "Conheça este profissional e encontre a experiência ideal para o seu momento."}
-                className="text-sm leading-7 text-[#50556C] sm:text-base"
-              />
-            </div>
-            <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-[#5C5570] md:justify-start">
-              {[location, therapist.service_type].filter(Boolean).map((item) => <span key={String(item)}>{item}</span>)}
-            </div>
+    <main className="min-h-screen bg-[#fffdfa] text-[#241b39]">
+      <div className="w-full pb-16">
+        <div className="relative w-full overflow-hidden">
+          <img src="/aurameets-minisite.png" alt="AuraMeets: mãos se aproximando ao pôr do sol" className="block h-auto w-full" />
+          <div className="absolute left-0 right-0 top-[34%] flex justify-center px-3 sm:top-[36%]">
+            <h1 className="max-w-[90%] rounded-xl bg-white/70 px-4 py-1 text-center text-[clamp(1.05rem,4.8vw,3.5rem)] font-extrabold uppercase tracking-[0.04em] text-[#421080] shadow-sm backdrop-blur-[3px]">
+              {headline}
+            </h1>
           </div>
         </div>
-      </section>
 
-      <nav aria-label="Navegação do perfil" className="sticky top-0 z-30 border-y border-[#ECE5F1] bg-white/95 backdrop-blur-md">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 items-center justify-items-center gap-x-3 gap-y-3 px-4 py-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-10 sm:px-8">
-          {[
-            { label: "Quem sou", href: "#quem-sou" },
-            { label: "Especialidades", href: "#especialidades" },
-            { label: "Serviços", href: "#servicos" },
-            ...(testimonials.length ? [{ label: "Depoimentos", href: "#depoimentos" }] : []),
-          ].map((item) => (
-            <a key={item.href} href={item.href} className="w-full rounded-lg bg-gradient-to-r from-[#6D28D9] via-[#7C3AED] to-[#9333EA] px-2 py-3 text-center text-[11px] font-bold uppercase tracking-[0.04em] text-white transition hover:from-[#5B21B6] hover:via-[#6D28D9] hover:to-[#7E22CE] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7935C5] sm:w-auto sm:px-5 sm:text-sm sm:tracking-[0.08em]">{item.label}</a>
-          ))}
-        </div>
-      </nav>
+        <section className="mx-auto w-full pt-12 text-center sm:max-w-4xl sm:px-8 sm:pt-16" aria-labelledby="terapeuta-titulo">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#966c28]">Conheça seu terapeuta</p>
+          <h2 id="terapeuta-titulo" className="mt-3 font-serif text-4xl text-[#3b176b] sm:text-5xl">{name}</h2>
+          <p className="mt-3 px-4 text-base text-[#5b5268]">{headline}{location ? ` · ${location}` : ""}</p>
+          <div className="mx-auto mt-7 flex aspect-square w-full items-center justify-center overflow-hidden border-y-4 border-[#e9d5f4] bg-[#f5edf9] text-center text-base font-medium text-[#79559a] sm:w-[400px] sm:border-4">
+            {photo ? (
+              <img src={photo} alt={`Foto profissional de ${name}`} className="h-full w-full object-contain" />
+            ) : (
+              <span className="font-serif text-6xl text-[#7935C5]">{getInitials(name)}</span>
+            )}
+          </div>
+        </section>
 
-      {(whatsappNumber || hasPresent) && (
-        <div className="mx-auto flex max-w-6xl flex-col justify-center gap-3 px-5 pb-8 pt-7 sm:flex-row sm:px-8">
-          {whatsappNumber && (
-            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#0DBE65] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#099F54]">
-              <Icon name="whatsapp" className="h-5 w-5" /> Falar com o terapeuta
-            </a>
-          )}
-          {hasPresent && whatsappNumber && (
-            <a href={presentHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#7935C5] bg-white px-6 py-3 text-sm font-bold text-[#7935C5] transition hover:bg-[#F5ECFC]">
-              <Icon name="gift" className="h-5 w-5" /> Experiência Presente
-            </a>
-          )}
-        </div>
-      )}
-      {hasPresent && presentDetails && whatsappNumber && (
-        <div className="mx-auto max-w-3xl px-5 pb-7 text-center">
-          <h2 className="font-serif text-xl text-[#201536]">{presentDetails.title}</h2>
-          {presentDetails.description && <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#50556C]">{presentDetails.description}</p>}
-        </div>
-      )}
+        {presentAvailable && presentDetails && (
+          <section className="mt-12 w-full border-y border-[#e8d9ec] px-4 py-12 text-center sm:py-16" aria-labelledby="experiencia-presente-titulo">
+            <div className="mx-auto max-w-4xl">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#966c28]">Experiência Presente</p>
+              <h2 id="experiencia-presente-titulo" className="mt-3 font-serif text-3xl text-[#3b176b] sm:text-4xl">{presentDetails.title}</h2>
+              {presentDetails.description && <div className="mx-auto mt-4 max-w-2xl"><ExpandableText text={presentDetails.description} className="leading-7 text-[#5b5268]" /></div>}
+              {whatsappNumber && <a href={presentHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[#7232a6] px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-white sm:w-auto">Quero receber</a>}
+            </div>
+          </section>
+        )}
 
-      <section id="quem-sou" className="mx-auto max-w-6xl scroll-mt-24 border-t border-[#EAE4F0] px-5 py-10 sm:px-8 sm:py-14">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#AE7B28]">Quem sou</p>
-        <h2 className="mt-2 font-serif text-3xl text-[#201536] sm:text-4xl">Conheça minha trajetória</h2>
-        <div className="mt-5 max-w-4xl">
-          <ExpandableText text={therapist.bio || "Conheça este profissional e encontre a experiência ideal para o seu momento."} className="text-base leading-8 text-[#50556C]" />
-        </div>
-      </section>
+        <section className="mx-auto mt-16 w-full border-y border-[#e8d9ec] px-4 py-12 text-center sm:max-w-4xl sm:px-8 sm:py-16">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#966c28]">O que me inspira</p>
+          <h2 className="mt-3 font-serif text-3xl text-[#3b176b] sm:text-4xl">Meu propósito</h2>
+          <div className="mx-auto mt-6 max-w-3xl"><ExpandableText text={purpose} className="text-lg leading-9 text-[#51465f]" /></div>
+        </section>
 
-      <section id="especialidades" className="mx-auto max-w-6xl scroll-mt-24 border-t border-[#EAE4F0] px-5 py-10 sm:px-8 sm:py-12">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#AE7B28]">Áreas de atuação</p>
-        <h2 className="mt-2 font-serif text-3xl text-[#201536] sm:text-4xl">Especialidades</h2>
-        <div className="mt-6 flex flex-wrap gap-3">
-          {(specialties.length ? specialties : [headline]).map((specialty, index) => (
-            <span key={`${specialty}-${index}`} className="rounded-full border border-[#E5D7F0] bg-white px-5 py-2.5 text-sm font-semibold text-[#6C329E] sm:text-base">{specialty}</span>
-          ))}
-        </div>
-      </section>
-
-      <section id="servicos" className="mx-auto max-w-6xl scroll-mt-24 border-t border-[#EAE4F0] px-5 py-10 sm:px-8 sm:py-14">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#AE7B28]">Atendimentos e experiências</p>
-        <h2 className="mt-2 font-serif text-3xl text-[#201536] sm:text-4xl">Serviços oferecidos</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-[#59647B]">Conheça os serviços e escolha o atendimento que combina com seu momento.</p>
-        {services.length ? (
-          <div className="mt-8 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
-            {services.map((service) => (
-              <article key={service.id} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#EBE5F0] bg-white shadow-[0_8px_30px_rgba(32,21,54,0.045)]">
-                {service.cover_photo_url && (
-                  <div className="aspect-[16/9] overflow-hidden bg-[#F3EAF9]">
-                    <img src={service.cover_photo_url} alt={`Imagem de ${service.name}`} className="h-full w-full object-cover" loading="lazy" />
-                  </div>
-                )}
-                <div className="flex flex-1 flex-col p-5 sm:p-6">
-                  {service.category && <p className="text-xs font-bold uppercase tracking-wider text-[#A36D22]">{service.category}</p>}
-                  <h3 className="mt-2 font-serif text-2xl leading-snug text-[#201536]">{service.name}</h3>
-                  {service.description && <div className="mt-3"><ExpandableText text={service.description} className="text-sm leading-6 text-[#59647B]" /></div>}
-                  <div className="mt-5 space-y-2 text-sm text-[#5B5369]">
-                    {service.duration_minutes && <p>{service.duration_minutes} minutos</p>}
-                    <p className="font-semibold text-[#5A337A]">{getDeliveryLabel(service)}</p>
-                  </div>
-                  <div className="mt-auto pt-6">
-                    {getDiscountPercentage(service) !== null && (
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <span className="text-sm text-[#8B7498] line-through">{formatCurrency(service.price, service.currency || "BRL")}</span>
-                        <span className="rounded-full bg-[#E8F7ED] px-2 py-1 text-xs font-bold text-[#13703A]">{getDiscountPercentage(service)}% OFF</span>
+        <section id="servicos" className="mx-auto w-full scroll-mt-24 px-4 py-14 sm:max-w-5xl sm:px-8 sm:py-20" aria-labelledby="servicos-titulo">
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#966c28]">Escolha seu atendimento</p>
+            <h2 id="servicos-titulo" className="mt-3 font-serif text-3xl text-[#3b176b] sm:text-4xl">Meus serviços</h2>
+          </div>
+          {services.length > 0 ? (
+            <div className="mt-9 divide-y divide-[#e8d9ec] border-y border-[#e8d9ec]">
+              {services.map((service) => {
+                const discount = getDiscountPercentage(service);
+                return (
+                  <article key={service.id} className="grid gap-7 py-9 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:items-center md:gap-12">
+                    {service.cover_photo_url && (
+                      <div className="aspect-[16/10] overflow-hidden rounded-[22px] bg-[#f5edf9]">
+                        <img src={service.cover_photo_url} alt={`Fotografia de ${service.name}`} className="h-full w-full object-contain" loading="lazy" />
                       </div>
                     )}
-                    <p className="text-2xl font-extrabold text-[#7935C5]">{formatCurrency(getFinalPrice(service), service.currency || "BRL")}</p>
-                    <Link href={`/comprar?servico=${encodeURIComponent(service.id)}`} className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#7935C5] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#6323A8]">
-                      <Icon name="cart" className="h-5 w-5" /> Quero contratar
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-6 text-sm text-[#59647B]">Este profissional ainda não publicou serviços.</p>
+                    <div>
+                      {service.category && <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#966c28]">{service.category}</p>}
+                      <h3 className="font-serif text-2xl text-[#3b176b] sm:text-3xl">{service.name}</h3>
+                      {service.description && <div className="mt-3"><ExpandableText text={service.description} className="leading-7 text-[#5b5268]" /></div>}
+                      <p className="mt-4 text-sm font-medium text-[#675c73]">{service.duration_minutes ? `${service.duration_minutes} minutos · ` : ""}{getDeliveryLabel(service)}</p>
+                      {discount !== null ? (
+                        <div className="mt-4">
+                          <p className="text-base text-[#847b8b] line-through">{formatCurrency(service.price, service.currency || "BRL")}</p>
+                          <p className="mt-1 text-2xl font-extrabold text-[#6d28a7]">{formatCurrency(getFinalPrice(service), service.currency || "BRL")}</p>
+                          <p className="mt-1 text-sm font-semibold text-[#966c28]">Desconto especial · {discount}% OFF</p>
+                        </div>
+                      ) : (
+                        <p className="mt-4 text-2xl font-extrabold text-[#6d28a7]">{formatCurrency(service.price, service.currency || "BRL")}</p>
+                      )}
+                      <Link href={`/comprar?servico=${encodeURIComponent(service.id)}`} className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-[#7232a6] px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-white sm:w-auto">Quero agendar</Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : <p className="mt-9 text-center text-[#5b5268]">Este profissional ainda não publicou serviços.</p>}
+        </section>
+
+        {testimonials.length > 0 && (
+          <section id="depoimentos" className="mx-auto w-full border-t border-[#e8d9ec] px-4 py-12 text-center sm:max-w-4xl sm:px-8" aria-labelledby="depoimentos-titulo">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#966c28]">Experiências compartilhadas</p>
+            <h2 id="depoimentos-titulo" className="mt-3 font-serif text-3xl text-[#3b176b] sm:text-4xl">Depoimentos</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#5b5268]">Depoimentos informados pelo terapeuta e autorizados para publicação. Não são avaliações verificadas pelo AuraMeets.</p>
+            <div className="mt-9 grid gap-8 text-left sm:grid-cols-2 sm:gap-12">
+              {testimonials.map((item) => (
+                <blockquote key={item.id} className="border-t border-[#e8d9ec] pt-5">
+                  <ExpandableText text={`“${item.testimonial}”`} className="italic leading-8 text-[#51465f]" />
+                  <footer className="mt-3 text-sm font-semibold text-[#6d28a7]">{item.client_name}</footer>
+                </blockquote>
+              ))}
+            </div>
+          </section>
         )}
-      </section>
 
-      {testimonials.length > 0 && (
-        <section id="depoimentos" aria-labelledby="titulo-depoimentos" className="mx-auto max-w-6xl scroll-mt-24 border-t border-[#EAE4F0] px-5 py-10 sm:px-8 sm:py-14">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#AE7B28]">Experiências compartilhadas</p>
-          <h2 id="titulo-depoimentos" className="mt-2 font-serif text-3xl text-[#201536] sm:text-4xl">Depoimentos</h2>
-          <p className="mt-3 text-xs leading-6 text-[#667086]">Depoimentos informados pelo terapeuta e autorizados para publicação. Não são avaliações verificadas pelo AuraMeets.</p>
-          <div className="mt-7 grid gap-5 md:grid-cols-2">
-            {testimonials.map((item) => (
-              <blockquote key={item.id} className="border-l-2 border-[#D7B474] bg-white px-5 py-6 sm:px-7">
-                <p className="whitespace-pre-wrap break-words font-serif text-lg leading-8 text-[#352A48]">“{item.testimonial}”</p>
-                <footer className="mt-4 text-sm font-semibold text-[#7935C5]">{item.client_name}</footer>
-              </blockquote>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {whatsappNumber && (
-        <section id="contato" className="scroll-mt-24 border-t border-[#EAE4F0] bg-[#F5F0FA] px-5 py-12 text-center sm:py-16">
-          <h2 className="font-serif text-3xl text-[#201536] sm:text-4xl">Vamos conversar?</h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[#59647B]">Entre em contato para saber mais sobre os atendimentos.</p>
-          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#0DBE65] px-8 py-3 text-sm font-bold text-white transition hover:bg-[#099F54]">
-            <Icon name="whatsapp" className="h-5 w-5" /> Falar pelo WhatsApp
-          </a>
-        </section>
-      )}
-      <footer className="border-t border-[#EAE4F0] bg-white px-5 py-7 text-center text-xs text-[#667086]">AuraMeets · Conecta · Transforma · Realiza</footer>
+        {whatsappNumber && (
+          <section className="mx-auto w-full border-t border-[#e8d9ec] px-4 py-12 text-center sm:max-w-4xl sm:px-8">
+            <h2 className="font-serif text-3xl text-[#3b176b]">Vamos conversar?</h2>
+            <p className="mt-4 text-[#5b5268]">Entre em contato para saber mais sobre os atendimentos.</p>
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center justify-center rounded-xl bg-[#1b9e66] px-7 py-3.5 font-bold text-white">WhatsApp</a>
+          </section>
+        )}
+        <footer className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-[#e8d9ec] px-4 pt-7 text-center text-xs text-[#71677d]">
+          <span>AuraMeets · Conecta · Transforma · Realiza</span>
+          <Link href="/home3" className="underline underline-offset-4">Voltar à Home</Link>
+        </footer>
+      </div>
     </main>
   );
 }

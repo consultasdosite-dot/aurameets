@@ -504,6 +504,23 @@ async function criarNotificacaoInternaParaAdmins(
 
 }
 
+// A primeira mensalidade é proporcional aos dias restantes do mês,
+// incluindo o dia do cadastro, conforme a data de Brasília.
+function calcularPrimeiraMensalidadeProporcional(): number {
+  const partes = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(new Date());
+  const obter = (tipo: string) => Number(partes.find((p) => p.type === tipo)?.value);
+  const ano = obter("year");
+  const mes = obter("month");
+  const dia = obter("day");
+  const diasNoMes = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  return Math.round((80 * (diasNoMes - dia + 1) / diasNoMes) * 100) / 100;
+}
+
 export async function POST(request: Request) {
 
   let authUserId: string | null = null;
@@ -893,22 +910,35 @@ export async function POST(request: Request) {
     const supabaseAdmin = criarSupabaseAdmin();
 
     // O endereço público usa apenas o nome; não acrescenta códigos ou números.
+
     const slug = criarSlug(nome);
+
     const { data: slugExistente, error: erroConsultaSlug } = await supabaseAdmin
+
       .from("therapists")
+
       .select("id")
+
       .eq("slug", slug)
+
       .limit(1);
 
     if (erroConsultaSlug) {
+
       throw new Error(`Não foi possível verificar o endereço do perfil: ${erroConsultaSlug.message}`);
+
     }
 
     if (slugExistente && slugExistente.length > 0) {
+
       return NextResponse.json(
+
         { error: "Já existe um terapeuta com esse nome profissional. Entre em contato com a administração para definir um endereço exclusivo." },
+
         { status: 409 },
+
       );
+
     }
 
     /*
@@ -1143,11 +1173,11 @@ export async function POST(request: Request) {
 
         in_person_service: atendePresencial,
 
-        approval_status: "aprovado",
+        approval_status: "aprovado", // Sem etapa de aprovação manual.
 
         verified: false,
 
-        active: true,
+        active: false, // Perfil público somente após confirmação do Pix.
 
         review_required: false,
 
@@ -1421,11 +1451,13 @@ export async function POST(request: Request) {
 
         message:
 
-          "Cadastro profissional salvo. Falta concluir o pagamento da mensalidade.",
+          "Cadastro realizado. Você já pode acessar o Guia do Terapeuta; a publicação do perfil depende da confirmação do Pix.",
 
         paymentRequired: true,
 
-        monthlyAmount: 35,
+        monthlyAmount: 80,
+        firstPaymentAmount: calcularPrimeiraMensalidadeProporcional(),
+        paymentDueDay: 1,
 
         userId: authUserId,
 
