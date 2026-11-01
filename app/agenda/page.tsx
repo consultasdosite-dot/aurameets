@@ -1,638 +1,311 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import {
-  acceptAppointment,
-  declineAppointment,
-  getAppointmentsByTherapistId,
-  getTherapistIdByEmail,
-  proposeNewAppointmentTime,
-  type Appointment,
-} from "@/lib/appointments";
+import { getTherapistIdByProfileId } from "@/lib/appointments";
 import { supabase } from "@/lib/supabase";
-import AppointmentCard from "./components/AppointmentCard";
-import ProposeDateModal from "./components/ProposeDateModal";
 
-function formatarData(data?: string | null) {
-  if (!data) {
-    return "Data não informada";
+type Reserva = {
+  id: number;
+  therapist_id: number;
+  data_divulgacao: string;
+};
+
+const LIMITE_DIA = 3;
+const LIMITE_SEMANA = 2;
+
+function dataLocal(date: Date): string {
+  const ano = date.getFullYear();
+  const mes = String(date.getMonth() + 1).padStart(2, "0");
+  const dia = String(date.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
+function inicioSemana(data: string): string {
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const date = new Date(ano, mes - 1, dia);
+  date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+  return dataLocal(date);
+}
+
+function formatarData(data: string): string {
+  return data.split("-").reverse().join("/");
+}
+
+function mensagemErro(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    return String(error.message);
   }
-
-  const partes = data.split("-");
-
-  if (partes.length !== 3) {
-    return data;
-  }
-
-  return `${partes[2]}/${partes[1]}/${partes[0]}`;
-}
-
-function formatarHorario(horario?: string | null) {
-  if (!horario) {
-    return "Horário não informado";
-  }
-
-  return horario.slice(0, 5);
-}
-
-function formatarValor(valor?: number | null) {
-  if (valor === null || valor === undefined) {
-    return "Valor não informado";
-  }
-
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(valor);
-}
-
-function obterStatus(status: Appointment["status"]) {
-  const statusDisponiveis: Record<
-    Appointment["status"],
-    {
-      texto: string;
-      classe: string;
-    }
-  > = {
-    pending: {
-      texto: "Aguardando resposta",
-      classe:
-        "border-amber-400/30 bg-amber-400/10 text-amber-300",
-    },
-    accepted: {
-      texto: "Aceito",
-      classe:
-        "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-    },
-    new_time_proposed: {
-      texto: "Novo horário proposto",
-      classe:
-        "border-purple-400/30 bg-purple-400/10 text-purple-300",
-    },
-    awaiting_payment: {
-      texto: "Aguardando pagamento",
-      classe:
-        "border-yellow-400/30 bg-yellow-400/10 text-yellow-300",
-    },
-    payment_processing: {
-      texto: "Pagamento em processamento",
-      classe:
-        "border-blue-400/30 bg-blue-400/10 text-blue-300",
-    },
-    confirmed: {
-      texto: "Confirmado",
-      classe:
-        "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-    },
-    completed: {
-      texto: "Concluído",
-      classe:
-        "border-sky-400/30 bg-sky-400/10 text-sky-300",
-    },
-    declined: {
-      texto: "Recusado",
-      classe:
-        "border-red-400/30 bg-red-400/10 text-red-300",
-    },
-    cancelled: {
-      texto: "Cancelado",
-      classe:
-        "border-slate-400/30 bg-slate-400/10 text-slate-300",
-    },
-    refunded: {
-      texto: "Reembolsado",
-      classe:
-        "border-orange-400/30 bg-orange-400/10 text-orange-300",
-    },
-    no_show: {
-      texto: "Não compareceu",
-      classe:
-        "border-slate-400/30 bg-slate-400/10 text-slate-300",
-    },
-  };
-
-  return statusDisponiveis[status];
-}
-
-function obterDataExibicao(appointment: Appointment) {
-  return (
-    appointment.confirmed_date ??
-    appointment.proposed_date ??
-    appointment.preferred_date
-  );
-}
-
-function obterHorarioExibicao(appointment: Appointment) {
-  return (
-    appointment.confirmed_time ??
-    appointment.proposed_time ??
-    appointment.preferred_time
-  );
-}
-
-function podeResponderAtendimento(
-  appointment: Appointment,
-) {
-  return (
-    appointment.status === "pending" ||
-    appointment.status === "new_time_proposed"
-  );
+  return "Não foi possível concluir a operação. Tente novamente.";
 }
 
 export default function AgendaPage() {
   const router = useRouter();
-
-  const [appointments, setAppointments] = useState<
-    Appointment[]
-  >([]);
-
+  const [mesAtual, setMesAtual] = useState(() => {
+    const hoje = new Date();
+    return new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  });
+  const [terapeutaId, setTerapeutaId] = useState<number | null>(null);
+  const [reservas, setReservas] = useState<Reserva[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
-
-  const [
-    appointmentEmAtualizacao,
-    setAppointmentEmAtualizacao,
-  ] = useState<number | null>(null);
-
-  const [
-    appointmentSelecionado,
-    setAppointmentSelecionado,
-  ] = useState<Appointment | null>(null);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [aviso, setAviso] = useState("");
 
   const carregarAgenda = useCallback(async () => {
     setCarregando(true);
-    setErro(null);
-
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError || !session?.user) {
-      router.replace("/login-terapeuta");
-      return;
-    }
-
+    setErro("");
     try {
-      if (!session.user.email) {
-  throw new Error(
-    "Não foi possível identificar o e-mail da conta.",
-  );
-}
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!authData.user) {
+        setTerapeutaId(null);
+        router.replace("/login-terapeuta");
+        return;
+      }
 
-const therapistId =
-  await getTherapistIdByEmail(session.user.email);
+      const id = await getTherapistIdByProfileId(authData.user.id);
+      if (id == null) {
+        setTerapeutaId(null);
+        setErro("Não foi possível identificar seu perfil de terapeuta.");
+        return;
+      }
+      const idNumerico = Number(id);
+      if (!Number.isFinite(idNumerico)) {
+        throw new Error("Identificador do terapeuta inválido.");
+      }
+      setTerapeutaId(idNumerico);
 
-      const dados =
-        await getAppointmentsByTherapistId(therapistId);
+      const primeiroDia = new Date(mesAtual.getFullYear(), mesAtual.getMonth(), 1);
+      const ultimoDia = new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 0);
+      const inicio = new Date(primeiroDia);
+      inicio.setDate(inicio.getDate() - ((inicio.getDay() + 6) % 7));
+      const fim = new Date(ultimoDia);
+      fim.setDate(fim.getDate() + (6 - ((fim.getDay() + 6) % 7)));
 
-      setAppointments(dados);
+      const { data, error } = await supabase
+        .from("agenda_divulgacao")
+        .select("id, therapist_id, data_divulgacao")
+        .gte("data_divulgacao", dataLocal(inicio))
+        .lte("data_divulgacao", dataLocal(fim))
+        .order("data_divulgacao", { ascending: true });
+      if (error) throw error;
+      setReservas((data ?? []) as Reserva[]);
     } catch (errorDesconhecido) {
-      const mensagem =
-        errorDesconhecido instanceof Error
-          ? errorDesconhecido.message
-          : "Não foi possível carregar a agenda.";
-
-      setErro(mensagem);
-      setAppointments([]);
+      setErro(mensagemErro(errorDesconhecido));
     } finally {
       setCarregando(false);
     }
-  }, [router]);
+  }, [mesAtual, router]);
 
   useEffect(() => {
     void carregarAgenda();
   }, [carregarAgenda]);
 
-  async function aceitarAtendimento(
-    appointment: Appointment,
-  ) {
-    if (appointment.status !== "pending") {
-      return;
-    }
+  const dias = useMemo(() => {
+    const ano = mesAtual.getFullYear();
+    const mes = mesAtual.getMonth();
+    const deslocamento = (new Date(ano, mes, 1).getDay() + 6) % 7;
+    const quantidade = new Date(ano, mes + 1, 0).getDate();
+    return [
+      ...Array.from({ length: deslocamento }, () => null),
+      ...Array.from({ length: quantidade }, (_, i) => dataLocal(new Date(ano, mes, i + 1))),
+    ];
+  }, [mesAtual]);
 
-    setAppointmentEmAtualizacao(appointment.id);
-    setErro(null);
+  const hoje = dataLocal(new Date());
+  const minhasReservas = reservas
+    .filter((reserva) => reserva.therapist_id === terapeutaId && reserva.data_divulgacao >= hoje)
+    .sort((a, b) => a.data_divulgacao.localeCompare(b.data_divulgacao));
 
-    try {
-      await acceptAppointment(
-        appointment.id,
-        appointment.preferred_date,
-        appointment.preferred_time,
-      );
+  async function alterarReserva(data: string) {
+    if (terapeutaId === null || salvando || carregando) return;
+    setErro("");
+    setAviso("");
 
-      const updatedAt = new Date().toISOString();
-
-      setAppointments((appointmentsAtuais) =>
-        appointmentsAtuais.map((item) =>
-          item.id === appointment.id
-            ? {
-                ...item,
-                status: "accepted",
-                confirmed_date: item.preferred_date,
-                confirmed_time: item.preferred_time,
-                updated_at: updatedAt,
-              }
-            : item,
-        ),
-      );
-    } catch (errorDesconhecido) {
-      const mensagem =
-        errorDesconhecido instanceof Error
-          ? errorDesconhecido.message
-          : "Não foi possível aceitar o atendimento.";
-
-      setErro(mensagem);
-    } finally {
-      setAppointmentEmAtualizacao(null);
-    }
-  }
-
-  function abrirModalNovoHorario(
-    appointment: Appointment,
-  ) {
-    if (!podeResponderAtendimento(appointment)) {
-      return;
-    }
-
-    setErro(null);
-    setAppointmentSelecionado(appointment);
-  }
-
-  function fecharModalNovoHorario() {
-    if (appointmentEmAtualizacao) {
-      return;
-    }
-
-    setAppointmentSelecionado(null);
-  }
-
-  async function confirmarNovoHorario({
-    date,
-    time,
-  }: {
-    date: string;
-    time: string;
-    message: string;
-  }) {
-    if (!appointmentSelecionado) {
-      return;
-    }
-
-    const appointmentId = appointmentSelecionado.id;
-
-    setAppointmentEmAtualizacao(appointmentId);
-    setErro(null);
-
-    try {
-      await proposeNewAppointmentTime(
-        appointmentId,
-        date,
-        time,
-      );
-
-      const updatedAt = new Date().toISOString();
-
-      setAppointments((appointmentsAtuais) =>
-        appointmentsAtuais.map((item) =>
-          item.id === appointmentId
-            ? {
-                ...item,
-                status: "new_time_proposed",
-                proposed_date: date,
-                proposed_time: time,
-                updated_at: updatedAt,
-              }
-            : item,
-        ),
-      );
-
-      setAppointmentSelecionado(null);
-    } catch (errorDesconhecido) {
-      const mensagem =
-        errorDesconhecido instanceof Error
-          ? errorDesconhecido.message
-          : "Não foi possível propor o novo horário.";
-
-      setErro(mensagem);
-    } finally {
-      setAppointmentEmAtualizacao(null);
-    }
-  }
-
-  async function recusarAtendimento(
-    appointment: Appointment,
-  ) {
-    if (!podeResponderAtendimento(appointment)) {
-      return;
-    }
-
-    const confirmouRecusa = window.confirm(
-      `Deseja realmente recusar o atendimento de ${
-        appointment.client_name ?? "Cliente AuraMeets"
-      }?`,
+    const reservaMinha = reservas.find(
+      (reserva) => reserva.data_divulgacao === data && reserva.therapist_id === terapeutaId,
     );
+    const ocupadas = reservas.filter((reserva) => reserva.data_divulgacao === data).length;
+    const minhaSemana = reservas.filter(
+      (reserva) =>
+        reserva.therapist_id === terapeutaId &&
+        inicioSemana(reserva.data_divulgacao) === inicioSemana(data),
+    ).length;
 
-    if (!confirmouRecusa) {
+    if (data < hoje) return;
+    if (!reservaMinha && ocupadas >= LIMITE_DIA) {
+      setErro("As três vagas deste dia já estão ocupadas.");
+      return;
+    }
+    if (!reservaMinha && minhaSemana >= LIMITE_SEMANA) {
+      setErro("Você já escolheu dois dias nesta semana.");
       return;
     }
 
-    setAppointmentEmAtualizacao(appointment.id);
-    setErro(null);
-
-    try {
-      await declineAppointment(appointment.id);
-
-      const updatedAt = new Date().toISOString();
-
-      setAppointments((appointmentsAtuais) =>
-        appointmentsAtuais.map((item) =>
-          item.id === appointment.id
-            ? {
-                ...item,
-                status: "declined",
-                updated_at: updatedAt,
-              }
-            : item,
-        ),
+    if (!reservaMinha) {
+      const confirmado = window.confirm(
+        `Confirmar divulgação em ${formatarData(data)}?\n\n` +
+          "Ao participar, seu perfil poderá receber maior visibilidade e pedidos de consultas. " +
+          "Mantenha seus serviços e valores atualizados.",
       );
-    } catch (errorDesconhecido) {
-      const mensagem =
-        errorDesconhecido instanceof Error
-          ? errorDesconhecido.message
-          : "Não foi possível recusar o atendimento.";
+      if (!confirmado) return;
+    } else if (!window.confirm("Deseja cancelar sua reserva deste dia?")) {
+      return;
+    }
 
-      setErro(mensagem);
+    setSalvando(true);
+    try {
+      if (reservaMinha) {
+        const { error } = await supabase
+          .from("agenda_divulgacao")
+          .delete()
+          .eq("id", reservaMinha.id)
+          .eq("therapist_id", terapeutaId);
+        if (error) throw error;
+        setAviso("Reserva cancelada.");
+      } else {
+        const { error } = await supabase.from("agenda_divulgacao").insert({
+          therapist_id: terapeutaId,
+          data_divulgacao: data,
+        });
+        if (error) throw error;
+        setAviso("Dia reservado com sucesso.");
+      }
+      await carregarAgenda();
+    } catch (errorDesconhecido) {
+      setErro(mensagemErro(errorDesconhecido));
+      await carregarAgenda();
     } finally {
-      setAppointmentEmAtualizacao(null);
+      setSalvando(false);
     }
   }
 
-  const appointmentsOrdenados = useMemo(() => {
-    return [...appointments].sort((a, b) => {
-      const dataA = obterDataExibicao(a) ?? "";
-      const horarioA = obterHorarioExibicao(a) ?? "";
-
-      const dataB = obterDataExibicao(b) ?? "";
-      const horarioB = obterHorarioExibicao(b) ?? "";
-
-      return `${dataA}T${horarioA}`.localeCompare(
-        `${dataB}T${horarioB}`,
-      );
-    });
-  }, [appointments]);
-
-  const totalConfirmados = appointments.filter(
-    (appointment) =>
-      appointment.status === "confirmed" ||
-      appointment.status === "accepted",
-  ).length;
-
-  const totalPendentes = appointments.filter(
-    (appointment) => appointment.status === "pending",
-  ).length;
-
-  const totalPropostas = appointments.filter(
-    (appointment) =>
-      appointment.status === "new_time_proposed",
-  ).length;
-
-  if (carregando) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#050816] px-6 text-white">
-        <div className="text-center">
-          <div className="mx-auto h-11 w-11 animate-spin rounded-full border-4 border-slate-700 border-t-yellow-400" />
-
-          <p className="mt-4 text-sm font-semibold text-slate-300">
-            Carregando sua agenda...
-          </p>
-        </div>
-      </main>
-    );
+  function mudarMes(diferenca: number) {
+    setErro("");
+    setAviso("");
+    setMesAtual((atual) => new Date(atual.getFullYear(), atual.getMonth() + diferenca, 1));
   }
 
   return (
-    <main className="min-h-screen bg-[#050816] px-4 py-8 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-7xl">
-        <header className="flex flex-col gap-5 rounded-3xl border border-slate-800 bg-[#111A33] p-6 shadow-2xl sm:p-8 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-400">
-              AuraMeets
-            </p>
-
-            <h1 className="mt-4 text-3xl font-black sm:text-4xl">
-              Minha agenda
-            </h1>
-
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-              Consulte seus atendimentos, solicitações e
-              horários confirmados.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() =>
-                router.push("/dashboard-terapeuta")
-              }
-              className="min-h-11 rounded-xl border border-slate-600 bg-transparent px-5 py-2.5 text-sm font-bold text-slate-200 transition hover:border-slate-400 hover:bg-slate-800"
-            >
-              Voltar ao painel
-            </button>
-
-            <button
-              type="button"
-              onClick={() => void carregarAgenda()}
-              className="min-h-11 rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-black text-slate-950 transition hover:bg-yellow-300"
-            >
-              Atualizar agenda
-            </button>
-          </div>
+    <main className="min-h-screen bg-slate-50 px-4 pb-16 pt-6 md:px-8">
+      <div className="mx-auto max-w-5xl">
+        <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <span className="text-xl font-bold tracking-tight text-purple-700">AuraMeets</span>
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard-terapeuta")}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+          >
+            Voltar ao painel
+          </button>
         </header>
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-slate-800 bg-[#111A33] p-5">
-            <p className="text-sm font-semibold text-slate-400">
-              Total
-            </p>
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">Agenda de Divulgação</h1>
+          <p className="mt-4 leading-7 text-slate-600">
+            Escolha, se desejar, até dois dias por semana para participar da divulgação
+            no Instagram oficial do AuraMeets. Há três vagas disponíveis por dia.
+          </p>
+          <p className="mt-2 leading-7 text-slate-600">
+            Toque em uma data disponível para reservar. Para cancelar, toque novamente em “Meu dia”.
+          </p>
 
-            <p className="mt-3 text-3xl font-black">
-              {appointments.length}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-[#111A33] p-5">
-            <p className="text-sm font-semibold text-slate-400">
-              Pendentes
-            </p>
-
-            <p className="mt-3 text-3xl font-black text-amber-300">
-              {totalPendentes}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-[#111A33] p-5">
-            <p className="text-sm font-semibold text-slate-400">
-              Confirmados
-            </p>
-
-            <p className="mt-3 text-3xl font-black text-emerald-300">
-              {totalConfirmados}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-[#111A33] p-5">
-            <p className="text-sm font-semibold text-slate-400">
-              Novas propostas
-            </p>
-
-            <p className="mt-3 text-3xl font-black text-purple-300">
-              {totalPropostas}
-            </p>
-          </div>
-        </section>
-
-        {erro && (
-          <div
-            role="alert"
-            className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/10 px-5 py-4"
-          >
-            <p className="text-sm font-semibold text-red-300">
-              {erro}
-            </p>
-          </div>
-        )}
-
-        <section className="mt-6">
-          {appointmentsOrdenados.length === 0 ? (
-            <div className="rounded-3xl border border-slate-800 bg-[#111A33] p-8 text-center shadow-xl sm:p-12">
-              <p className="text-sm font-bold uppercase tracking-[0.25em] text-yellow-400">
-                Agenda vazia
-              </p>
-
-              <h2 className="mt-4 text-2xl font-black">
-                Nenhum atendimento encontrado
+          <div className="mt-8" aria-label="Calendário mensal de divulgação">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => mudarMes(-1)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-100"
+                aria-label="Mês anterior"
+              >
+                ←
+              </button>
+              <h2 className="text-center text-lg font-bold capitalize text-slate-900">
+                {mesAtual.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
               </h2>
-
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-300">
-                Quando um cliente solicitar ou confirmar um
-                atendimento, ele aparecerá nesta área.
-              </p>
+              <button
+                type="button"
+                onClick={() => mudarMes(1)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-100"
+                aria-label="Próximo mês"
+              >
+                →
+              </button>
             </div>
-          ) : (
-            <div className="grid gap-5 lg:grid-cols-2">
-              {appointmentsOrdenados.map((appointment) => {
-                const status = obterStatus(
-                  appointment.status,
-                );
 
-                const data =
-                  obterDataExibicao(appointment);
-
-                const horario =
-                  obterHorarioExibicao(appointment);
-
-                const valor =
-                  appointment.price ??
-                  appointment.offer?.offer_price ??
-                  null;
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600 sm:gap-2 sm:text-sm">
+              {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((dia) => (
+                <span key={dia} className="py-2">{dia}</span>
+              ))}
+              {dias.map((data, indice) => {
+                if (!data) return <span key={`vazio-${indice}`} />;
+                const doDia = reservas.filter((reserva) => reserva.data_divulgacao === data);
+                const minha = doDia.some((reserva) => reserva.therapist_id === terapeutaId);
+                const indisponivel = data < hoje || (!minha && doDia.length >= LIMITE_DIA);
+                const minhaSemana = reservas.filter(
+                  (reserva) =>
+                    reserva.therapist_id === terapeutaId &&
+                    inicioSemana(reserva.data_divulgacao) === inicioSemana(data),
+                ).length;
+                const limiteSemanal = !minha && minhaSemana >= LIMITE_SEMANA;
+                const desabilitado = carregando || salvando || terapeutaId === null || indisponivel || limiteSemanal;
+                const texto = minha
+                  ? "Meu dia"
+                  : data < hoje
+                    ? "Encerrado"
+                    : doDia.length >= LIMITE_DIA
+                      ? "Lotado"
+                      : limiteSemanal
+                        ? "Limite semanal"
+                        : `${LIMITE_DIA - doDia.length} vagas`;
 
                 return (
-                  <AppointmentCard
-                    key={appointment.id}
-                    clientName={
-                      appointment.client_name ??
-                      "Cliente AuraMeets"
-                    }
-                    service={
-                      appointment.offer?.title ??
-                      "Atendimento sem oferta vinculada"
-                    }
-                    date={formatarData(data)}
-                    time={formatarHorario(horario)}
-                    modality={
-                      appointment.modality ??
-                      "Não informada"
-                    }
-                    price={formatarValor(valor)}
-                    email={
-                      appointment.client_email ??
-                      undefined
-                    }
-                    phone={
-                      appointment.client_phone ??
-                      undefined
-                    }
-                    message={
-                      appointment.message ?? undefined
-                    }
-                    status={status.texto}
-                    loading={
-                      appointmentEmAtualizacao ===
-                      appointment.id
-                    }
-                    showActions={podeResponderAtendimento(
-                      appointment,
-                    )}
-                    onAccept={() =>
-                      void aceitarAtendimento(
-                        appointment,
-                      )
-                    }
-                    onProposeNewTime={() =>
-                      abrirModalNovoHorario(
-                        appointment,
-                      )
-                    }
-                    onDecline={() =>
-                      void recusarAtendimento(
-                        appointment,
-                      )
-                    }
-                  />
+                  <button
+                    key={data}
+                    type="button"
+                    disabled={desabilitado}
+                    onClick={() => void alterarReserva(data)}
+                    title={minha ? "Cancelar minha reserva" : texto}
+                    aria-label={`${formatarData(data)}: ${texto}`}
+                    className={`min-h-16 rounded-lg border px-1 py-2 text-center sm:min-h-20 ${
+                      minha
+                        ? "border-purple-700 bg-purple-100 text-purple-900"
+                        : desabilitado
+                          ? "cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400"
+                          : "border-slate-300 bg-white text-slate-800 hover:border-purple-600"
+                    }`}
+                  >
+                    <span className="block text-sm font-bold">{Number(data.slice(-2))}</span>
+                    <span className="mt-1 block text-[10px] leading-tight sm:text-xs">{texto}</span>
+                  </button>
                 );
               })}
             </div>
+
+            {carregando && <p className="mt-4 text-sm text-slate-600">Carregando agenda...</p>}
+            {salvando && <p className="mt-4 text-sm text-slate-600">Salvando reserva...</p>}
+            {erro && <p role="alert" className="mt-4 text-sm text-red-700">{erro}</p>}
+            {aviso && <p role="status" className="mt-4 text-sm text-green-700">{aviso}</p>}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+          <h2 className="text-xl font-bold text-slate-900">Meus próximos dias de divulgação</h2>
+          {minhasReservas.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-600">Você ainda não tem dias futuros reservados neste período.</p>
+          ) : (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {minhasReservas.map((reserva) => (
+                <span key={reserva.id} className="rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-900">
+                  {formatarData(reserva.data_divulgacao)}
+                </span>
+              ))}
+            </div>
           )}
+          <p className="mt-3 text-xs text-slate-500">São exibidas as reservas do mês selecionado e das semanas que o atravessam.</p>
         </section>
       </div>
-
-      <ProposeDateModal
-        open={appointmentSelecionado !== null}
-        clientName={
-          appointmentSelecionado?.client_name ??
-          "Cliente AuraMeets"
-        }
-        initialDate={
-          appointmentSelecionado?.proposed_date ??
-          appointmentSelecionado?.preferred_date ??
-          ""
-        }
-        initialTime={
-          appointmentSelecionado?.proposed_time ??
-          appointmentSelecionado?.preferred_time ??
-          ""
-        }
-        loading={
-          appointmentSelecionado !== null &&
-          appointmentEmAtualizacao ===
-            appointmentSelecionado.id
-        }
-        onClose={fecharModalNovoHorario}
-        onConfirm={(dados) =>
-          void confirmarNovoHorario(dados)
-        }
-      />
     </main>
   );
 }
