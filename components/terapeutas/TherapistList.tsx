@@ -1,3 +1,4 @@
+
 import TherapistCard from "./TherapistCard";
 import type { Therapist } from "./therapists";
 
@@ -44,13 +45,32 @@ export default async function TherapistList() {
         return !ehJosemaria;
       })
       .map((therapist) => {
-        const especialidades =
+        const especialidadesPrincipais =
           therapist.speciality
             ? therapist.speciality
                 .split(/[,•]/)
                 .map((item) => item.trim())
                 .filter(Boolean)
-            : ["Terapias Integrativas"];
+            : [];
+
+        const especialidadesAdicionais =
+          therapist.specialties ?? [];
+
+        const especialidades = [
+          ...especialidadesPrincipais,
+          ...especialidadesAdicionais.filter(
+            (item) =>
+              !especialidadesPrincipais.some(
+                (principal) =>
+                  normalizarTexto(principal) ===
+                  normalizarTexto(item),
+              ),
+          ),
+        ];
+
+        if (especialidades.length === 0) {
+          especialidades.push("Terapias Integrativas");
+        }
 
         const cidade = [
           therapist.city,

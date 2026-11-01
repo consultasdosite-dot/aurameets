@@ -32,6 +32,11 @@ export default function DepoimentosTerapeutaPage() {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [excluindoId, setExcluindoId] = useState<string | null>(null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [nomeEdicao, setNomeEdicao] = useState("");
+  const [textoEdicao, setTextoEdicao] = useState("");
+  const [autorizadoEdicao, setAutorizadoEdicao] = useState(false);
 
   const [nomeCliente, setNomeCliente] = useState("");
   const [textoDepoimento, setTextoDepoimento] = useState("");
@@ -163,8 +168,69 @@ export default function DepoimentosTerapeutaPage() {
     setSalvando(false);
   }
 
+  function iniciarEdicao(depoimento: Depoimento) {
+    setMensagem("");
+    setErro("");
+    setEditandoId(depoimento.id);
+    setNomeEdicao(depoimento.client_name);
+    setTextoEdicao(depoimento.testimonial);
+    setAutorizadoEdicao(depoimento.publication_authorized);
+  }
+
+  function cancelarEdicao() {
+    setEditandoId(null);
+    setNomeEdicao("");
+    setTextoEdicao("");
+    setAutorizadoEdicao(false);
+  }
+
+  async function salvarEdicao(depoimento: Depoimento) {
+    if (!usuarioId || editandoId !== depoimento.id) return;
+
+    setErro("");
+    setMensagem("");
+
+    if (!nomeEdicao.trim() || !textoEdicao.trim()) {
+      setErro("Preencha o nome do cliente e o depoimento.");
+      return;
+    }
+
+    if (!autorizadoEdicao) {
+      setErro("Confirme a autorização do cliente para a publicação.");
+      return;
+    }
+
+    const confirmou = window.confirm(
+      "Ao salvar, este depoimento voltará para aprovação administrativa e deixará de aparecer publicamente até ser aprovado novamente. Deseja continuar?"
+    );
+    if (!confirmou) return;
+
+    setSalvandoEdicao(true);
+    const { data, error } = await supabase
+      .from("therapist_testimonials")
+      .update({
+        client_name: nomeEdicao.trim(),
+        testimonial: textoEdicao.trim(),
+        publication_authorized: true,
+        status: "pending",
+      })
+      .eq("id", depoimento.id)
+      .eq("therapist_id", usuarioId)
+      .select("id");
+
+    if (error || !data?.length) {
+      console.error("Erro ao editar depoimento:", error);
+      setErro("Não foi possível atualizar o depoimento. Verifique suas permissões.");
+    } else {
+      cancelarEdicao();
+      setMensagem("Depoimento atualizado e enviado para nova aprovação.");
+      await carregarDepoimentos(usuarioId);
+    }
+    setSalvandoEdicao(false);
+  }
+
   async function excluirDepoimento(depoimento: Depoimento) {
-    if (!usuarioId || depoimento.status !== "pending") {
+    if (!usuarioId) {
       return;
     }
 
@@ -178,19 +244,20 @@ export default function DepoimentosTerapeutaPage() {
     setErro("");
     setExcluindoId(depoimento.id);
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("therapist_testimonials")
       .delete()
       .eq("id", depoimento.id)
       .eq("therapist_id", usuarioId)
-      .eq("status", "pending");
+      .select("id");
 
-    if (error) {
+    if (error || !data?.length) {
       console.error("Erro ao excluir depoimento:", error);
       setErro(
         "Não foi possível excluir. Verifique se a exclusão está autorizada."
       );
     } else {
+      if (editandoId === depoimento.id) cancelarEdicao();
       setMensagem("Depoimento excluído com sucesso.");
       await carregarDepoimentos(usuarioId);
     }
@@ -390,20 +457,81 @@ export default function DepoimentosTerapeutaPage() {
                   ).toLocaleDateString("pt-BR")}
                 </p>
 
-                {depoimento.status === "pending" && (
+                {editandoId === depoimento.id && (
+                  <div className="mt-5 space-y-4 rounded-xl border border-purple-200 bg-white p-4">
+                    <label className="block text-sm font-semibold text-slate-800">
+                      Nome do cliente
+                      <input
+                        type="text"
+                        maxLength={120}
+                        required
+                        value={nomeEdicao}
+                        onChange={(evento) => setNomeEdicao(evento.target.value)}
+                        className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-purple-600"
+                      />
+                    </label>
+                    <label className="block text-sm font-semibold text-slate-800">
+                      Depoimento do cliente
+                      <textarea
+                        rows={6}
+                        maxLength={3000}
+                        required
+                        value={textoEdicao}
+                        onChange={(evento) => setTextoEdicao(evento.target.value)}
+                        className="mt-2 w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-sm leading-6 outline-none focus:border-purple-600"
+                      />
+                    </label>
+                    <label className="flex items-start gap-3 text-sm text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={autorizadoEdicao}
+                        onChange={(evento) => setAutorizadoEdicao(evento.target.checked)}
+                        className="mt-1 h-5 w-5 shrink-0 accent-purple-700"
+                      />
+                      Confirmo que o cliente autorizou a publicação deste depoimento e do nome informado.
+                    </label>
+                    <p className="text-xs text-amber-800">
+                      A alteração exigirá nova aprovação administrativa antes da publicação.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={salvandoEdicao}
+                        onClick={() => void salvarEdicao(depoimento)}
+                        className="rounded-xl bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-800 disabled:opacity-60"
+                      >
+                        {salvandoEdicao ? "Salvando..." : "Salvar alterações"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={salvandoEdicao}
+                        onClick={cancelarEdicao}
+                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    disabled={excluindoId === depoimento.id}
-                    onClick={() =>
-                      void excluirDepoimento(depoimento)
-                    }
-                    className="mt-4 rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-60"
+                    disabled={salvandoEdicao || excluindoId !== null}
+                    onClick={() => iniciarEdicao(depoimento)}
+                    className="rounded-xl border border-purple-200 bg-white px-4 py-2 text-sm font-semibold text-purple-700 transition hover:bg-purple-50 disabled:opacity-60"
                   >
-                    {excluindoId === depoimento.id
-                      ? "Excluindo..."
-                      : "Excluir depoimento"}
+                    Editar depoimento
                   </button>
-                )}
+                  <button
+                    type="button"
+                    disabled={excluindoId !== null || salvandoEdicao}
+                    onClick={() => void excluirDepoimento(depoimento)}
+                    className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-60"
+                  >
+                    {excluindoId === depoimento.id ? "Excluindo..." : "Excluir depoimento"}
+                  </button>
+                </div>
               </article>
             ))}
           </div>

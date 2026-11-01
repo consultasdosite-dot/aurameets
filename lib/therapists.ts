@@ -1,3 +1,4 @@
+
 import { unstable_noStore as noStore } from "next/cache";
 
 import { supabase } from "./supabase";
@@ -9,6 +10,7 @@ export type SupabaseTherapist = {
   email: string | null;
   phone: string | null;
   speciality: string | null;
+  specialties?: string[];
   city: string | null;
   state: string | null;
   bio: string | null;
@@ -111,7 +113,93 @@ export async function getActiveTherapists(): Promise<
     return [];
   }
 
-  return data ?? [];
+  const therapists = data ?? [];
+
+  if (therapists.length === 0) {
+    return [];
+  }
+
+  const therapistIds = therapists.map((item) =>
+    Number(item.id),
+  );
+
+  const { data: relations, error: relationsError } =
+    await supabase
+      .from("therapist_specialties")
+      .select("therapist_id, specialty_id")
+      .in("therapist_id", therapistIds);
+
+  if (relationsError) {
+    console.error(
+      "Erro ao buscar especialidades dos terapeutas:",
+      relationsError,
+    );
+
+    return therapists;
+  }
+
+  const specialtyIds = [
+    ...new Set(
+      (relations ?? []).map((item) =>
+        Number(item.specialty_id),
+      ),
+    ),
+  ];
+
+  if (specialtyIds.length === 0) {
+    return therapists;
+  }
+
+  const { data: specialties, error: specialtiesError } =
+    await supabase
+      .from("specialties")
+      .select("id, name")
+      .in("id", specialtyIds);
+
+  if (specialtiesError) {
+    console.error(
+      "Erro ao buscar nomes das especialidades:",
+      specialtiesError,
+    );
+
+    return therapists;
+  }
+
+  const specialtyNames = new Map<number, string>();
+
+  for (const specialty of specialties ?? []) {
+    specialtyNames.set(
+      Number(specialty.id),
+      specialty.name ?? "",
+    );
+  }
+
+  const therapistSpecialties = new Map<number, string[]>();
+
+  for (const relation of relations ?? []) {
+    const therapistId = Number(relation.therapist_id);
+    const specialtyName = specialtyNames.get(
+      Number(relation.specialty_id),
+    );
+
+    if (!specialtyName) {
+      continue;
+    }
+
+    const current = therapistSpecialties.get(therapistId) ?? [];
+
+    if (!current.includes(specialtyName)) {
+      current.push(specialtyName);
+    }
+
+    therapistSpecialties.set(therapistId, current);
+  }
+
+  return therapists.map((therapist) => ({
+    ...therapist,
+    specialties:
+      therapistSpecialties.get(Number(therapist.id)) ?? [],
+  }));
 }
 
 export async function getTherapistBySlug(

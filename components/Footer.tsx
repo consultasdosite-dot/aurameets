@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 
 export default function Footer() {
@@ -18,11 +19,17 @@ export default function Footer() {
             Planos
           </Link>
 
-          <Link href="/termos" className="transition hover:text-yellow-400">
+          <Link
+            href="/termos-de-uso"
+            className="transition hover:text-yellow-400"
+          >
             Termos de Uso
           </Link>
 
-          <Link href="/privacidade" className="transition hover:text-yellow-400">
+          <Link
+            href="/politica-de-privacidade"
+            className="transition hover:text-yellow-400"
+          >
             Privacidade
           </Link>
         </div>
