@@ -723,10 +723,42 @@ export default function DashboardTerapeutaPage() {
         />
 
         <div className="min-w-0 flex-1">
-          <DashboardHeader />
 
           <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
             <div className="space-y-6">
+              <section className="mx-auto max-w-2xl space-y-5">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-purple-700">Meu espaço profissional</p>
+                  <h1 className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">
+                    Olá, {profile.name?.trim().split(/\s+/)[0] || "Terapeuta"}!
+                  </h1>
+                  <p className="mt-2 text-sm text-slate-600">Organize sua apresentação seguindo estas etapas:</p>
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  {[
+                    { titulo: "Meu Perfil", descricao: "Foto e apresentação profissional", href: "/dashboard-terapeuta/perfil" },
+                    { titulo: "Especialidades e Experiência", descricao: "Mostre suas áreas de atuação", href: "/dashboard-terapeuta/especialidades" },
+                    { titulo: "Meus Serviços", descricao: "Cadastre atendimentos e valores", href: "/dashboard-terapeuta/servicos" },
+                  ].map((etapa, indice) => (
+                    <button
+                      key={etapa.href}
+                      type="button"
+                      onClick={() => router.push(etapa.href)}
+                      className="flex w-full items-center gap-4 border-b border-slate-100 px-4 py-5 text-left transition hover:bg-purple-50 last:border-b-0 sm:px-6"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 font-bold text-purple-700">{indice + 1}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold text-slate-950">{etapa.titulo}</span>
+                        <span className="mt-1 block text-sm text-slate-500">{etapa.descricao}</span>
+                      </span>
+                      <span aria-hidden="true" className="text-xl text-purple-700">›</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+              <details className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:px-6">
+                <summary className="cursor-pointer py-2 font-semibold text-slate-700">Outras informações e atendimentos</summary>
+                <div className="mt-5 space-y-6">
               <DashboardStats
                 totalSolicitacoes={
                   solicitacoes.length
@@ -936,6 +968,8 @@ export default function DashboardTerapeutaPage() {
                   excluirSolicitacao
                 }
               />
+                </div>
+              </details>
             </div>
           </div>
         </div>
