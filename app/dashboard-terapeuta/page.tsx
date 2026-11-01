@@ -739,6 +739,7 @@ export default function DashboardTerapeutaPage() {
                     { titulo: "Meu Perfil", descricao: "Foto e apresentação profissional", href: "/dashboard-terapeuta/perfil" },
                     { titulo: "Especialidades e Experiência", descricao: "Mostre suas áreas de atuação", href: "/dashboard-terapeuta/especialidades" },
                     { titulo: "Meus Serviços", descricao: "Cadastre atendimentos e valores", href: "/dashboard-terapeuta/servicos" },
+                    { titulo: "Agenda de Disponibilidade", descricao: "Organize seus horários e sessões", href: "/agenda" },
                   ].map((etapa, indice) => (
                     <button
                       key={etapa.href}
@@ -759,6 +760,29 @@ export default function DashboardTerapeutaPage() {
               <details className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:px-6">
                 <summary className="cursor-pointer py-2 font-semibold text-slate-700">Outras informações e atendimentos</summary>
                 <div className="mt-5 space-y-6">
+                  <div className="overflow-hidden rounded-xl border border-slate-200">
+                    {[
+                      { titulo: "Guia do Terapeuta", descricao: "Seu passo a passo", href: "/dashboard-terapeuta/guia" },
+                      { titulo: "Comunidade de Terapeutas", descricao: "Divulgação e mensagens", href: "/dashboard-terapeuta/comunidade" },
+                      { titulo: "Experiência Presente", descricao: "Gerencie suas experiências", href: "/dashboard-terapeuta/experiencias" },
+                      { titulo: "Solicitações", descricao: "Consulte novos atendimentos", href: "/dashboard/solicitacoes" },
+                      { titulo: "Centro Financeiro", descricao: "Mensalidades, recebimentos e comissões", href: "/dashboard-terapeuta/financeiro" },
+                      { titulo: "Configurações", descricao: "Preferências da conta", href: "/dashboard-terapeuta/dados-profissionais" },
+                    ].map((item) => (
+                      <button
+                        key={item.href}
+                        type="button"
+                        onClick={() => router.push(item.href)}
+                        className="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-4 text-left transition hover:bg-purple-50 last:border-b-0"
+                      >
+                        <span>
+                          <span className="block text-sm font-semibold text-slate-900">{item.titulo}</span>
+                          <span className="mt-1 block text-xs text-slate-500">{item.descricao}</span>
+                        </span>
+                        <span aria-hidden="true" className="text-lg text-purple-700">›</span>
+                      </button>
+                    ))}
+                  </div>
               <DashboardStats
                 totalSolicitacoes={
                   solicitacoes.length
