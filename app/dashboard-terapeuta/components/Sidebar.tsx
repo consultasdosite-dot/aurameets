@@ -52,12 +52,6 @@ const menuItems: MenuItem[] = [
     icon: <BookIcon />,
   },
   {
-    label: "Meu Chat",
-    description: "Perguntas dos visitantes",
-    href: "/dashboard-terapeuta/chat",
-    icon: <EnvelopeIcon />,
-  },
-  {
     label: "Comunidade de Terapeutas",
     description: "Divulgação e mensagens",
     href: "/dashboard-terapeuta/comunidade",

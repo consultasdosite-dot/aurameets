@@ -103,6 +103,13 @@ export default function Home3() {
   );
   const [carregandoTerapeutas, setCarregandoTerapeutas] = useState(true);
   const [posicaoConvite, setPosicaoConvite] = useState(0);
+  const [terapeutaDanyela, setTerapeutaDanyela] = useState<TerapeutaDestaque | null>(null);
+  const [agora, setAgora] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalo = window.setInterval(() => setAgora(Date.now()), 30_000);
+    return () => window.clearInterval(intervalo);
+  }, []);
 
   useEffect(() => {
     let ativo = true;
@@ -115,6 +122,20 @@ export default function Home3() {
         if (ativo) {
           const destaques = montarDestaques(terapeutas, ofertas);
           setTerapeutasDestaque(destaques);
+          const danyela = terapeutas.find((item) => normalizarNome(item.name).startsWith("danyela"));
+          const ofertaDanyela = ofertas.find((item) => normalizarNome(item.therapist_name).startsWith("danyela"));
+          if (danyela || ofertaDanyela) {
+            setTerapeutaDanyela({
+              nome: danyela?.name || ofertaDanyela?.therapist_name || "Danyela",
+              profissao: danyela?.speciality?.trim() || ofertaDanyela?.therapist?.speciality?.trim() || null,
+              foto: danyela?.profile_photo_url || danyela?.photo_url || ofertaDanyela?.therapist_photo_url || null,
+              perfil: danyela
+                ? (danyela.slug?.trim()
+                  ? `/terapeuta/${encodeURIComponent(danyela.slug.trim())}`
+                  : `/terapeutas?therapistId=${encodeURIComponent(String(danyela.id))}`)
+                : ofertaDanyela?.public_href || null,
+            });
+          }
           setPosicaoConvite(Math.floor(Math.random() * (destaques.length + 1)));
         }
       } catch (erro) {
@@ -259,7 +280,7 @@ export default function Home3() {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
-          }).format(new Date());
+          }).format(new Date(agora + 2 * 60 * 60 * 1000));
 
           const programacao: Record<string, {
             busca: string;
@@ -303,13 +324,36 @@ export default function Home3() {
               titulo: "UMA PERGUNTA OBJETIVA E ENVIO DE REIKI",
               descricao: "Uma pergunta objetiva e envio de Reiki.",
             },
+            "2026-11-02": {
+              busca: "fernanda miranda",
+              nome: "Fernanda Miranda",
+              data: "SEGUNDA-FEIRA • 02/11/2026",
+              titulo: "VALE CONSULTA COM FERNANDA MIRANDA",
+              descricao: "Conheça o perfil da profissional e saiba mais sobre sua experiência.",
+            },
+            "2026-11-03": {
+              busca: "danyela",
+              nome: "Danyela",
+              data: "TERÇA-FEIRA • 03/11/2026",
+              titulo: "VALE CONSULTA COM DANYELA",
+              descricao: "Conheça o perfil da profissional e saiba mais sobre sua experiência.",
+            },
+            "2026-11-04": {
+              busca: "kassia",
+              nome: "Kássia",
+              data: "QUARTA-FEIRA • 04/11/2026",
+              titulo: "VALE CONSULTA COM KÁSSIA",
+              descricao: "Conheça o perfil da profissional e saiba mais sobre sua experiência.",
+            },
           };
 
           const experiencia = programacao[dataBrasilia];
           if (!experiencia) return null;
-          const terapeuta = terapeutasDestaque.find((item) =>
-            normalizarNome(item.nome).startsWith(experiencia.busca),
-          );
+          const terapeuta = experiencia.busca === "danyela"
+            ? terapeutaDanyela
+            : terapeutasDestaque.find((item) =>
+                normalizarNome(item.nome).startsWith(experiencia.busca),
+              );
           if (!terapeuta?.perfil) return null;
 
           return (
