@@ -10,6 +10,8 @@ export type HomeExperienceTherapist = {
 
   speciality: string | null;
 
+  especialidades?: string[];
+
   photo_url: string | null;
 
   profile_photo_url: string | null;
@@ -675,20 +677,94 @@ export async function getHomeTherapistsWithServices(): Promise<HomeExperienceThe
     ),
   ];
 
-  if (profileIds.length === 0) return [];
+  // Inclui também profissionais que aparecem na Home por uma experiência
+  // aprovada, mesmo quando não possuem serviço ativo na tabela services.
+  const { data: experienceData, error: experienceError } = await supabase
+    .from("experiences")
+    .select("therapist_id")
+    .eq("approval_status", "approved")
+    .eq("active", true);
+
+  if (experienceError) {
+    console.error("Erro ao buscar terapeutas das experiências da Home:", experienceError.message);
+  }
+
+  const idsComExperiencia = new Set(
+    (experienceData ?? []).map((item) => Number(item.therapist_id)),
+  );
+  if (profileIds.length === 0 && idsComExperiencia.size === 0) return [];
 
   const { data: therapistData, error: therapistError } = await supabase
     .from("therapists")
     .select(DISCOUNT_THERAPIST_SELECT)
-    .in("profile_id", profileIds)
     .eq("active", true);
 
   if (therapistError) {
-    console.error("Erro ao buscar terapeutas com serviços:", therapistError.message);
+    console.error("Erro ao buscar terapeutas com serviços ou experiências:", therapistError.message);
     return [];
   }
 
-  return shuffle((therapistData ?? []) as HomeExperienceTherapist[]);
+  const idsComServico = new Set(profileIds);
+  const terapeutas = ((therapistData ?? []) as DiscountTherapist[]).filter(
+    (item) =>
+      (item.profile_id !== null && idsComServico.has(item.profile_id)) ||
+      idsComExperiencia.has(item.id),
+  );
+  const idsTerapeutas = terapeutas.map((item) => item.id);
+  if (idsTerapeutas.length === 0) return [];
+
+  // As especialidades múltiplas pertencem à tabela de relacionamento,
+  // vinculada pelo ID numérico de therapists (não pelo profile_id).
+  const { data: vinculos, error: erroVinculos } = await supabase
+    .from("therapist_specialties")
+    .select("therapist_id, specialty_id")
+    .in("therapist_id", idsTerapeutas)
+    .eq("approval_status", "approved");
+
+  if (erroVinculos) {
+    console.error("Erro ao buscar especialidades aprovadas da Home:", erroVinculos.message);
+    return shuffle(terapeutas);
+  }
+
+  const relacoes = (vinculos ?? []) as { therapist_id: number; specialty_id: number }[];
+  const idsEspecialidades = [...new Set(relacoes.map((item) => item.specialty_id))];
+  if (idsEspecialidades.length === 0) return shuffle(terapeutas);
+
+  const { data: especialidades, error: erroEspecialidades } = await supabase
+    .from("specialties")
+    .select("id, name, active, is_active")
+    .in("id", idsEspecialidades);
+
+  if (erroEspecialidades) {
+    console.error("Erro ao buscar nomes das especialidades da Home:", erroEspecialidades.message);
+    return shuffle(terapeutas);
+  }
+
+  const nomesPorId = new Map<number, string>();
+  for (const item of (especialidades ?? []) as {
+    id: number;
+    name: string;
+    active: boolean | null;
+    is_active: boolean | null;
+  }[]) {
+    if (item.active === true && item.is_active === true && item.name?.trim()) {
+      nomesPorId.set(item.id, item.name.trim());
+    }
+  }
+
+  const especialidadesPorTerapeuta = new Map<number, string[]>();
+  for (const relacao of relacoes) {
+    const nome = nomesPorId.get(relacao.specialty_id);
+    if (!nome) continue;
+    const lista = especialidadesPorTerapeuta.get(relacao.therapist_id) ?? [];
+    if (!lista.includes(nome)) lista.push(nome);
+    especialidadesPorTerapeuta.set(relacao.therapist_id, lista);
+  }
+
+  return shuffle(terapeutas.map((terapeuta) => ({
+    ...terapeuta,
+    especialidades: especialidadesPorTerapeuta.get(terapeuta.id) ?? [],
+  })));
 }
 
 export async function getFeaturedExperiences(): Promise<FeaturedExperience[]> {
@@ -717,25 +793,45 @@ export async function getFeaturedExperiences(): Promise<FeaturedExperience[]> {
 
   const { data, error } = experienceResult;
 
+  let experiences = (data ?? []) as unknown as SupabaseExperienceRow[];
+
+  // Se a relação incorporada falhar, recupera as ofertas e os terapeutas
+  // em consultas separadas, sem interromper a Home.
   if (error) {
+    const { data: offers, error: offersError } = await supabase
+      .from("experiences")
+      .select("*")
+      .eq("approval_status", "approved")
+      .eq("active", true)
+      .order("display_order", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false });
 
-    console.error("Erro ao buscar ofertas para a Home:", {
+    if (offersError) {
+      console.error("Erro ao buscar ofertas para a Home:", offersError.message);
+    } else {
+      const rows = (offers ?? []) as unknown as SupabaseExperienceRow[];
+      const therapistIds = [...new Set(rows.map((row) => Number(row.therapist_id)))];
+      if (therapistIds.length > 0) {
+        const { data: therapistRows, error: therapistError } = await supabase
+          .from("therapists")
+          .select(DISCOUNT_THERAPIST_SELECT)
+          .in("id", therapistIds)
+          .eq("active", true);
 
-      message: error.message,
-
-      details: error.details,
-
-      hint: error.hint,
-
-      code: error.code,
-
-    });
-
+        if (therapistError) {
+          console.error("Erro ao recuperar terapeutas da Home:", therapistError.message);
+        } else {
+          const byId = new Map(
+            ((therapistRows ?? []) as HomeExperienceTherapist[]).map((therapist) => [therapist.id, therapist]),
+          );
+          experiences = rows.map((row) => ({
+            ...row,
+            therapist: byId.get(Number(row.therapist_id)) ?? null,
+          }));
+        }
+      }
+    }
   }
-
-
-
-  const experiences = (data ?? []) as unknown as SupabaseExperienceRow[];
 
   const normalized = experiences
 
