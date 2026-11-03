@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -9,17 +8,17 @@ const WHATSAPP_ATENDENTE = "5551980339532";
 
 const areas = [
   "Relacionamentos",
-  "FamÃ­lia",
-  "Ansiedade e emoÃ§Ãµes",
-  "Trabalho e finanÃ§as",
+  "Família",
+  "Ansiedade e emoções",
+  "Trabalho e finanças",
   "Autoconhecimento",
   "Espiritualidade",
-  "Ainda nÃ£o sei explicar",
+  "Ainda não sei explicar",
 ];
 
 const objetivos = [
   "Quero ser acolhido(a)",
-  "Preciso de orientaÃ§Ã£o e clareza",
+  "Preciso de orientação e clareza",
   "Quero me conhecer melhor",
 ];
 
@@ -52,9 +51,9 @@ export default function JornadaPage() {
     }
 
     const mensagem = [
-      "OlÃ¡! Vim pelo AuraMeets e gostaria de acolhimento.",
+      "Olá! Vim pelo AuraMeets e gostaria de acolhimento.",
       "",
-      "Minhas maiores preocupaÃ§Ãµes hoje:",
+      "Minhas maiores preocupações hoje:",
       ...areasSelecionadas.map((item) => `- ${item}`),
       "",
       "O que procuro neste momento:",
@@ -88,7 +87,7 @@ export default function JornadaPage() {
           <div className="relative mx-auto mt-6 h-44 w-full overflow-hidden rounded-[28px] bg-[#F0E8FA] sm:h-60">
             <Image
               src="/home2-mobile.png"
-              alt="AuraMeets - acolhimento e conexÃ£o"
+              alt="AuraMeets - acolhimento e conexão"
               fill
               priority
               className="object-cover object-center"
@@ -101,12 +100,12 @@ export default function JornadaPage() {
           </p>
 
           <h1 className="mt-4 text-3xl font-black leading-tight sm:text-4xl">
-            Estamos aqui para acolher vocÃª.
+            Estamos aqui para acolher você.
           </h1>
 
           <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[#58647A]">
             Escolha as respostas que representam seu momento.
-            VocÃª pode marcar mais de uma opÃ§Ã£o.
+            Você pode marcar mais de uma opção.
           </p>
         </header>
 
@@ -117,12 +116,12 @@ export default function JornadaPage() {
             </span>
 
             <h2 className="text-xl font-black sm:text-2xl">
-              QUAL A SUA MAIOR PREOCUPAÃ‡ÃƒO HOJE?
+              QUAL A SUA MAIOR PREOCUPAÇÃO HOJE?
             </h2>
           </div>
 
           <p className="mb-5 text-sm text-[#68758A]">
-            Selecione quantas opÃ§Ãµes desejar.
+            Selecione quantas opções desejar.
           </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -151,7 +150,7 @@ export default function JornadaPage() {
                           : "border-[#C9B8D9] bg-white"
                       }`}
                     >
-                      {selecionada ? "âœ“" : ""}
+                      {selecionada ? "✓" : ""}
                     </span>
                   </span>
                 </button>
@@ -167,12 +166,12 @@ export default function JornadaPage() {
             </span>
 
             <h2 className="text-xl font-black sm:text-2xl">
-              O que vocÃª procura neste momento?
+              O que você procura neste momento?
             </h2>
           </div>
 
           <p className="mb-5 text-sm text-[#68758A]">
-            VocÃª pode escolher mais de uma resposta.
+            Você pode escolher mais de uma resposta.
           </p>
 
           <div className="grid gap-3">
@@ -201,7 +200,7 @@ export default function JornadaPage() {
                           : "border-[#C9B8D9] bg-white"
                       }`}
                     >
-                      {selecionada ? "âœ“" : ""}
+                      {selecionada ? "✓" : ""}
                     </span>
                   </span>
                 </button>
@@ -217,25 +216,25 @@ export default function JornadaPage() {
             disabled={!podeContinuar}
             className="w-full rounded-2xl bg-[#7653A6] px-8 py-5 text-lg font-black text-white shadow-lg transition hover:bg-[#62418F] disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           >
-            QUERO SER ACOLHIDO â†’
+            QUERO SER ACOLHIDO →
           </button>
 
           <p className="mx-auto mt-4 max-w-lg text-sm leading-6 text-[#68758A]">
-            VocÃª serÃ¡ direcionado ao WhatsApp com todas as respostas
+            Você será direcionado ao WhatsApp com todas as respostas
             selecionadas preenchidas automaticamente.
             Basta enviar a mensagem.
           </p>
 
           <p className="mx-auto mt-5 max-w-lg text-xs leading-5 text-[#7A8495]">
-            Este acolhimento inicial nÃ£o constitui diagnÃ³stico nem
-            substitui acompanhamento mÃ©dico ou psicolÃ³gico.
+            Este acolhimento inicial não constitui diagnóstico nem
+            substitui acompanhamento médico ou psicológico.
           </p>
 
           <Link
             href="/"
             className="mt-7 inline-block text-sm font-bold text-[#7653A6] hover:underline"
           >
-            â† Voltar para o inÃ­cio
+            ← Voltar para o início
           </Link>
         </div>
       </div>
