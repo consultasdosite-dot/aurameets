@@ -313,12 +313,21 @@ export default async function TherapistPage({
             <h2 className="font-serif text-3xl text-[#3b176b]">Vamos conversar?</h2>
             <p className="mt-4 text-[#5b5268]">Entre em contato para saber mais sobre os atendimentos.</p>
             <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center justify-center rounded-xl bg-[#1b9e66] px-7 py-3.5 font-bold text-white">WhatsApp</a>
+            {(therapist.specialties ?? []).length > 0 && (
+              <div className="mt-6 flex flex-wrap justify-center gap-2" aria-label="Especialidades do terapeuta">
+                {(therapist.specialties ?? []).map((specialty) => (
+                  <span key={specialty} className="inline-flex items-center justify-center rounded-xl bg-[#7232a6] px-4 py-2 text-sm font-semibold text-white">
+                    {specialty}
+                  </span>
+                ))}
+              </div>
+            )}
           </section>
         )}
         {presentAvailable && presentDetails && (
           <section className="mt-12 w-full border-y border-[#e8d9ec] px-4 py-12 text-center sm:py-16" aria-labelledby="experiencia-presente-titulo">
             <div className="mx-auto max-w-4xl">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#966c28]">Experiência Presente</p>
+              <p className="text-2xl font-bold uppercase tracking-[0.18em] text-[#966c28]">Experiência Presente</p>
               <h2 id="experiencia-presente-titulo" className="mt-3 font-serif text-3xl text-[#3b176b] sm:text-4xl">{presentDetails.title}</h2>
               {presentDetails.description && <div className="mx-auto mt-4 max-w-2xl"><ExpandableText text={presentDetails.description} className="leading-7 text-[#5b5268]" /></div>}
               {whatsappNumber && <a href={presentHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[#7232a6] px-7 py-3.5 text-sm font-bold uppercase tracking-wide text-white sm:w-auto">Quero receber</a>}

@@ -245,7 +245,69 @@ export async function getTherapistBySlug(
     return null;
   }
 
-  return data;
+  if (!data) {
+    return null;
+  }
+
+  const { data: relations, error: relationsError } =
+    await supabase
+      .from("therapist_specialties")
+      .select("specialty_id")
+      .eq("therapist_id", data.id);
+
+  if (relationsError) {
+    console.error(
+      "Erro ao buscar especialidades do terapeuta:",
+      relationsError,
+    );
+
+    return { ...data, specialties: [] };
+  }
+
+  const specialtyIds = [
+    ...new Set(
+      (relations ?? []).map((item) =>
+        Number(item.specialty_id),
+      ),
+    ),
+  ];
+
+  if (specialtyIds.length === 0) {
+    return { ...data, specialties: [] };
+  }
+
+  const { data: specialties, error: specialtiesError } =
+    await supabase
+      .from("specialties")
+      .select("id, name")
+      .in("id", specialtyIds);
+
+  if (specialtiesError) {
+    console.error(
+      "Erro ao buscar nomes das especialidades:",
+      specialtiesError,
+    );
+
+    return { ...data, specialties: [] };
+  }
+
+  const specialtyNames = new Map<number, string>();
+
+  for (const specialty of specialties ?? []) {
+    specialtyNames.set(
+      Number(specialty.id),
+      specialty.name ?? "",
+    );
+  }
+
+  const names = specialtyIds
+    .map((id) => specialtyNames.get(id))
+    .filter((name): name is string => Boolean(name));
+
+  return {
+    ...data,
+    specialties: names,
+  };
 }
 
 export async function getSalesCampaignBySlug(
