@@ -308,6 +308,13 @@ export default async function TherapistPage({
           </div>
         </section>
 
+        {whatsappNumber && (
+          <section className="mx-auto w-full border-t border-[#e8d9ec] px-4 py-12 text-center sm:max-w-4xl sm:px-8">
+            <h2 className="font-serif text-3xl text-[#3b176b]">Vamos conversar?</h2>
+            <p className="mt-4 text-[#5b5268]">Entre em contato para saber mais sobre os atendimentos.</p>
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center justify-center rounded-xl bg-[#1b9e66] px-7 py-3.5 font-bold text-white">WhatsApp</a>
+          </section>
+        )}
         {presentAvailable && presentDetails && (
           <section className="mt-12 w-full border-y border-[#e8d9ec] px-4 py-12 text-center sm:py-16" aria-labelledby="experiencia-presente-titulo">
             <div className="mx-auto max-w-4xl">
@@ -380,13 +387,6 @@ export default async function TherapistPage({
           </section>
         )}
 
-        {whatsappNumber && (
-          <section className="mx-auto w-full border-t border-[#e8d9ec] px-4 py-12 text-center sm:max-w-4xl sm:px-8">
-            <h2 className="font-serif text-3xl text-[#3b176b]">Vamos conversar?</h2>
-            <p className="mt-4 text-[#5b5268]">Entre em contato para saber mais sobre os atendimentos.</p>
-            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center justify-center rounded-xl bg-[#1b9e66] px-7 py-3.5 font-bold text-white">WhatsApp</a>
-          </section>
-        )}
         <footer className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-[#e8d9ec] px-4 pt-7 text-center text-xs text-[#71677d]">
           <span>AuraMeets · Conecta · Transforma · Realiza</span>
           <Link href="/home3" className="underline underline-offset-4">Voltar à Home</Link>

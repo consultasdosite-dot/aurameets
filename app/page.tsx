@@ -52,7 +52,22 @@ function embaralharTerapeutas<T>(itens: T[]): T[] {
   return resultado;
 }
 
-type TerapeutaDestaque = { nome: string; profissao: string | null; especialidades: string[]; foto: string | null; perfil: string | null };
+type TerapeutaDestaque = { nome: string; profissao: string | null; especialidades: string[]; foto: string | null; perfil: string | null; whatsapp: string | null };
+
+function linkWhatsAppTerapeuta(telefone: string | null | undefined): string | null {
+  if (!telefone?.trim()) return null;
+  const numero = telefone.replace(/\D/g, "");
+  if (!numero) return null;
+  const internacional = telefone.trim().startsWith("+") || numero.startsWith("55") || numero.startsWith("81")
+    ? numero
+    : /^0(?:70|80|90)\d{8}$/.test(numero)
+      ? `81${numero.slice(1)}`
+      : /^\d{10,11}$/.test(numero)
+        ? `55${numero}`
+        : numero;
+  const mensagem = "Olá! Conheci seu perfil no AuraMeets e gostaria de conversar sobre seus atendimentos.";
+  return `https://wa.me/${internacional}?text=${encodeURIComponent(mensagem)}`;
+}
 
 function normalizarNome(nome: string) {
   return nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -78,7 +93,7 @@ function montarDestaques(
         : `/terapeutas?therapistId=${encodeURIComponent(String(terapeuta.id))}`
       : oferta?.public_href || null;
     const profissao = terapeuta?.speciality?.trim() || oferta?.therapist?.speciality?.trim() || null;
-    return { nome: terapeuta?.name || oferta?.therapist_name || selecionado.nome, profissao, especialidades: terapeuta?.especialidades ?? [], foto, perfil };
+    return { nome: terapeuta?.name || oferta?.therapist_name || selecionado.nome, profissao, especialidades: terapeuta?.especialidades ?? [], foto, perfil, whatsapp: linkWhatsAppTerapeuta(terapeuta?.phone || oferta?.therapist?.phone) };
   }).filter((item) => item.perfil);
 
   const alzira = destaques.find((item) => normalizarNome(item.nome).startsWith("alzira"));
@@ -207,6 +222,7 @@ export default function Home() {
                   ? `/terapeuta/${encodeURIComponent(danyela.slug.trim())}`
                   : `/terapeutas?therapistId=${encodeURIComponent(String(danyela.id))}`)
                 : ofertaDanyela?.public_href || null,
+              whatsapp: linkWhatsAppTerapeuta(danyela?.phone || ofertaDanyela?.therapist?.phone),
             });
           }
         }
@@ -444,13 +460,20 @@ export default function Home() {
                   ) : terapeuta.profissao ? (
                     <span className="profissaoTerapeuta">{terapeuta.profissao}</span>
                   ) : null}
-                  <small>{terapeuta.perfil ? "CONHECER PROFISSIONAL →" : carregandoTerapeutas ? "Carregando..." : "Perfil indisponível"}</small>
+                  {terapeuta.perfil ? (
+                    <Link href={terapeuta.perfil} className="botaoPerfilTerapeuta">CONHECER PROFISSIONAL →</Link>
+                  ) : (
+                    <small>{carregandoTerapeutas ? "Carregando..." : "Perfil indisponível"}</small>
+                  )}
+                  {terapeuta.whatsapp && (
+                    <a className="botaoWhatsAppTerapeuta" href={terapeuta.whatsapp} target="_blank" rel="noopener noreferrer">FALAR COM TERAPEUTA</a>
+                  )}
                 </>
               );
               return terapeuta.perfil ? (
-                <Link href={terapeuta.perfil} className="cartaoTerapeuta" key={terapeuta.nome} style={{ order: indice }}>
+                <div className="cartaoTerapeuta" key={terapeuta.nome} style={{ order: indice }}>
                   {conteudo}
-                </Link>
+                </div>
               ) : (
                 <div className="cartaoTerapeuta" key={terapeuta.nome} style={{ order: indice }}>
                   {conteudo}
@@ -1066,6 +1089,19 @@ export default function Home() {
           line-height: 1.4;
           overflow-wrap: anywhere;
         }
+        .home3 .cartaoTerapeuta .botaoPerfilTerapeuta,
+        .home3 .cartaoTerapeuta .botaoWhatsAppTerapeuta {
+          align-self: center;
+          margin: 18px 12px 0;
+          padding: 12px 20px;
+          border-radius: 24px;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+        .home3 .cartaoTerapeuta .botaoPerfilTerapeuta { background: #7735c5; }
+        .home3 .cartaoTerapeuta .botaoWhatsAppTerapeuta { background: #178c50; margin-top: 10px; }
         .home3 .cartaoTerapeuta small {
           align-self: center;
           margin: 18px 12px 0;
