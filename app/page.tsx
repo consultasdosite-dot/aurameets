@@ -37,10 +37,11 @@ const terapeutasSelecionados = [
   { nome: "Ricardo", busca: ["ricardo"] },
   { nome: "Tyemi", busca: ["tyemi"] },
   { nome: "Oscar", busca: ["oscar ahumada", "oscar"] },
-  { nome: "Eunice", busca: ["eunice"] },
   { nome: "Kassia", busca: ["kassia", "kássia"] },
   { nome: "Fernanda", busca: ["fernanda"] },
   { nome: "Kelly", busca: ["kelly"] },
+  { nome: "Danyela", busca: ["danyela"] },
+  { nome: "Mariangela", busca: ["mariangela", "mariângela"] },
 ];
 
 function embaralharTerapeutas<T>(itens: T[]): T[] {
@@ -441,7 +442,20 @@ export default function Home() {
                   <small>Com {experiencia.nome} • {experiencia.data.toLowerCase()}</small>
                   <Link href={terapeuta.perfil} className="experienciaDiaPerfil">CONHECER PERFIL DE {experiencia.nome.toLocaleUpperCase("pt-BR")} →</Link>
                 </div>
-                <Link href={terapeuta.perfil} className="botaoPrincipal botaoVoucher">{semAgendamento ? "CONHECER PROFISSIONAL" : "QUERO VALE CONSULTA"} <span>→</span></Link>
+                {terapeuta.whatsapp ? (
+                  <a
+                    href={`${terapeuta.whatsapp.split("?")[0]}?text=${encodeURIComponent(`Olá! Conheci seu perfil no AuraMeets e gostaria de solicitar seu Vale Consulta.`)}`}
+                    className="botaoPrincipal botaoVoucher"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    QUERO VALE CONSULTA <span>→</span>
+                  </a>
+                ) : (
+                  <span className="botaoPrincipal botaoVoucher" aria-disabled="true" title="WhatsApp do terapeuta não cadastrado">
+                    VALE CONSULTA INDISPONÍVEL
+                  </span>
+                )}
               </div>
             </section>
           );
