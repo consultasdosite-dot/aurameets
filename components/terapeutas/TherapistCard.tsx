@@ -64,7 +64,7 @@ export default function TherapistCard({
           <img
             src={therapist.foto}
             alt={`Foto de perfil de ${therapist.nome}`}
-            className="h-full w-full object-cover object-center"
+            className="h-full w-full object-contain object-center"
             loading="lazy"
           />
         ) : (
@@ -89,7 +89,7 @@ export default function TherapistCard({
           {nomeExibido}
         </h2>
 
-        <p className="mt-2 text-lg font-bold leading-7 text-[#7935C5]">
+        <p className="mt-2 text-lg font-normal leading-7 text-[#7935C5]">
           {therapist.especialidades.join(" • ")}
         </p>
 
