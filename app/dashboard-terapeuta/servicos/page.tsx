@@ -53,7 +53,7 @@ function obterStatus(status: Servico["status"]) {
     return {
       texto: "Publicado",
       classe:
-        "border-emerald-400/40 bg-emerald-400/10 text-emerald-300",
+        "border-emerald-300 bg-emerald-50 text-emerald-800",
     };
   }
 
@@ -61,14 +61,14 @@ function obterStatus(status: Servico["status"]) {
     return {
       texto: "Em análise",
       classe:
-        "border-orange-400/40 bg-orange-400/10 text-orange-300",
+        "border-orange-300 bg-orange-50 text-orange-800",
     };
   }
 
   return {
     texto: "Oculto",
     classe:
-      "border-slate-500 bg-slate-500/10 text-slate-300",
+      "border-slate-300 bg-slate-100 text-slate-700",
   };
 }
 
@@ -860,19 +860,32 @@ export default function ServicosPage() {
   ).length;
 
   return (
-    <main className="min-h-screen bg-[#050816] p-6 text-white lg:p-10">
+    <main className="min-h-screen bg-white p-6 text-[#102657] lg:p-10">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.25em] text-yellow-400">
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#70389D]">
               Dashboard do Terapeuta
             </p>
 
-            <h1 className="mt-3 text-4xl font-black">
-              Meus Serviços
-            </h1>
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              <h1 className="text-4xl font-black">
+                Meus Serviços
+              </h1>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuraAberta(true);
+                  setAuraTopico(null);
+                  setAuraErroFoto("");
+                }}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#7C3AED] px-5 py-2 text-sm font-bold text-white transition hover:bg-[#6D28D9]"
+              >
+                Ajuda da AURA
+              </button>
+            </div>
 
-            <p className="mt-3 max-w-3xl leading-7 text-slate-300">
+            <p className="mt-3 max-w-3xl leading-7 text-[#485673]">
               Cadastre, edite e escolha quais
               serviços deseja publicar no seu
               perfil do AuraMeets.
@@ -884,7 +897,7 @@ export default function ServicosPage() {
               <Link
                 href={`/terapeuta/${terapeutaSlug}`}
                 target="_blank"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-6 py-4 font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400"
+                className="inline-flex items-center justify-center rounded-xl border border-[#D7CBE4] px-6 py-4 font-bold text-[#102657] transition hover:border-[#8546B3] hover:text-[#70389D]"
               >
                 Ver meu perfil
               </Link>
@@ -899,61 +912,33 @@ export default function ServicosPage() {
           </div>
         </div>
 
-        <section className="mt-8 rounded-3xl border border-yellow-300 bg-yellow-400 p-5 text-black sm:p-7">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-black">
-                Precisa de ajuda?
-              </p>
-              <h2 className="mt-2 text-2xl font-black text-black sm:text-3xl">
-                Sou AURA, sua assistente virtual
-              </h2>
-              <p className="mt-2 max-w-2xl text-base font-medium leading-7 text-black/80">
-                Eu explico devagar, uma coisa por vez.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setAuraAberta(true);
-                setAuraTopico(null);
-                setAuraErroFoto("");
-              }}
-              className="min-h-16 rounded-2xl bg-[#050816] px-8 py-4 text-lg font-black text-yellow-400 transition hover:bg-black"
-            >
-              PEÇA AJUDA
-            </button>
-          </div>
-        </section>
-
         {mensagem && (
-          <div className="mt-8 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-emerald-300">
+          <div className="mt-8 rounded-2xl border border-emerald-500/30 bg-emerald-50 p-5 text-emerald-800">
             {mensagem}
           </div>
         )}
 
         {erro && (
-          <div className="mt-8 rounded-2xl border border-red-500/40 bg-red-500/10 p-5 text-red-300">
+          <div className="mt-8 rounded-2xl border border-red-500/40 bg-red-50 p-5 text-red-800">
             {erro}
           </div>
         )}
 
         <section className="mt-10 grid gap-6 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-700 bg-[#111A33] p-6">
-            <p className="text-sm text-slate-400">
+          <div className="rounded-2xl border border-[#E5DDED] bg-white p-6">
+            <p className="text-sm text-[#64718B]">
               Total de Serviços
             </p>
 
-            <p className="mt-3 text-4xl font-black text-yellow-400">
+            <p className="mt-3 text-4xl font-black text-[#70389D]">
               {carregando
                 ? "—"
                 : totalServicos}
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-700 bg-[#111A33] p-6">
-            <p className="text-sm text-slate-400">
+          <div className="rounded-2xl border border-[#E5DDED] bg-white p-6">
+            <p className="text-sm text-[#64718B]">
               Publicados
             </p>
 
@@ -964,8 +949,8 @@ export default function ServicosPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-700 bg-[#111A33] p-6">
-            <p className="text-sm text-slate-400">
+          <div className="rounded-2xl border border-[#E5DDED] bg-white p-6">
+            <p className="text-sm text-[#64718B]">
               Em análise
             </p>
 
@@ -978,10 +963,10 @@ export default function ServicosPage() {
         </section>
 
         {carregando && (
-          <section className="mt-10 rounded-3xl border border-slate-700 bg-[#111A33] p-12 text-center">
-            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-700 border-t-yellow-400" />
+          <section className="mt-10 rounded-3xl border border-[#E5DDED] bg-white p-12 text-center">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[#E5DDED] border-t-[#8546B3]" />
 
-            <p className="mt-6 font-bold text-slate-300">
+            <p className="mt-6 font-bold text-[#485673]">
               Carregando seus serviços...
             </p>
           </section>
@@ -990,8 +975,8 @@ export default function ServicosPage() {
         {!carregando &&
           !erro &&
           servicos.length === 0 && (
-            <section className="mt-10 rounded-3xl border border-dashed border-slate-700 bg-[#111A33] p-8 text-center sm:p-12">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#1B2444] text-5xl">
+            <section className="mt-10 rounded-3xl border border-dashed border-[#E5DDED] bg-white p-8 text-center sm:p-12">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-[#F3F0FA] text-5xl">
                 ✨
               </div>
 
@@ -1000,7 +985,7 @@ export default function ServicosPage() {
                 serviços cadastrados.
               </h2>
 
-              <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-300">
+              <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#485673]">
                 Cadastre seu primeiro serviço
                 para começar a preparar seu
                 perfil no AuraMeets.
@@ -1023,7 +1008,7 @@ export default function ServicosPage() {
                   Serviços cadastrados
                 </h2>
 
-                <p className="mt-2 text-slate-400">
+                <p className="mt-2 text-[#64718B]">
                   Use Subir e Descer para escolher a ordem dos serviços.
                   Você também pode editar, publicar, ocultar ou excluir.
                 </p>
@@ -1042,9 +1027,9 @@ export default function ServicosPage() {
                   return (
                     <article
                       key={servico.id}
-                      className="overflow-hidden rounded-3xl border border-slate-700 bg-[#111A33] shadow-xl"
+                      className="overflow-hidden rounded-3xl border border-[#E5DDED] bg-white shadow-xl"
                     >
-                      <div className="flex aspect-video w-full items-center justify-center overflow-hidden bg-[#1B2444]">
+                      <div className="flex aspect-video w-full items-center justify-center overflow-hidden bg-[#F3F0FA]">
                         {servico.cover_photo_url ? (
                           <img
                             src={
@@ -1059,7 +1044,7 @@ export default function ServicosPage() {
                               ✨
                             </div>
 
-                            <p className="mt-3 text-sm font-bold text-slate-400">
+                            <p className="mt-3 text-sm font-bold text-[#64718B]">
                               Foto do serviço
                             </p>
                           </div>
@@ -1068,7 +1053,7 @@ export default function ServicosPage() {
 
                       <div className="flex-1 p-6 sm:p-7">
                         <div className="flex flex-wrap items-start justify-between gap-3">
-                          <p className="text-xs font-black uppercase tracking-[0.18em] text-yellow-400">
+                          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#70389D]">
                             {servico.category}
                           </p>
 
@@ -1083,24 +1068,24 @@ export default function ServicosPage() {
                           {servico.name}
                         </h3>
 
-                        <p className="mt-3 whitespace-pre-line leading-7 text-slate-300">
+                        <p className="mt-3 whitespace-pre-line leading-7 text-[#485673]">
                           {servico.description}
                         </p>
 
                         <div className="mt-5 flex flex-wrap gap-2">
                           {servico.online && (
-                            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">
+                            <span className="rounded-full bg-[#F1EBFA] px-3 py-1 text-xs font-bold text-[#485673]">
                               Online
                             </span>
                           )}
 
                           {servico.in_person && (
-                            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">
+                            <span className="rounded-full bg-[#F1EBFA] px-3 py-1 text-xs font-bold text-[#485673]">
                               Presencial
                             </span>
                           )}
 
-                          <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">
+                          <span className="rounded-full bg-[#F1EBFA] px-3 py-1 text-xs font-bold text-[#485673]">
                             {
                               servico.duration_minutes
                             }{" "}
@@ -1108,11 +1093,11 @@ export default function ServicosPage() {
                           </span>
                         </div>
 
-                        <div className="mt-6 border-t border-slate-700 pt-5">
+                        <div className="mt-6 border-t border-[#E5DDED] pt-5">
                           {servico.promotional_price !==
                           null ? (
                             <div>
-                              <p className="text-sm text-slate-400 line-through">
+                              <p className="text-sm text-[#64718B] line-through">
                                 {formatarPreco(
                                   Number(
                                     servico.price,
@@ -1122,7 +1107,7 @@ export default function ServicosPage() {
                               </p>
 
                               <div className="mt-1 flex flex-wrap items-center gap-3">
-                                <p className="text-3xl font-black text-yellow-400">
+                                <p className="text-3xl font-black text-[#70389D]">
                                   {formatarPreco(
                                     Number(
                                       servico.promotional_price,
@@ -1132,7 +1117,7 @@ export default function ServicosPage() {
                                 </p>
 
                                 {Number(servico.price) > 0 && (
-                                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-300">
+                                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-700">
                                     {Math.round(
                                       ((Number(servico.price) -
                                         Number(servico.promotional_price)) /
@@ -1145,7 +1130,7 @@ export default function ServicosPage() {
                               </div>
                             </div>
                           ) : (
-                            <p className="text-3xl font-black text-yellow-400">
+                            <p className="text-3xl font-black text-[#70389D]">
                               {formatarPreco(
                                 Number(
                                   servico.price,
@@ -1174,7 +1159,7 @@ export default function ServicosPage() {
                               void moverServico(index, -1)
                             }
                             disabled={index === 0 || acaoId !== null}
-                            className="rounded-xl border border-yellow-400/40 px-4 py-3 font-bold text-yellow-300 transition hover:bg-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="rounded-xl border border-[#A978D1]/40 px-4 py-3 font-bold text-[#70389D] transition hover:bg-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             ↑ Subir
                           </button>
@@ -1185,7 +1170,7 @@ export default function ServicosPage() {
                               void moverServico(index, 1)
                             }
                             disabled={index === servicos.length - 1 || acaoId !== null}
-                            className="rounded-xl border border-yellow-400/40 px-4 py-3 font-bold text-yellow-300 transition hover:bg-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="rounded-xl border border-[#A978D1]/40 px-4 py-3 font-bold text-[#70389D] transition hover:bg-yellow-400/10 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             ↓ Descer
                           </button>
@@ -1200,7 +1185,7 @@ export default function ServicosPage() {
                             disabled={
                               executando
                             }
-                            className="rounded-xl border border-slate-600 px-4 py-3 font-bold text-white transition hover:border-yellow-400 hover:text-yellow-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-xl border border-[#D7CBE4] px-4 py-3 font-bold text-[#102657] transition hover:border-[#8546B3] hover:text-[#70389D] disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Editar
                           </button>
@@ -1218,8 +1203,8 @@ export default function ServicosPage() {
                             className={
                               servico.status ===
                               "active"
-                                ? "rounded-xl border border-orange-400/40 px-4 py-3 font-bold text-orange-300 transition hover:bg-orange-400/10 disabled:cursor-not-allowed disabled:opacity-50"
-                                : "rounded-xl border border-emerald-400/40 px-4 py-3 font-bold text-emerald-300 transition hover:bg-emerald-400/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                ? "rounded-xl border border-orange-400/40 px-4 py-3 font-bold text-orange-700 transition hover:bg-orange-400/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                : "rounded-xl border border-emerald-400/40 px-4 py-3 font-bold text-emerald-700 transition hover:bg-emerald-400/10 disabled:cursor-not-allowed disabled:opacity-50"
                             }
                           >
                             {servico.status ===
@@ -1232,7 +1217,7 @@ export default function ServicosPage() {
                             <Link
                               href={`/terapeuta/${terapeutaSlug}`}
                               target="_blank"
-                              className="rounded-xl border border-purple-400/40 px-4 py-3 text-center font-bold text-purple-200 transition hover:bg-purple-400/10"
+                              className="rounded-xl border border-purple-400/40 px-4 py-3 text-center font-bold text-purple-700 transition hover:bg-purple-400/10"
                             >
                               Ver no perfil
                             </Link>
@@ -1248,7 +1233,7 @@ export default function ServicosPage() {
                             disabled={
                               executando
                             }
-                            className="rounded-xl border border-red-500/40 px-4 py-3 font-bold text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-xl border border-red-500/40 px-4 py-3 font-bold text-red-700 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Excluir
                           </button>
@@ -1263,14 +1248,14 @@ export default function ServicosPage() {
       </div>
 
       {auraAberta && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4">
-          <section className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-yellow-400/30 bg-[#111A33] p-6 shadow-2xl sm:p-8">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+          <section className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-[#A978D1]/30 bg-white p-6 shadow-2xl sm:p-8">
             <div className="flex items-start justify-between gap-5">
               <div>
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-[#70389D]">
                   AURA
                 </p>
-                <h2 className="mt-2 text-3xl font-black text-white">
+                <h2 className="mt-2 text-3xl font-black text-[#102657]">
                   {auraTopico ? auraAjuda[auraTopico].titulo : "Olá! O que você quer fazer?"}
                 </h2>
               </div>
@@ -1278,7 +1263,7 @@ export default function ServicosPage() {
               <button
                 type="button"
                 onClick={fecharAura}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-600 text-2xl font-bold text-white"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#D7CBE4] text-2xl font-bold text-[#102657]"
                 aria-label="Fechar ajuda"
               >
                 ×
@@ -1298,7 +1283,7 @@ export default function ServicosPage() {
                     key={id}
                     type="button"
                     onClick={() => setAuraTopico(id)}
-                    className="min-h-16 rounded-2xl border border-slate-600 bg-slate-950/50 px-5 py-4 text-left text-lg font-bold text-white transition hover:border-yellow-400 hover:text-yellow-300"
+                    className="min-h-16 rounded-2xl border border-[#D7CBE4] bg-[#F8F6FC] px-5 py-4 text-left text-lg font-bold text-[#102657] transition hover:border-[#8546B3] hover:text-[#70389D]"
                   >
                     {label}
                   </button>
@@ -1307,11 +1292,11 @@ export default function ServicosPage() {
             ) : auraTopico === "foto" ? (
               <div className="mt-7">
                 {servicos.length === 0 ? (
-                  <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-5">
-                    <p className="text-lg font-bold text-white">
+                  <div className="rounded-2xl border border-[#A978D1]/30 bg-yellow-400/10 p-5">
+                    <p className="text-lg font-bold text-[#102657]">
                       Primeiro cadastre um serviço.
                     </p>
-                    <p className="mt-2 leading-7 text-slate-300">
+                    <p className="mt-2 leading-7 text-[#485673]">
                       Depois volte aqui e a AURA poderá criar a foto para ele.
                     </p>
                     <Link
@@ -1324,7 +1309,7 @@ export default function ServicosPage() {
                 ) : (
                   <>
                     <label className="block">
-                      <span className="mb-2 block text-lg font-black text-white">
+                      <span className="mb-2 block text-lg font-black text-[#102657]">
                         1. Qual serviço precisa da foto?
                       </span>
                       <select
@@ -1334,7 +1319,7 @@ export default function ServicosPage() {
                           setAuraImagemUrl("");
                           setAuraErroFoto("");
                         }}
-                        className="w-full rounded-2xl border border-slate-600 bg-slate-950 px-4 py-4 text-lg text-white outline-none focus:border-yellow-400"
+                        className="w-full rounded-2xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-4 text-lg text-[#102657] outline-none focus:border-[#8546B3]"
                       >
                         <option value="">Escolha um serviço</option>
                         {servicos.map((servico) => (
@@ -1346,7 +1331,7 @@ export default function ServicosPage() {
                     </label>
 
                     <label className="mt-6 block">
-                      <span className="mb-2 block text-lg font-black text-white">
+                      <span className="mb-2 block text-lg font-black text-[#102657]">
                         2. Quer pedir algo especial?
                       </span>
                       <textarea
@@ -1357,15 +1342,15 @@ export default function ServicosPage() {
                         maxLength={500}
                         rows={4}
                         placeholder="Exemplo: quero uma imagem acolhedora, elegante e com sensação de tranquilidade."
-                        className="w-full rounded-2xl border border-slate-600 bg-slate-950 px-4 py-4 text-lg leading-7 text-white outline-none placeholder:text-slate-500 focus:border-yellow-400"
+                        className="w-full rounded-2xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-4 text-lg leading-7 text-[#102657] outline-none placeholder:text-[#64718B] focus:border-[#8546B3]"
                       />
-                      <p className="mt-2 text-sm text-slate-400">
+                      <p className="mt-2 text-sm text-[#64718B]">
                         Se preferir, deixe em branco. A AURA cria por você.
                       </p>
                     </label>
 
                     {auraErroFoto && (
-                      <div className="mt-5 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-red-300">
+                      <div className="mt-5 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-red-700">
                         {auraErroFoto}
                       </div>
                     )}
@@ -1383,11 +1368,11 @@ export default function ServicosPage() {
                       </button>
                     ) : (
                       <div className="mt-6">
-                        <p className="text-lg font-black text-white">
+                        <p className="text-lg font-black text-[#102657]">
                           3. Veja como ficou
                         </p>
 
-                        <div className="mt-3 overflow-hidden rounded-2xl border border-yellow-400/30 bg-slate-950">
+                        <div className="mt-3 overflow-hidden rounded-2xl border border-[#A978D1]/30 bg-[#F8F6FC]">
                           <div className="aspect-video w-full">
                             <img
                               src={auraImagemUrl}
@@ -1397,7 +1382,7 @@ export default function ServicosPage() {
                           </div>
                         </div>
 
-                        <p className="mt-3 text-base leading-7 text-slate-300">
+                        <p className="mt-3 text-base leading-7 text-[#485673]">
                           Gostou? Toque em USAR ESTA FOTO. Se não gostou, peça outra.
                         </p>
 
@@ -1409,7 +1394,7 @@ export default function ServicosPage() {
                               void gerarFotoComAura();
                             }}
                             disabled={auraGerandoFoto || auraSalvandoFoto}
-                            className="min-h-14 rounded-2xl border border-yellow-400/50 px-5 py-3 font-black text-yellow-300 disabled:opacity-50"
+                            className="min-h-14 rounded-2xl border border-[#A978D1]/50 px-5 py-3 font-black text-[#70389D] disabled:opacity-50"
                           >
                             CRIAR OUTRA
                           </button>
@@ -1440,7 +1425,7 @@ export default function ServicosPage() {
                     setAuraErroFoto("");
                   }}
                   disabled={auraGerandoFoto || auraSalvandoFoto}
-                  className="mt-6 min-h-14 w-full rounded-2xl border border-slate-600 px-5 py-3 font-bold text-white disabled:opacity-50"
+                  className="mt-6 min-h-14 w-full rounded-2xl border border-[#D7CBE4] px-5 py-3 font-bold text-[#102657] disabled:opacity-50"
                 >
                   VOLTAR
                 </button>
@@ -1451,12 +1436,12 @@ export default function ServicosPage() {
                   {auraAjuda[auraTopico].passos.map((passo, index) => (
                     <div
                       key={passo}
-                      className="flex gap-4 rounded-2xl border border-slate-700 bg-slate-950/50 p-5"
+                      className="flex gap-4 rounded-2xl border border-[#E5DDED] bg-[#F8F6FC] p-5"
                     >
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-lg font-black text-black">
                         {index + 1}
                       </div>
-                      <p className="pt-1 text-lg leading-7 text-white">
+                      <p className="pt-1 text-lg leading-7 text-[#102657]">
                         {passo}
                       </p>
                     </div>
@@ -1467,7 +1452,7 @@ export default function ServicosPage() {
                   <button
                     type="button"
                     onClick={() => setAuraTopico(null)}
-                    className="min-h-14 rounded-2xl border border-slate-600 px-5 py-3 font-bold text-white"
+                    className="min-h-14 rounded-2xl border border-[#D7CBE4] px-5 py-3 font-bold text-[#102657]"
                   >
                     VOLTAR
                   </button>
@@ -1480,7 +1465,7 @@ export default function ServicosPage() {
                   </button>
                 </div>
 
-                <p className="mt-4 text-center text-sm leading-6 text-slate-400">
+                <p className="mt-4 text-center text-sm leading-6 text-[#64718B]">
                   Se não ficou claro, toque em NÃO ENTENDI e escolha novamente o que precisa.
                 </p>
               </div>
@@ -1491,11 +1476,11 @@ export default function ServicosPage() {
 
       {servicoEditando &&
         formEdicao && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-            <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-slate-700 bg-[#111A33] p-6 shadow-2xl sm:p-8">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-[#E5DDED] bg-white p-6 shadow-2xl sm:p-8">
               <div className="flex items-start justify-between gap-6">
                 <div>
-                  <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-[#70389D]">
                     Editar serviço
                   </p>
 
@@ -1510,7 +1495,7 @@ export default function ServicosPage() {
                     fecharEdicao
                   }
                   disabled={salvando}
-                  className="rounded-xl border border-slate-600 px-4 py-2 font-bold text-slate-300 hover:text-white disabled:opacity-50"
+                  className="rounded-xl border border-[#D7CBE4] px-4 py-2 font-bold text-[#485673] hover:text-[#102657] disabled:opacity-50"
                 >
                   Fechar
                 </button>
@@ -1533,7 +1518,7 @@ export default function ServicosPage() {
                           .target.value,
                       })
                     }
-                    className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                    className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                   />
                 </label>
 
@@ -1554,7 +1539,7 @@ export default function ServicosPage() {
                             .value,
                       })
                     }
-                    className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                    className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                   />
                 </label>
 
@@ -1574,14 +1559,14 @@ export default function ServicosPage() {
                     rows={10}
                     maxLength={2000}
                     placeholder="Descreva o serviço com clareza, benefícios, formato do atendimento e para quem ele é indicado."
-                    className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                    className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                   />
 
                   <div className="mt-2 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
-                    <span className="text-slate-400">
+                    <span className="text-[#64718B]">
                       Descrição completa do serviço. Limite máximo de 2.000 caracteres.
                     </span>
-                    <span className="font-bold text-yellow-400">
+                    <span className="font-bold text-[#70389D]">
                       {formEdicao.description.length} / 2000
                     </span>
                   </div>
@@ -1601,15 +1586,15 @@ export default function ServicosPage() {
                       })
                     }
                     placeholder="https://..."
-                    className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                    className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                   />
 
-                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                  <p className="mt-2 text-sm leading-6 text-[#64718B]">
                     TAMANHO RECOMENDADO: 1200 × 675 PX — FORMATO HORIZONTAL — 16:9. Use uma imagem horizontal, nítida e sem textos próximos das bordas.
                   </p>
 
                   {formEdicao.cover_photo_url.trim() && (
-                    <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700 bg-[#1B2444]">
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-[#E5DDED] bg-[#F3F0FA]">
                       <div className="aspect-video w-full">
                         <img
                           src={formEdicao.cover_photo_url}
@@ -1617,7 +1602,7 @@ export default function ServicosPage() {
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <p className="px-4 py-3 text-xs text-slate-400">
+                      <p className="px-4 py-3 text-xs text-[#64718B]">
                         Prévia no formato recomendado 16:9 (1200 × 675). A imagem é exibida proporcionalmente, sem ser esticada.
                       </p>
                     </div>
@@ -1644,7 +1629,7 @@ export default function ServicosPage() {
                               .value,
                         })
                       }
-                      className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                      className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                     />
                   </label>
 
@@ -1665,7 +1650,7 @@ export default function ServicosPage() {
                               .value,
                         })
                       }
-                      className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                      className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                     >
                       <option value="BRL">
                         BRL — Real
@@ -1698,7 +1683,7 @@ export default function ServicosPage() {
                               .value,
                         })
                       }
-                      className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                      className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                     />
                   </label>
 
@@ -1723,10 +1708,10 @@ export default function ServicosPage() {
                         })
                       }
                       placeholder="Ex.: 20"
-                      className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                      className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                     />
 
-                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                    <p className="mt-2 text-sm leading-6 text-[#64718B]">
                       Informe apenas a porcentagem. O preço com desconto é calculado automaticamente.
                     </p>
                   </label>
@@ -1739,9 +1724,9 @@ export default function ServicosPage() {
                     value={formEdicao.payment_url}
                     onChange={(event) => setFormEdicao({ ...formEdicao, payment_url: event.target.value })}
                     placeholder="https://link.infinitepay.io/..."
-                    className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                    className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                   />
-                  <p className="mt-2 text-sm text-slate-400">Você pode substituir ou remover este link quando quiser.</p>
+                  <p className="mt-2 text-sm text-[#64718B]">Você pode substituir ou remover este link quando quiser.</p>
                 </label>
 
                 <label>
@@ -1751,11 +1736,11 @@ export default function ServicosPage() {
                     value={formEdicao.pix_key}
                     onChange={(event) => setFormEdicao({ ...formEdicao, pix_key: event.target.value })}
                     placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
-                    className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                    className="w-full rounded-xl border border-[#D7CBE4] bg-[#F8F6FC] px-4 py-3 text-[#102657] outline-none focus:border-[#8546B3]"
                   />
                 </label>
 
-                <div className="flex flex-wrap gap-6 rounded-2xl border border-slate-700 bg-slate-950/40 p-5">
+                <div className="flex flex-wrap gap-6 rounded-2xl border border-[#E5DDED] bg-[#F8F6FC] p-5">
                   <label className="flex items-center gap-3">
                     <input
                       type="checkbox"
@@ -1801,7 +1786,7 @@ export default function ServicosPage() {
               </div>
 
               {erro && (
-                <div className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-300">
+                <div className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-700">
                   {erro}
                 </div>
               )}
@@ -1813,7 +1798,7 @@ export default function ServicosPage() {
                     fecharEdicao
                   }
                   disabled={salvando}
-                  className="rounded-xl border border-slate-600 px-6 py-4 font-bold text-white disabled:opacity-50"
+                  className="rounded-xl border border-[#D7CBE4] px-6 py-4 font-bold text-[#102657] disabled:opacity-50"
                 >
                   Cancelar
                 </button>

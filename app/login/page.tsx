@@ -162,47 +162,47 @@ export default function LoginPage() {
     loading || enviandoRecuperacao;
 
   return (
-    <main className="relative flex min-h-screen overflow-hidden bg-slate-950">
+    <main className="relative flex min-h-screen overflow-hidden bg-white">
       <div
         aria-hidden="true"
-        className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-purple-700/20 blur-3xl"
+        className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-purple-100/60 blur-3xl"
       />
 
       <div
         aria-hidden="true"
-        className="absolute -bottom-40 -right-24 h-[500px] w-[500px] rounded-full bg-violet-600/15 blur-3xl"
+        className="absolute -bottom-40 -right-24 h-[500px] w-[500px] rounded-full bg-violet-100/50 blur-3xl"
       />
 
-      <section className="relative hidden min-h-screen w-[48%] flex-col justify-between border-r border-white/10 px-12 py-10 lg:flex xl:px-20">
+      <section className="relative hidden min-h-screen w-[48%] flex-col justify-between border-r border-slate-200 px-12 py-10 lg:flex xl:px-20">
         <Link
           href="/"
           className="flex w-fit items-center gap-3"
         >
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-violet-500 to-fuchsia-500 text-sm font-black text-white shadow-xl shadow-purple-950/50">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-violet-500 to-fuchsia-500 text-sm font-black text-white shadow-lg shadow-purple-200">
             AM
           </span>
 
           <span>
-            <span className="block text-xl font-bold tracking-tight text-white">
+            <span className="block text-xl font-bold tracking-tight text-slate-900">
               AuraMeets
             </span>
 
-            <span className="block text-xs text-slate-400">
+            <span className="block text-xs text-slate-600">
               Conexões que transformam
             </span>
           </span>
         </Link>
 
         <div className="max-w-xl">
-          <p className="text-sm font-bold uppercase tracking-[0.22em] text-purple-300">
+          <p className="text-sm font-bold uppercase tracking-[0.22em] text-purple-700">
             Sua jornada começa aqui
           </p>
 
-          <h1 className="mt-5 text-5xl font-bold leading-tight tracking-tight text-white xl:text-6xl">
+          <h1 className="mt-5 text-5xl font-bold leading-tight tracking-tight text-slate-900 xl:text-6xl">
             Um espaço profissional para cuidar, conectar e evoluir.
           </h1>
 
-          <p className="mt-6 max-w-lg text-lg leading-8 text-slate-300">
+          <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
             Acesse sua conta para administrar seu perfil,
             acompanhar solicitações e construir sua presença
             profissional no AuraMeets.
@@ -225,13 +225,13 @@ export default function LoginPage() {
             ].map((item) => (
               <div
                 key={item.numero}
-                className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 backdrop-blur"
+                className="rounded-2xl border border-purple-100 bg-purple-50 p-4 backdrop-blur"
               >
-                <p className="text-xs font-bold text-purple-300">
+                <p className="text-xs font-bold text-purple-700">
                   {item.numero}
                 </p>
 
-                <p className="mt-2 text-sm font-semibold leading-5 text-white">
+                <p className="mt-2 text-sm font-semibold leading-5 text-slate-800">
                   {item.texto}
                 </p>
               </div>
@@ -239,7 +239,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-600">
           AuraMeets © 2026
         </p>
       </section>
@@ -250,32 +250,32 @@ export default function LoginPage() {
             href="/"
             className="mx-auto mb-10 flex w-fit items-center gap-3 lg:hidden"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-violet-500 to-fuchsia-500 text-sm font-black text-white shadow-xl shadow-purple-950/50">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 via-violet-500 to-fuchsia-500 text-sm font-black text-white shadow-lg shadow-purple-200">
               AM
             </span>
 
             <span>
-              <span className="block text-xl font-bold text-white">
+              <span className="block text-xl font-bold text-slate-900">
                 AuraMeets
               </span>
 
-              <span className="block text-xs text-slate-400">
+              <span className="block text-xs text-slate-600">
                 Conexões que transformam
               </span>
             </span>
           </Link>
 
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl sm:p-9">
+          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-2xl backdrop-blur-xl sm:p-9">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-purple-300">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-purple-700">
                 Bem-vindo
               </p>
 
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
                 Acesse sua conta
               </h2>
 
-              <p className="mt-3 text-sm leading-6 text-slate-400">
+              <p className="mt-3 text-sm leading-6 text-slate-600">
                 Utilize o e-mail cadastrado no AuraMeets.
               </p>
             </div>
@@ -287,7 +287,7 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-2 block text-sm font-semibold text-slate-200"
+                  className="mb-2 block text-sm font-semibold text-slate-800"
                 >
                   E-mail
                 </label>
@@ -304,7 +304,7 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   disabled={formularioBloqueado}
-                  className="min-h-12 w-full rounded-xl border border-white/10 bg-slate-900/70 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -312,7 +312,7 @@ export default function LoginPage() {
                 <div className="mb-2 flex items-center justify-between gap-4">
                   <label
                     htmlFor="password"
-                    className="block text-sm font-semibold text-slate-200"
+                    className="block text-sm font-semibold text-slate-800"
                   >
                     Senha
                   </label>
@@ -323,7 +323,7 @@ export default function LoginPage() {
                       void handleRecuperarSenha()
                     }
                     disabled={formularioBloqueado}
-                    className="text-xs font-semibold text-purple-300 transition hover:text-purple-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="text-xs font-semibold text-purple-700 transition hover:text-purple-900 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {enviandoRecuperacao
                       ? "Enviando..."
@@ -346,7 +346,7 @@ export default function LoginPage() {
                     autoComplete="current-password"
                     required
                     disabled={formularioBloqueado}
-                    className="min-h-12 w-full rounded-xl border border-white/10 bg-slate-900/70 px-4 py-3 pr-20 text-white outline-none transition placeholder:text-slate-600 focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="min-h-12 w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 pr-20 text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
 
                   <button
@@ -357,7 +357,7 @@ export default function LoginPage() {
                       )
                     }
                     disabled={formularioBloqueado}
-                    className="absolute inset-y-0 right-4 text-xs font-semibold text-slate-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    className="absolute inset-y-0 right-4 text-xs font-semibold text-slate-600 transition hover:text-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {mostrarSenha ? "Ocultar" : "Mostrar"}
                   </button>
@@ -367,7 +367,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={formularioBloqueado}
-                className="flex min-h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-purple-950/40 transition hover:from-purple-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-purple-200 transition hover:from-purple-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Entrando..." : "Entrar no AuraMeets"}
               </button>
@@ -378,8 +378,8 @@ export default function LoginPage() {
                 role="alert"
                 className={`mt-6 rounded-2xl border p-4 ${
                   tipoMensagem === "sucesso"
-                    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200"
-                    : "border-amber-400/30 bg-amber-400/10 text-amber-200"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    : "border-amber-200 bg-amber-50 text-amber-800"
                 }`}
               >
                 <p className="text-sm leading-6">
@@ -388,14 +388,14 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div className="mt-8 border-t border-white/10 pt-6">
-              <p className="text-center text-sm text-slate-400">
+            <div className="mt-8 border-t border-slate-200 pt-6">
+              <p className="text-center text-sm text-slate-600">
                 Ainda não possui uma conta?
               </p>
 
               <Link
                 href="/cadastro-fundador"
-                className="mt-3 flex min-h-11 w-full items-center justify-center rounded-xl border border-purple-400/30 bg-purple-400/10 px-5 py-3 text-sm font-semibold text-purple-200 transition hover:border-purple-300/50 hover:bg-purple-400/15 hover:text-white"
+                className="mt-3 flex min-h-11 w-full items-center justify-center rounded-xl border border-purple-200 bg-purple-50 px-5 py-3 text-sm font-semibold text-purple-700 transition hover:border-purple-400 hover:bg-purple-100 hover:text-purple-900"
               >
                 Criar perfil de terapeuta
               </Link>

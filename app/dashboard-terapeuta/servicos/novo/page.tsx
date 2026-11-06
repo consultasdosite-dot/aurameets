@@ -18,7 +18,7 @@ import {
 
 import { useRouter } from "next/navigation";
 
-import { supabase } from "../../../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 const categorias = [
 
@@ -173,9 +173,13 @@ export default function NovoServicoPage() {
   const [ativo, setAtivo] = useState(true);
 
   // Pacote opcional vinculado ao atendimento avulso.
+
   const [oferecerPacote, setOferecerPacote] = useState(false);
+
   const [quantidadeSessoes, setQuantidadeSessoes] = useState("2");
+
   const [precoPacote, setPrecoPacote] = useState("");
+
   const [linkPacote, setLinkPacote] = useState("");
 
   const [foto, setFoto] = useState<File | null>(null);
@@ -441,33 +445,53 @@ export default function NovoServicoPage() {
         : null;
 
     if (oferecerPacote) {
+
       const sessoes = Number(quantidadeSessoes);
+
       const valorPacote = converterValorParaNumero(precoPacote);
 
       if (!Number.isInteger(sessoes) || sessoes < 2 || sessoes > 10) {
+
         setErro("Escolha de 2 a 10 sessões para o pacote.");
+
         return;
+
       }
 
       if (!precoPacote.trim() || !Number.isFinite(valorPacote) || valorPacote <= 0) {
+
         setErro("Informe o preço total válido do pacote.");
+
         return;
+
       }
 
       if (valorPacote >= precoConvertido * sessoes) {
+
         setErro("O preço do pacote deve ser menor que o total das sessões avulsas.");
+
         return;
+
       }
 
       try {
+
         const urlPacote = new URL(linkPacote.trim());
+
         if (urlPacote.protocol !== "https:") {
+
           throw new Error("Link inválido");
+
         }
+
       } catch {
+
         setErro("Informe um link HTTPS de pagamento exclusivo para o pacote.");
+
         return;
+
       }
+
     }
 
     {
@@ -621,21 +645,35 @@ export default function NovoServicoPage() {
       const fotoPublicaUrl = dadosFotoPublica.publicUrl;
 
       // A tabela offers identifica o terapeuta por bigint, não pelo UUID de autenticação.
+
       let terapeutaId: number | null = null;
+
       if (oferecerPacote) {
+
         const { data: terapeuta, error: erroTerapeuta } = await supabase
+
           .from("therapists")
+
           .select("id")
+
           .eq("profile_id", user.id)
+
           .single();
 
         if (erroTerapeuta || !terapeuta) {
+
           setErro("Não foi possível identificar o terapeuta para cadastrar o pacote.");
+
           await supabase.storage.from("service-photos").remove([caminhoDaFotoEnviada]);
+
           caminhoDaFotoEnviada = "";
+
           return;
+
         }
+
         terapeutaId = terapeuta.id;
+
       }
 
       const { data: servicoCriado, error: erroCadastro } = await supabase
@@ -687,6 +725,7 @@ export default function NovoServicoPage() {
               : null,
 
           status: ativo ? "active" : "inactive",
+
         }).select("id").single();
 
       if (erroCadastro) {
@@ -720,36 +759,67 @@ export default function NovoServicoPage() {
       }
 
       if (oferecerPacote && servicoCriado && terapeutaId !== null) {
+
         const totalAvulso = precoConvertido * Number(quantidadeSessoes);
+
         const valorPacote = converterValorParaNumero(precoPacote);
+
         const { error: erroPacote } = await supabase.from("offers").insert({
+
           therapist_id: terapeutaId,
+
           service_id: servicoCriado.id,
+
           title: `${nome.trim()} — pacote de ${quantidadeSessoes} sessões`,
+
           description: `Pacote de ${quantidadeSessoes} sessões do serviço ${nome.trim()}.`,
+
           offer_type: "pacote",
+
           package_sessions: Number(quantidadeSessoes),
+
           original_price: Math.round(totalAvulso * 100) / 100,
+
           offer_price: valorPacote,
+
           regular_price: Math.round(totalAvulso * 100) / 100,
+
           promo_price: valorPacote,
+
           currency_code: moeda,
+
           payment_url: linkPacote.trim(),
+
           active: ativo,
+
         });
+
         if (erroPacote) {
+
           const { error: erroExclusao } = await supabase.from("services")
+
             .delete().eq("id", servicoCriado.id).eq("therapist_id", user.id);
+
           if (!erroExclusao) {
+
             await supabase.storage.from("service-photos").remove([caminhoDaFotoEnviada]);
+
             caminhoDaFotoEnviada = "";
+
           }
+
           setErro(erroExclusao
+
             ? `Serviço criado, mas pacote não salvo: ${erroPacote.message}. Confira Meus Serviços.`
+
             : `Pacote não salvo: ${erroPacote.message}. O serviço criado foi desfeito.`);
+
           return;
+
         }
+
       }
+
       router.push("/dashboard-terapeuta/servicos");
 
       router.refresh();
@@ -790,7 +860,7 @@ export default function NovoServicoPage() {
 
   return (
 
-    <main className="min-h-screen bg-[#050816] px-4 py-8 text-white sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-white px-4 py-8 text-slate-900 sm:px-6 lg:px-10">
 
       <div className="mx-auto w-full max-w-5xl">
 
@@ -798,7 +868,7 @@ export default function NovoServicoPage() {
 
           <div>
 
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-yellow-400 sm:text-sm">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-violet-700 sm:text-sm">
 
               Dashboard do Terapeuta
 
@@ -810,7 +880,7 @@ export default function NovoServicoPage() {
 
             </h1>
 
-            <p className="mt-3 max-w-2xl leading-7 text-slate-300">
+            <p className="mt-3 max-w-2xl leading-7 text-slate-600">
 
               Cadastre uma consulta, terapia, experiência, entrega
 
@@ -824,7 +894,7 @@ export default function NovoServicoPage() {
 
             href="/dashboard-terapeuta/servicos"
 
-            className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-5 py-3 font-bold text-slate-200 transition hover:border-yellow-400 hover:text-yellow-400"
+            className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 transition hover:border-violet-400 hover:text-violet-700"
 
           >
 
@@ -838,19 +908,19 @@ export default function NovoServicoPage() {
 
           onSubmit={handleSubmit}
 
-          className="mt-10 space-y-8 rounded-3xl border border-slate-800 bg-[#111A33] p-5 shadow-2xl sm:p-8 lg:p-10"
+          className="mt-10 space-y-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-8 lg:p-10"
 
         >
 
           <section>
 
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700">
 
               Foto de capa do serviço
 
             </p>
 
-            <div className="mt-6 overflow-hidden rounded-2xl border border-slate-700 bg-[#080D22]">
+            <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
 
               <button
 
@@ -878,7 +948,7 @@ export default function NovoServicoPage() {
 
                     />
 
-                    <span className="absolute inset-0 flex items-center justify-center bg-black/65 px-4 text-lg font-black text-white opacity-0 transition group-hover:opacity-100">
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/65 px-4 text-lg font-black text-slate-900 opacity-0 transition group-hover:opacity-100">
 
                       Alterar foto de capa
 
@@ -890,19 +960,19 @@ export default function NovoServicoPage() {
 
                   <div className="w-full px-4 text-center sm:px-6">
 
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-400 text-2xl font-black text-black sm:h-16 sm:w-16 sm:text-3xl">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-600 text-2xl font-black text-white sm:h-16 sm:w-16 sm:text-3xl">
 
                       +
 
                     </div>
 
-                    <p className="mt-3 text-base font-black leading-6 text-yellow-400 sm:mt-5 sm:text-xl">
+                    <p className="mt-3 text-base font-black leading-6 text-violet-700 sm:mt-5 sm:text-xl">
 
                       Adicionar foto do serviço
 
                     </p>
 
-                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
 
                       Escolha uma imagem que represente claramente o
 
@@ -910,15 +980,15 @@ export default function NovoServicoPage() {
 
                     </p>
 
-                    <div className="mx-auto mt-4 max-w-md rounded-xl border border-yellow-400/50 bg-yellow-400/10 px-3 py-3 sm:mt-5 sm:px-4">
+                    <div className="mx-auto mt-4 max-w-md rounded-xl border border-violet-400/50 bg-violet-50 px-3 py-3 sm:mt-5 sm:px-4">
 
-                      <p className="text-xs font-black uppercase tracking-normal text-yellow-400 sm:text-sm sm:tracking-wide">
+                      <p className="text-xs font-black uppercase tracking-normal text-violet-700 sm:text-sm sm:tracking-wide">
 
                         TAMANHO RECOMENDADO: 1200 × 675 PX
 
                       </p>
 
-                      <p className="mt-1 text-xs font-bold uppercase tracking-wide text-yellow-200">
+                      <p className="mt-1 text-xs font-bold uppercase tracking-wide text-violet-800">
 
                         FORMATO HORIZONTAL — 16:9
 
@@ -932,7 +1002,7 @@ export default function NovoServicoPage() {
 
               </button>
 
-              <div className="border-t border-slate-700 p-5">
+              <div className="border-t border-slate-200 p-5">
 
                 <input
 
@@ -954,7 +1024,7 @@ export default function NovoServicoPage() {
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
 
                     JPG, PNG ou WEBP · máximo de 5 MB
 
@@ -970,7 +1040,7 @@ export default function NovoServicoPage() {
 
                       disabled={carregando}
 
-                      className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-5 py-3 text-sm font-black text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex items-center justify-center rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
 
                     >
 
@@ -988,7 +1058,7 @@ export default function NovoServicoPage() {
 
                         disabled={carregando}
 
-                        className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-5 py-3 text-sm font-bold text-slate-200 transition hover:border-red-400 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-violet-400 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
 
                       >
 
@@ -1014,7 +1084,7 @@ export default function NovoServicoPage() {
 
                 aria-live="polite"
 
-                className="mt-4 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-300"
+                className="mt-4 rounded-xl border border-violet-500/40 bg-violet-500/10 p-4 text-violet-700"
 
               >
 
@@ -1030,7 +1100,7 @@ export default function NovoServicoPage() {
 
           <section>
 
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700">
 
               Informações principais
 
@@ -1060,7 +1130,7 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
 
                 />
 
@@ -1094,7 +1164,7 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition focus:border-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
 
                 >
 
@@ -1152,11 +1222,11 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="w-full resize-none rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 leading-7 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 leading-7 outline-none transition placeholder:text-slate-500 focus:border-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
 
                 />
 
-                <p className="mt-2 text-right text-xs text-slate-400">
+                <p className="mt-2 text-right text-xs text-slate-500">
 
                   {descricao.length}/2000 caracteres
 
@@ -1172,7 +1242,7 @@ export default function NovoServicoPage() {
 
           <section>
 
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700">
 
               Forma de entrega
 
@@ -1186,9 +1256,9 @@ export default function NovoServicoPage() {
 
                   atendeOnline
 
-                    ? "border-yellow-400 bg-yellow-400/10"
+                    ? "border-violet-400 bg-violet-50"
 
-                    : "border-slate-700 bg-[#080D22]"
+                    : "border-slate-200 bg-slate-50"
 
                 } ${
 
@@ -1216,7 +1286,7 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="h-5 w-5 accent-yellow-400"
+                  className="h-5 w-5 accent-violet-600"
 
                 />
 
@@ -1234,9 +1304,9 @@ export default function NovoServicoPage() {
 
                   atendePresencial
 
-                    ? "border-yellow-400 bg-yellow-400/10"
+                    ? "border-violet-400 bg-violet-50"
 
-                    : "border-slate-700 bg-[#080D22]"
+                    : "border-slate-200 bg-slate-50"
 
                 } ${
 
@@ -1264,7 +1334,7 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="h-5 w-5 accent-yellow-400"
+                  className="h-5 w-5 accent-violet-600"
 
                 />
 
@@ -1282,9 +1352,9 @@ export default function NovoServicoPage() {
 
                   entregaPdf
 
-                    ? "border-yellow-400 bg-yellow-400/10"
+                    ? "border-violet-400 bg-violet-50"
 
-                    : "border-slate-700 bg-[#080D22]"
+                    : "border-slate-200 bg-slate-50"
 
                 } ${
 
@@ -1308,7 +1378,7 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="h-5 w-5 accent-yellow-400"
+                  className="h-5 w-5 accent-violet-600"
 
                 />
 
@@ -1322,9 +1392,9 @@ export default function NovoServicoPage() {
 
                   entregaVideo
 
-                    ? "border-yellow-400 bg-yellow-400/10"
+                    ? "border-violet-400 bg-violet-50"
 
-                    : "border-slate-700 bg-[#080D22]"
+                    : "border-slate-200 bg-slate-50"
 
                 } ${
 
@@ -1348,7 +1418,7 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="h-5 w-5 accent-yellow-400"
+                  className="h-5 w-5 accent-violet-600"
 
                 />
 
@@ -1362,9 +1432,9 @@ export default function NovoServicoPage() {
 
                   entregaAudio
 
-                    ? "border-yellow-400 bg-yellow-400/10"
+                    ? "border-violet-400 bg-violet-50"
 
-                    : "border-slate-700 bg-[#080D22]"
+                    : "border-slate-200 bg-slate-50"
 
                 } ${
 
@@ -1388,7 +1458,7 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="h-5 w-5 accent-yellow-400"
+                  className="h-5 w-5 accent-violet-600"
 
                 />
 
@@ -1414,9 +1484,9 @@ export default function NovoServicoPage() {
 
                       opcao.checked
 
-                        ? "border-yellow-400 bg-yellow-400/10"
+                        ? "border-violet-400 bg-violet-50"
 
-                        : "border-slate-700 bg-[#080D22]"
+                        : "border-slate-200 bg-slate-50"
 
                     } ${carregando ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
 
@@ -1432,7 +1502,7 @@ export default function NovoServicoPage() {
 
                       disabled={carregando}
 
-                      className="h-5 w-5 accent-yellow-400"
+                      className="h-5 w-5 accent-violet-600"
 
                     />
 
@@ -1480,11 +1550,11 @@ export default function NovoServicoPage() {
 
                     disabled={carregando}
 
-                    className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60 sm:max-w-xs"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition focus:border-violet-400 disabled:cursor-not-allowed disabled:opacity-60 sm:max-w-xs"
 
                   />
 
-                  <span className="font-semibold text-slate-300">
+                  <span className="font-semibold text-slate-600">
 
                     minutos
 
@@ -1502,7 +1572,7 @@ export default function NovoServicoPage() {
 
           <section>
 
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700">
 
               Preço
 
@@ -1538,7 +1608,7 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition focus:border-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
 
                 >
 
@@ -1596,7 +1666,7 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
 
                 />
 
@@ -1642,11 +1712,11 @@ export default function NovoServicoPage() {
 
                   disabled={carregando}
 
-                  className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
 
                 />
 
-                <p className="mt-2 text-xs leading-5 text-slate-400">
+                <p className="mt-2 text-xs leading-5 text-slate-500">
 
                   O preço com desconto será calculado automaticamente.
 
@@ -1661,50 +1731,95 @@ export default function NovoServicoPage() {
           <div className="h-px bg-slate-800" />
 
           <section>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">Pacote de sessões (opcional)</p>
-            <label className="mt-5 flex items-center gap-3 rounded-xl border border-slate-700 bg-[#080D22] p-5">
+
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700">Pacote de sessões (opcional)</p>
+
+            <label className="mt-5 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-5">
+
               <input type="checkbox" checked={oferecerPacote}
+
                 onChange={(event) => setOferecerPacote(event.target.checked)}
-                disabled={carregando} className="h-5 w-5 accent-yellow-400" />
+
+                disabled={carregando} className="h-5 w-5 accent-violet-600" />
+
               <span className="font-bold">Oferecer também um pacote com desconto</span>
+
             </label>
+
             {oferecerPacote && (
-              <div className="mt-5 grid gap-5 rounded-2xl border border-yellow-400/30 bg-yellow-400/5 p-5 sm:grid-cols-2">
+
+              <div className="mt-5 grid gap-5 rounded-2xl border border-violet-400/30 bg-violet-50 p-5 sm:grid-cols-2">
+
                 <div>
+
                   <label htmlFor="quantidadeSessoes" className="mb-2 block font-bold">Quantidade de sessões</label>
+
                   <select id="quantidadeSessoes" value={quantidadeSessoes}
+
                     onChange={(event) => setQuantidadeSessoes(event.target.value)}
+
                     disabled={carregando}
-                    className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4">
+
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+
                     {Array.from({length: 9}, (_, index) => index + 2).map((n) => (
+
                       <option key={n} value={n}>{n} sessões</option>
+
                     ))}
+
                   </select>
+
                 </div>
+
                 <div>
+
                   <label htmlFor="precoPacote" className="mb-2 block font-bold">Preço total do pacote</label>
+
                   <input id="precoPacote" type="text" inputMode="decimal" value={precoPacote}
+
                     onChange={(event) => setPrecoPacote(event.target.value)}
+
                     placeholder="Ex.: 500,00" disabled={carregando}
-                    className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4" />
+
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4" />
+
                 </div>
+
                 <div className="sm:col-span-2">
+
                   <label htmlFor="linkPacote" className="mb-2 block font-bold">Link exclusivo de pagamento do pacote</label>
+
                   <input id="linkPacote" type="url" value={linkPacote}
+
                     onChange={(event) => setLinkPacote(event.target.value)}
+
                     placeholder="https://..." disabled={carregando}
-                    className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4" />
+
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4" />
+
                 </div>
+
               </div>
+
             )}
+
           </section>
+
           <div className="h-px bg-slate-800" />
+
           <section>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700">
+
               Forma de pagamento
+
             </p>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
+
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+
               Informe seu link InfinitePay, sua chave Pix ou ambos. O horário do atendimento será combinado diretamente com o visitante.
+
             </p>
 
               <div className="mt-6 grid gap-6 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 sm:p-6">
@@ -1715,7 +1830,7 @@ export default function NovoServicoPage() {
 
                     htmlFor="linkPagamento"
 
-                    className="block font-bold text-white"
+                    className="block font-bold text-slate-900"
 
                   >
 
@@ -1741,11 +1856,11 @@ export default function NovoServicoPage() {
 
                     disabled={carregando}
 
-                    className="mt-3 w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
 
                   />
 
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
 
                     Opcional. Gere o link no aplicativo InfinitePay, copie e cole aqui.
 
@@ -1757,7 +1872,7 @@ export default function NovoServicoPage() {
 
                     onClick={() => setMostrarAjudaInfinitePay((valor) => !valor)}
 
-                    className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-violet-400/50 bg-violet-500/10 px-5 py-3 text-sm font-black text-violet-200 transition hover:bg-violet-500/20 sm:w-auto"
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-violet-400/50 bg-violet-500/10 px-5 py-3 text-sm font-black text-violet-800 transition hover:bg-violet-500/20 sm:w-auto"
 
                   >
 
@@ -1767,15 +1882,15 @@ export default function NovoServicoPage() {
 
                   {mostrarAjudaInfinitePay && (
 
-                    <div className="mt-4 rounded-2xl border border-violet-400/30 bg-[#11152D] p-5">
+                    <div className="mt-4 rounded-2xl border border-violet-400/30 bg-violet-50 p-5">
 
-                      <p className="font-black text-violet-200">
+                      <p className="font-black text-violet-800">
 
                         AURA — Como criar seu link InfinitePay
 
                       </p>
 
-                      <ol className="mt-4 space-y-3 text-sm leading-6 text-slate-200">
+                      <ol className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
 
                         <li><strong>1.</strong> Abra o aplicativo ou site da InfinitePay e entre na sua conta.</li>
 
@@ -1789,7 +1904,7 @@ export default function NovoServicoPage() {
 
                       </ol>
 
-                      <p className="mt-4 text-xs leading-5 text-slate-400">
+                      <p className="mt-4 text-xs leading-5 text-slate-500">
 
                         Cole somente o link https:// da InfinitePay. Não é necessário copiar código HTML.
 
@@ -1809,7 +1924,7 @@ export default function NovoServicoPage() {
 
                     htmlFor="chavePix"
 
-                    className="block font-bold text-white"
+                    className="block font-bold text-slate-900"
 
                   >
 
@@ -1837,11 +1952,11 @@ export default function NovoServicoPage() {
 
                     disabled={carregando}
 
-                    className="mt-3 w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition placeholder:text-slate-500 focus:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
 
                   />
 
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
 
                     Opcional. Cadastre a chave Pix que será apresentada ao cliente.
 
@@ -1853,14 +1968,13 @@ export default function NovoServicoPage() {
 
               </div>
 
-
           </section>
 
           <div className="h-px bg-slate-800" />
 
           <section>
 
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700">
 
               Disponibilidade
 
@@ -1874,7 +1988,7 @@ export default function NovoServicoPage() {
 
                   ? "border-emerald-400 bg-emerald-400/10"
 
-                  : "border-slate-700 bg-[#080D22]"
+                  : "border-slate-200 bg-slate-50"
 
               } ${
 
@@ -1908,13 +2022,13 @@ export default function NovoServicoPage() {
 
               <span>
 
-                <strong className="block text-white">
+                <strong className="block text-slate-900">
 
                   Serviço ativo
 
                 </strong>
 
-                <span className="mt-1 block text-sm leading-6 text-slate-300">
+                <span className="mt-1 block text-sm leading-6 text-slate-600">
 
                   Quando ativo, o serviço poderá aparecer no perfil
 
@@ -1936,7 +2050,7 @@ export default function NovoServicoPage() {
 
               aria-live="polite"
 
-              className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-red-300"
+              className="rounded-xl border border-violet-500/40 bg-violet-500/10 p-4 text-violet-700"
 
             >
 
@@ -1946,13 +2060,13 @@ export default function NovoServicoPage() {
 
           )}
 
-          <div className="flex flex-col-reverse gap-4 border-t border-slate-800 pt-8 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-4 border-t border-slate-200 pt-8 sm:flex-row sm:justify-end">
 
             <Link
 
               href="/dashboard-terapeuta/servicos"
 
-              className={`inline-flex items-center justify-center rounded-xl border border-slate-600 px-6 py-4 font-bold text-slate-200 transition hover:border-slate-400 ${
+              className={`inline-flex items-center justify-center rounded-xl border border-slate-300 px-6 py-4 font-bold text-slate-700 transition hover:border-slate-400 ${
 
                 carregando
 
@@ -1974,7 +2088,7 @@ export default function NovoServicoPage() {
 
               disabled={carregando}
 
-              className="inline-flex items-center justify-center rounded-xl bg-yellow-400 px-8 py-4 font-black text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-xl bg-violet-600 px-8 py-4 font-black text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
 
             >
 

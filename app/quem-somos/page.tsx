@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import Image from "next/image";
 
@@ -20,8 +21,15 @@ export default function QuemSomosPage() {
       <section className="bg-[#F5EAF9] px-5 py-14 sm:px-8">
         <div className="mx-auto max-w-5xl">
           <div className="grid items-center gap-10 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-            <div className="overflow-hidden rounded-[30px] bg-black shadow-xl">
-              <Image src="/oscar-ahumada-fundador.png" alt="Fotografia oficial de Oscar Ahumada, fundador do AuraMeets" width={864} height={1120} className="h-auto w-full" priority />
+            <div className="flex min-h-[320px] items-center justify-center overflow-hidden rounded-[30px] bg-[#DCECF8] shadow-xl sm:min-h-[420px]">
+              <Image
+                src="/oscar-ahumada-fundador.png"
+                alt="Fotografia oficial de Oscar Ahumada, fundador do AuraMeets"
+                width={864}
+                height={1120}
+                className="max-h-[480px] w-full object-contain object-center"
+                priority
+              />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#8546B3]">Conheça o fundador</p>
