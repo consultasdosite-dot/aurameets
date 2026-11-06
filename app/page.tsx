@@ -402,8 +402,22 @@ export default function Home() {
             },
           };
 
-          const experiencia = programacao[dataBrasilia];
-          if (!experiencia) return null;
+          const dataExibicao = new Intl.DateTimeFormat("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+            weekday: "long",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }).format(new Date(`${dataBrasilia}T12:00:00-03:00`)).toLocaleUpperCase("pt-BR");
+
+          const semAgendamento = !programacao[dataBrasilia];
+          const experiencia = programacao[dataBrasilia] ?? {
+            busca: "oscar ahumada",
+            nome: "Oscar Ahumada",
+            data: dataExibicao,
+            titulo: "OSCAR AHUMADA — NUMERÓLOGO DAS ESTRELAS",
+            descricao: "Conheça o trabalho de Oscar Ahumada e seus atendimentos em Numerologia.",
+          };
           const terapeuta = experiencia.busca === "danyela"
             ? terapeutaDanyela
             : terapeutasDestaque.find((item) =>
@@ -418,16 +432,16 @@ export default function Home() {
               </div>
               <div className="experienciaDiaTexto">
                 <span className="sobretitulo">{experiencia.data}</span>
-                <h2>EXPERIÊNCIA PRESENTE DO DIA</h2>
+                <h2>{semAgendamento ? "TERAPEUTA DESTAQUE DO DIA" : "EXPERIÊNCIA PRESENTE DO DIA"}</h2>
                 <div className="experienciaDiaVoucher" aria-label={`Vale Consulta presente ${experiencia.titulo} com ${experiencia.nome}`}>
-                  <span className="experienciaDiaSelo">VALE CONSULTA • AURAMEETS</span>
+                  <span className="experienciaDiaSelo">{semAgendamento ? "DESTAQUE DO DIA • AURAMEETS" : "VALE CONSULTA • AURAMEETS"}</span>
                   <strong>{experiencia.titulo}</strong>
                   {dataBrasilia === "2026-10-27" && <span>Clareza profunda para desatar o que está travado.</span>}
                   <p>{experiencia.descricao}</p>
                   <small>Com {experiencia.nome} • {experiencia.data.toLowerCase()}</small>
                   <Link href={terapeuta.perfil} className="experienciaDiaPerfil">CONHECER PERFIL DE {experiencia.nome.toLocaleUpperCase("pt-BR")} →</Link>
                 </div>
-                <Link href={terapeuta.perfil} className="botaoPrincipal botaoVoucher">QUERO VALE CONSULTA <span>→</span></Link>
+                <Link href={terapeuta.perfil} className="botaoPrincipal botaoVoucher">{semAgendamento ? "CONHECER PROFISSIONAL" : "QUERO VALE CONSULTA"} <span>→</span></Link>
               </div>
             </section>
           );
