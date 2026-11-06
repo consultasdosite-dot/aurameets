@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { getTherapistIdByProfileId } from "@/lib/appointments";
 import { supabase } from "@/lib/supabase";
 
@@ -43,6 +44,7 @@ function mensagemErro(error: unknown): string {
 }
 
 export default function ComunidadeTerapeutasPage() {
+  const router = useRouter();
   const [agendaAberta, setAgendaAberta] = useState(false);
   const [chatAberto, setChatAberto] = useState(false);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
@@ -257,6 +259,7 @@ export default function ComunidadeTerapeutasPage() {
       <div className="mx-auto max-w-6xl">
         <header className="mb-6 flex items-center justify-between">
           <span className="text-xl font-bold tracking-tight text-purple-700">AuraMeets</span>
+          <button type="button" onClick={() => router.push("/dashboard-terapeuta")} className="rounded-xl border border-purple-200 bg-white px-4 py-3 text-sm font-semibold text-purple-700 hover:bg-purple-50">← VOLTAR AO PAINEL</button>
         </header>
 
         <div className="overflow-hidden rounded-3xl">

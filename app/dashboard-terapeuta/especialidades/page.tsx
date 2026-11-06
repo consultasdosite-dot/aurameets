@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -48,18 +49,17 @@ export default function EspecialidadesPage() {
 
         if (therapistError) {
           throw new Error(
-            `Não foi possível localizar o perfil do terapeuta: ${therapistError.message}`,
+            `Não foi possível localizar o perfil do terapeuta: ${therapistError.message}`
           );
         }
 
         if (!therapistData) {
           throw new Error(
-            "O cadastro profissional desta conta não foi localizado.",
+            "O cadastro profissional desta conta não foi localizado."
           );
         }
 
         const idTerapeuta = Number(therapistData.id);
-
         setTherapistId(idTerapeuta);
 
         const { data: specialtiesData, error: specialtiesError } =
@@ -70,7 +70,7 @@ export default function EspecialidadesPage() {
 
         if (specialtiesError) {
           throw new Error(
-            `Não foi possível carregar as especialidades: ${specialtiesError.message}`,
+            `Não foi possível carregar as especialidades: ${specialtiesError.message}`
           );
         }
 
@@ -94,14 +94,14 @@ export default function EspecialidadesPage() {
 
         if (selecionadasError) {
           throw new Error(
-            `Não foi possível carregar suas especialidades: ${selecionadasError.message}`,
+            `Não foi possível carregar suas especialidades: ${selecionadasError.message}`
           );
         }
 
         setSelecionadas(
           (selecionadasData ?? []).map((item) =>
-            Number(item.specialty_id),
-          ),
+            Number(item.specialty_id)
+          )
         );
       } catch (errorDesconhecido) {
         const mensagem =
@@ -119,10 +119,12 @@ export default function EspecialidadesPage() {
   }, [router]);
 
   function alternarEspecialidade(id: number) {
+    if (salvando) return;
+
     setSelecionadas((selecionadasAtuais) => {
       if (selecionadasAtuais.includes(id)) {
         return selecionadasAtuais.filter(
-          (especialidadeId) => especialidadeId !== id,
+          (especialidadeId) => especialidadeId !== id
         );
       }
 
@@ -134,6 +136,8 @@ export default function EspecialidadesPage() {
   }
 
   async function salvarEspecialidades() {
+    if (salvando) return;
+
     if (!therapistId) {
       setErro("O perfil do terapeuta não foi localizado.");
       return;
@@ -159,20 +163,20 @@ export default function EspecialidadesPage() {
 
       if (relacionamentosError) {
         throw new Error(
-          `Não foi possível verificar as especialidades atuais: ${relacionamentosError.message}`,
+          `Não foi possível verificar as especialidades atuais: ${relacionamentosError.message}`
         );
       }
 
       const idsAtuais = (relacionamentosAtuais ?? []).map((item) =>
-        Number(item.specialty_id),
+        Number(item.specialty_id)
       );
 
       const idsParaAdicionar = selecionadas.filter(
-        (id) => !idsAtuais.includes(id),
+        (id) => !idsAtuais.includes(id)
       );
 
       const idsParaRemover = idsAtuais.filter(
-        (id) => !selecionadas.includes(id),
+        (id) => !selecionadas.includes(id)
       );
 
       if (idsParaAdicionar.length > 0) {
@@ -182,12 +186,12 @@ export default function EspecialidadesPage() {
             idsParaAdicionar.map((specialtyId) => ({
               therapist_id: therapistId,
               specialty_id: specialtyId,
-            })),
+            }))
           );
 
         if (adicionarError) {
           throw new Error(
-            `Não foi possível adicionar as especialidades: ${adicionarError.message}`,
+            `Não foi possível adicionar as especialidades: ${adicionarError.message}`
           );
         }
       }
@@ -201,13 +205,13 @@ export default function EspecialidadesPage() {
 
         if (removerError) {
           throw new Error(
-            `Não foi possível remover as especialidades: ${removerError.message}`,
+            `Não foi possível remover as especialidades: ${removerError.message}`
           );
         }
       }
 
       const primeiraEspecialidade = especialidades.find((especialidade) =>
-        selecionadas.includes(especialidade.id),
+        selecionadas.includes(especialidade.id)
       );
 
       if (primeiraEspecialidade) {
@@ -221,12 +225,13 @@ export default function EspecialidadesPage() {
 
         if (atualizarPrincipalError) {
           throw new Error(
-            `As especialidades foram salvas, mas a especialidade principal não foi atualizada: ${atualizarPrincipalError.message}`,
+            `As especialidades foram salvas, mas a especialidade principal não foi atualizada: ${atualizarPrincipalError.message}`
           );
         }
       }
 
       setSucesso("Especialidades salvas com sucesso.");
+      router.push("/dashboard-terapeuta");
     } catch (errorDesconhecido) {
       const mensagem =
         errorDesconhecido instanceof Error
@@ -280,27 +285,7 @@ export default function EspecialidadesPage() {
           </button>
         </div>
 
-        {erro && (
-          <div
-            role="alert"
-            className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4"
-          >
-            <p className="text-sm font-medium text-red-700">{erro}</p>
-          </div>
-        )}
-
-        {sucesso && (
-          <div
-            role="status"
-            className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4"
-          >
-            <p className="text-sm font-medium text-emerald-700">
-              {sucesso}
-            </p>
-          </div>
-        )}
-
-        {!erro && (
+        {!carregando && (
           <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="font-semibold text-slate-900">
@@ -328,6 +313,7 @@ export default function EspecialidadesPage() {
                     <input
                       type="checkbox"
                       checked={selecionada}
+                      disabled={salvando}
                       onChange={() =>
                         alternarEspecialidade(especialidade.id)
                       }
@@ -355,18 +341,38 @@ export default function EspecialidadesPage() {
                 Você poderá alterar suas especialidades sempre que necessário.
               </p>
 
-              <button
-                type="button"
-                onClick={salvarEspecialidades}
-                disabled={salvando}
-                className="min-h-12 rounded-xl bg-purple-700 px-8 py-3 font-semibold text-white transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-              >
-                {salvando
-                  ? "Salvando..."
-                  : "Salvar especialidades"}
-              </button>
+              {erro && (
+                <p role="alert" className="text-sm font-semibold text-red-700">
+                  {erro}
+                </p>
+              )}
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard-terapeuta")}
+                  className="min-h-12 rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Voltar ao Painel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={salvarEspecialidades}
+                  disabled={salvando}
+                  className="min-h-12 rounded-xl bg-purple-700 px-8 py-3 font-semibold text-white transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                >
+                  {salvando ? "Salvando..." : "Salvar especialidades"}
+                </button>
+              </div>
             </div>
           </section>
+        )}
+
+        {erro && especialidades.length === 0 && (
+          <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-medium text-red-700">{erro}</p>
+          </div>
         )}
       </div>
     </main>

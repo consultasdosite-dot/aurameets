@@ -17,6 +17,7 @@ type Servico = {
   price: number;
   promotional_price: number | null;
   payment_url: string | null;
+  pix_key: string | null;
   currency: string;
   status: "active" | "inactive" | "under_review";
   created_at: string;
@@ -24,6 +25,8 @@ type Servico = {
 };
 
 type FormEdicao = {
+  payment_url: string;
+  pix_key: string;
   name: string;
   category: string;
   description: string;
@@ -331,6 +334,7 @@ export default function ServicosPage() {
               price,
               promotional_price,
               payment_url,
+              pix_key,
               currency,
               status,
               created_at,
@@ -397,6 +401,8 @@ export default function ServicosPage() {
     setServicoEditando(servico);
 
     setFormEdicao({
+      payment_url: servico.payment_url ?? "",
+      pix_key: servico.pix_key ?? "",
       name: servico.name,
       category: servico.category,
       description: servico.description,
@@ -510,6 +516,17 @@ export default function ServicosPage() {
       return;
     }
 
+    const linkPagamento = formEdicao.payment_url.trim();
+    if (linkPagamento) {
+      try {
+        const url = new URL(linkPagamento);
+        if (url.protocol !== "https:") throw new Error("Protocolo inválido");
+      } catch {
+        setErro("Informe um link de pagamento HTTPS válido ou deixe o campo vazio.");
+        return;
+      }
+    }
+
     setSalvando(true);
     setErro("");
     setMensagem("");
@@ -530,6 +547,8 @@ export default function ServicosPage() {
       const { error } = await supabase
         .from("services")
         .update({
+          payment_url: linkPagamento || null,
+          pix_key: formEdicao.pix_key.trim() || null,
           name: formEdicao.name.trim(),
           category:
             formEdicao.category.trim(),
@@ -567,6 +586,8 @@ export default function ServicosPage() {
           servico.id === servicoEditando.id
             ? {
                 ...servico,
+                payment_url: linkPagamento || null,
+                pix_key: formEdicao.pix_key.trim() || null,
                 name: formEdicao.name.trim(),
                 category:
                   formEdicao.category.trim(),
@@ -1710,6 +1731,29 @@ export default function ServicosPage() {
                     </p>
                   </label>
                 </div>
+
+                <label>
+                  <span className="mb-2 block font-bold">Link de pagamento InfinitePay</span>
+                  <input
+                    type="url"
+                    value={formEdicao.payment_url}
+                    onChange={(event) => setFormEdicao({ ...formEdicao, payment_url: event.target.value })}
+                    placeholder="https://link.infinitepay.io/..."
+                    className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                  />
+                  <p className="mt-2 text-sm text-slate-400">Você pode substituir ou remover este link quando quiser.</p>
+                </label>
+
+                <label>
+                  <span className="mb-2 block font-bold">Chave Pix</span>
+                  <input
+                    type="text"
+                    value={formEdicao.pix_key}
+                    onChange={(event) => setFormEdicao({ ...formEdicao, pix_key: event.target.value })}
+                    placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+                    className="w-full rounded-xl border border-slate-600 bg-slate-950 px-4 py-3 text-white outline-none focus:border-yellow-400"
+                  />
+                </label>
 
                 <div className="flex flex-wrap gap-6 rounded-2xl border border-slate-700 bg-slate-950/40 p-5">
                   <label className="flex items-center gap-3">

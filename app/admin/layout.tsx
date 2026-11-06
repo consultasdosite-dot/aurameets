@@ -43,6 +43,11 @@ const menuItems: MenuItem[] = [
     icon: <AppointmentsIcon />,
   },
   {
+    label: "Agenda de Divulgação",
+    href: "/admin/agenda-divulgacao",
+    icon: <AppointmentsIcon />,
+  },
+  {
     label: "Autorizações",
     href: "/admin/autorizacoes",
     icon: <ApprovalIcon />,

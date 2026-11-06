@@ -22,6 +22,57 @@ type TherapistRow = {
   name: string | null;
 };
 
+type SubscriptionRow = {
+  id: number;
+  therapist_id: number;
+  monthly_amount: number | string;
+  due_day: number;
+  status: string;
+};
+
+type SubscriptionPaymentRow = {
+  subscription_id: number;
+  reference_month: string;
+  amount: number | string;
+  status: string;
+};
+
+const ISENTOS = new Set([1, 104]);
+const MESES = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+];
+
+function statusMensalidade(
+  contrato: SubscriptionRow,
+  pagamento: SubscriptionPaymentRow | undefined,
+  ano: number,
+  mes: number,
+) {
+  if (ISENTOS.has(contrato.therapist_id)) {
+    return { texto: "ISENTO", classe: "text-emerald-300" };
+  }
+  if (pagamento?.status === "paid") {
+    return { texto: "PAGO", classe: "text-emerald-300" };
+  }
+  if (pagamento?.status === "under_review") {
+    return { texto: "EM ANÁLISE", classe: "text-blue-300" };
+  }
+  const hoje = new Date();
+  const hojeBrasil = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(hoje);
+  const [anoAtual, mesAtual] = hojeBrasil.split("-").map(Number);
+  if (ano > anoAtual || (ano === anoAtual && mes > mesAtual)) {
+    return { texto: "A VENCER", classe: "text-slate-400" };
+  }
+  if (pagamento?.status === "overdue") {
+    return { texto: "ATRASADO", classe: "text-red-300" };
+  }
+  return { texto: "SEM REGISTRO", classe: "text-amber-300" };
+}
+
 function numero(valor: number | string | null | undefined) {
   const convertido = Number(valor ?? 0);
   return Number.isFinite(convertido) ? convertido : 0;
@@ -144,6 +195,64 @@ export default async function AdminPagamentosPage() {
     );
   }
 
+  // Consulta das mensalidades: nenhuma operação de escrita é realizada aqui.
+  const anoFinanceiro = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo", year: "numeric",
+    }).format(new Date()),
+  );
+
+  const { data: contratosData, error: contratosError } = await supabaseAdmin
+    .from("therapist_subscriptions")
+    .select("id, therapist_id, monthly_amount, due_day, status")
+    .order("therapist_id", { ascending: true });
+
+  const contratos = (contratosData ?? []) as SubscriptionRow[];
+  const idsContratos = contratos.map((item) => item.id);
+  let pagamentosMensais: SubscriptionPaymentRow[] = [];
+  let erroMensalidades = contratosError?.message ?? null;
+
+  if (!erroMensalidades && idsContratos.length > 0) {
+    const { data, error } = await supabaseAdmin
+      .from("therapist_subscription_payments")
+      .select("subscription_id, reference_month, amount, status")
+      .in("subscription_id", idsContratos)
+      .gte("reference_month", `${anoFinanceiro}-01-01`)
+      .lte("reference_month", `${anoFinanceiro}-12-01`);
+
+    if (error) erroMensalidades = error.message;
+    else pagamentosMensais = (data ?? []) as SubscriptionPaymentRow[];
+  }
+
+  const idsDeContratos = contratos.map((item) => item.therapist_id);
+  let nomesContratos: TherapistRow[] = [];
+  if (idsDeContratos.length > 0) {
+    const { data, error } = await supabaseAdmin
+      .from("therapists")
+      .select("id, name")
+      .in("id", idsDeContratos);
+    if (error) erroMensalidades = error.message;
+    else nomesContratos = (data ?? []) as TherapistRow[];
+  }
+  const nomesContratosPorId = new Map(
+    nomesContratos.map((item) => [item.id, item.name]),
+  );
+  const pagamentosPorChave = new Map(
+    pagamentosMensais.map((item) => [
+      `${item.subscription_id}:${item.reference_month.slice(0, 7)}`,
+      item,
+    ]),
+  );
+  const contratosPagantes = contratos.filter(
+    (item) => !ISENTOS.has(item.therapist_id),
+  );
+  const totalContratado = contratosPagantes.reduce(
+    (total, item) => total + numero(item.monthly_amount), 0,
+  );
+  const totalPagoAno = pagamentosMensais.reduce(
+    (total, item) => total + (item.status === "paid" ? numero(item.amount) : 0), 0,
+  );
+
   const registros = (registrosData ?? []) as FinancialRecord[];
 
   const therapistIds = Array.from(
@@ -248,6 +357,80 @@ export default async function AdminPagamentosPage() {
           </p>
         </section>
       )}
+
+      <section className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/60">
+        <div className="border-b border-white/10 p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-300">
+            Mensalidades dos terapeutas
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-white">
+            Agenda anual de mensalidades — {anoFinanceiro}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Valores conforme cada contrato. Pagamentos confirmados no Supabase.
+            Os meses sem lançamento são exibidos como sem registro, sem presumir dívida.
+          </p>
+          {!erroMensalidades && (
+            <div className="mt-5 flex flex-wrap gap-3 text-sm">
+              <span className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-slate-200">
+                {contratos.length} contratos · {contratosPagantes.length} pagantes · {contratos.length - contratosPagantes.length} isentos
+              </span>
+              <span className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-slate-200">
+                Mensalidade contratada: <strong className="text-white">{dinheiro(totalContratado)}</strong>
+              </span>
+              <span className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-slate-200">
+                Pagamentos registrados no ano: <strong className="text-emerald-300">{dinheiro(totalPagoAno)}</strong>
+              </span>
+            </div>
+          )}
+        </div>
+        {erroMensalidades ? (
+          <p className="p-6 text-sm text-red-300" role="alert">
+            Não foi possível carregar as mensalidades: {erroMensalidades}
+          </p>
+        ) : contratos.length === 0 ? (
+          <p className="p-6 text-sm text-slate-400">Nenhum contrato encontrado.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1500px] text-left text-sm">
+              <thead className="bg-slate-950/60 text-xs uppercase tracking-wider text-slate-400">
+                <tr>
+                  <th className="sticky left-0 z-10 bg-slate-950 px-4 py-4">Terapeuta</th>
+                  <th className="px-3 py-4 text-right">Contrato</th>
+                  {MESES.map((mes) => <th key={mes} className="px-3 py-4 text-center">{mes}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {contratos.map((contrato) => (
+                  <tr key={contrato.id} className="border-t border-white/10 hover:bg-white/[0.03]">
+                    <td className="sticky left-0 z-10 bg-slate-900 px-4 py-4 font-semibold text-white">
+                      {nomesContratosPorId.get(contrato.therapist_id) || `Terapeuta #${contrato.therapist_id}`}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-right text-slate-200">
+                      {ISENTOS.has(contrato.therapist_id) ? "ISENTO" : dinheiro(numero(contrato.monthly_amount))}
+                    </td>
+                    {MESES.map((mes, indice) => {
+                      const chave = `${contrato.id}:${anoFinanceiro}-${String(indice + 1).padStart(2, "0")}`;
+                      const pagamento = pagamentosPorChave.get(chave);
+                      const situacao = statusMensalidade(contrato, pagamento, anoFinanceiro, indice + 1);
+                      return (
+                        <td key={mes} className="whitespace-nowrap px-3 py-4 text-center">
+                          <span className={`text-[11px] font-bold ${situacao.classe}`}>
+                            {situacao.texto}
+                          </span>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="border-t border-white/10 px-6 py-4 text-xs text-slate-500">
+          Consulta administrativa. A confirmação de novos pagamentos será habilitada em etapa separada, após validar a autorização de acesso.
+        </p>
+      </section>
 
       <section className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/60">
         <div className="border-b border-white/10 p-6">

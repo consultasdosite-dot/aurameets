@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import Link from "next/link";
 
 import {
@@ -21,8 +19,6 @@ import {
 import { useRouter } from "next/navigation";
 
 import { supabase } from "../../../../lib/supabase";
-
-
 
 const categorias = [
 
@@ -52,8 +48,6 @@ const categorias = [
 
 ];
 
-
-
 const moedas = [
 
   { value: "BRL", label: "Real brasileiro — R$" },
@@ -64,11 +58,7 @@ const moedas = [
 
 ];
 
-
-
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
-
-
 
 const ALLOWED_PHOTO_TYPES = [
 
@@ -79,8 +69,6 @@ const ALLOWED_PHOTO_TYPES = [
   "image/webp",
 
 ];
-
-
 
 function converterValorParaNumero(valor: string) {
 
@@ -94,13 +82,9 @@ function converterValorParaNumero(valor: string) {
 
     .replace(",", ".");
 
-
-
   return Number(valorLimpo);
 
 }
-
-
 
 function obterExtensaoDaFoto(arquivo: File) {
 
@@ -111,8 +95,6 @@ function obterExtensaoDaFoto(arquivo: File) {
     .pop()
 
     ?.toLowerCase();
-
-
 
   if (
 
@@ -130,15 +112,11 @@ function obterExtensaoDaFoto(arquivo: File) {
 
   }
 
-
-
   if (arquivo.type === "image/png") {
 
     return "png";
 
   }
-
-
 
   if (arquivo.type === "image/webp") {
 
@@ -146,21 +124,15 @@ function obterExtensaoDaFoto(arquivo: File) {
 
   }
 
-
-
   return "jpg";
 
 }
-
-
 
 export default function NovoServicoPage() {
 
   const router = useRouter();
 
   const photoInputRef = useRef<HTMLInputElement | null>(null);
-
-
 
   const [nome, setNome] = useState("");
 
@@ -177,8 +149,11 @@ export default function NovoServicoPage() {
   const [entregaVideo, setEntregaVideo] = useState(false);
 
   const [entregaAudio, setEntregaAudio] = useState(false);
+
   const [relatorioPdf, setRelatorioPdf] = useState(false);
+
   const [relatorioAudio, setRelatorioAudio] = useState(false);
+
   const [relatorioConsulta, setRelatorioConsulta] = useState(false);
 
   const [duracao, setDuracao] = useState("60");
@@ -189,12 +164,6 @@ export default function NovoServicoPage() {
 
   const [moeda, setMoeda] = useState("BRL");
 
-  const [modoVenda, setModoVenda] = useState<
-
-    "schedule" | "direct_payment"
-
-  >("direct_payment");
-
   const [linkPagamento, setLinkPagamento] = useState("");
 
   const [mostrarAjudaInfinitePay, setMostrarAjudaInfinitePay] = useState(false);
@@ -203,7 +172,11 @@ export default function NovoServicoPage() {
 
   const [ativo, setAtivo] = useState(true);
 
-
+  // Pacote opcional vinculado ao atendimento avulso.
+  const [oferecerPacote, setOferecerPacote] = useState(false);
+  const [quantidadeSessoes, setQuantidadeSessoes] = useState("2");
+  const [precoPacote, setPrecoPacote] = useState("");
+  const [linkPacote, setLinkPacote] = useState("");
 
   const [foto, setFoto] = useState<File | null>(null);
 
@@ -211,13 +184,9 @@ export default function NovoServicoPage() {
 
   const [erroFoto, setErroFoto] = useState("");
 
-
-
   const [erro, setErro] = useState("");
 
   const [carregando, setCarregando] = useState(false);
-
-
 
   useEffect(() => {
 
@@ -233,35 +202,25 @@ export default function NovoServicoPage() {
 
   }, [fotoPreview]);
 
-
-
   function abrirSeletorDeFoto() {
 
     photoInputRef.current?.click();
 
   }
 
-
-
   function selecionarFoto(event: ChangeEvent<HTMLInputElement>) {
 
     const arquivo = event.target.files?.[0];
 
-
-
     setErro("");
 
     setErroFoto("");
-
-
 
     if (!arquivo) {
 
       return;
 
     }
-
-
 
     if (!ALLOWED_PHOTO_TYPES.includes(arquivo.type)) {
 
@@ -273,8 +232,6 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     if (arquivo.size > MAX_PHOTO_SIZE) {
 
       setErroFoto("A imagem deve ter no máximo 5 MB.");
@@ -285,27 +242,19 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     if (fotoPreview) {
 
       URL.revokeObjectURL(fotoPreview);
 
     }
 
-
-
     const novaPreview = URL.createObjectURL(arquivo);
-
-
 
     setFoto(arquivo);
 
     setFotoPreview(novaPreview);
 
   }
-
-
 
   function removerFoto() {
 
@@ -315,15 +264,11 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     setFoto(null);
 
     setFotoPreview("");
 
     setErroFoto("");
-
-
 
     if (photoInputRef.current) {
 
@@ -333,19 +278,13 @@ export default function NovoServicoPage() {
 
   }
 
-
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 
     event.preventDefault();
 
-
-
     setErro("");
 
     setErroFoto("");
-
-
 
     if (!foto) {
 
@@ -355,8 +294,6 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     if (!nome.trim()) {
 
       setErro("Informe o nome do serviço.");
@@ -364,8 +301,6 @@ export default function NovoServicoPage() {
       return;
 
     }
-
-
 
     if (!categoria) {
 
@@ -375,8 +310,6 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     if (!descricao.trim()) {
 
       setErro("Escreva uma descrição para o serviço.");
@@ -384,8 +317,6 @@ export default function NovoServicoPage() {
       return;
 
     }
-
-
 
     if (
 
@@ -398,8 +329,11 @@ export default function NovoServicoPage() {
       !entregaVideo &&
 
       !entregaAudio &&
+
       !relatorioPdf &&
+
       !relatorioAudio &&
+
       !relatorioConsulta
 
     ) {
@@ -409,8 +343,6 @@ export default function NovoServicoPage() {
       return;
 
     }
-
-
 
     const formatosEntrega = [
 
@@ -423,19 +355,18 @@ export default function NovoServicoPage() {
       entregaVideo ? "video" : null,
 
       entregaAudio ? "audio" : null,
+
       relatorioPdf ? "relatorio_pdf" : null,
+
       relatorioAudio ? "relatorio_audio" : null,
+
       relatorioConsulta ? "relatorio_consulta" : null,
 
     ].filter((item): item is string => item !== null);
 
-
-
     const exigeDuracao = atendeOnline || atendePresencial || relatorioConsulta;
 
     const duracaoEmMinutos = exigeDuracao ? Number(duracao) : null;
-
-
 
     if (
 
@@ -451,11 +382,7 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     const precoConvertido = converterValorParaNumero(preco);
-
-
 
     if (
 
@@ -473,8 +400,6 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     const percentualDescontoConvertido =
 
       percentualDesconto.trim()
@@ -482,8 +407,6 @@ export default function NovoServicoPage() {
         ? Number(percentualDesconto.replace(",", "."))
 
         : 0;
-
-
 
     if (
 
@@ -501,8 +424,6 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     const precoPromocionalConvertido =
 
       percentualDescontoConvertido > 0
@@ -519,15 +440,41 @@ export default function NovoServicoPage() {
 
         : null;
 
+    if (oferecerPacote) {
+      const sessoes = Number(quantidadeSessoes);
+      const valorPacote = converterValorParaNumero(precoPacote);
 
+      if (!Number.isInteger(sessoes) || sessoes < 2 || sessoes > 10) {
+        setErro("Escolha de 2 a 10 sessões para o pacote.");
+        return;
+      }
 
-    if (modoVenda === "direct_payment") {
+      if (!precoPacote.trim() || !Number.isFinite(valorPacote) || valorPacote <= 0) {
+        setErro("Informe o preço total válido do pacote.");
+        return;
+      }
+
+      if (valorPacote >= precoConvertido * sessoes) {
+        setErro("O preço do pacote deve ser menor que o total das sessões avulsas.");
+        return;
+      }
+
+      try {
+        const urlPacote = new URL(linkPacote.trim());
+        if (urlPacote.protocol !== "https:") {
+          throw new Error("Link inválido");
+        }
+      } catch {
+        setErro("Informe um link HTTPS de pagamento exclusivo para o pacote.");
+        return;
+      }
+    }
+
+    {
 
       const linkLimpo = linkPagamento.trim();
 
       const pixLimpo = chavePix.trim();
-
-
 
       if (!linkLimpo && !pixLimpo) {
 
@@ -541,15 +488,11 @@ export default function NovoServicoPage() {
 
       }
 
-
-
       if (linkLimpo) {
 
         try {
 
           const url = new URL(linkLimpo);
-
-
 
           if (
 
@@ -585,8 +528,6 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     if (!ALLOWED_PHOTO_TYPES.includes(foto.type)) {
 
       setErroFoto("Escolha uma imagem JPG, PNG ou WEBP.");
@@ -594,8 +535,6 @@ export default function NovoServicoPage() {
       return;
 
     }
-
-
 
     if (foto.size > MAX_PHOTO_SIZE) {
 
@@ -605,15 +544,9 @@ export default function NovoServicoPage() {
 
     }
 
-
-
     setCarregando(true);
 
-
-
     let caminhoDaFotoEnviada = "";
-
-
 
     try {
 
@@ -624,8 +557,6 @@ export default function NovoServicoPage() {
         error: erroUsuario,
 
       } = await supabase.auth.getUser();
-
-
 
       if (erroUsuario || !user) {
 
@@ -639,19 +570,13 @@ export default function NovoServicoPage() {
 
       }
 
-
-
       const extensao = obterExtensaoDaFoto(foto);
 
       const identificador = crypto.randomUUID();
 
-
-
       caminhoDaFotoEnviada =
 
         `${user.id}/${identificador}.${extensao}`;
-
-
 
       const { error: erroUpload } = await supabase.storage
 
@@ -667,8 +592,6 @@ export default function NovoServicoPage() {
 
         });
 
-
-
       if (erroUpload) {
 
         console.error(
@@ -679,21 +602,15 @@ export default function NovoServicoPage() {
 
         );
 
-
-
         setErroFoto(
 
           `Não foi possível enviar a foto: ${erroUpload.message}`,
 
         );
 
-
-
         return;
 
       }
-
-
 
       const { data: dadosFotoPublica } = supabase.storage
 
@@ -701,13 +618,27 @@ export default function NovoServicoPage() {
 
         .getPublicUrl(caminhoDaFotoEnviada);
 
-
-
       const fotoPublicaUrl = dadosFotoPublica.publicUrl;
 
+      // A tabela offers identifica o terapeuta por bigint, não pelo UUID de autenticação.
+      let terapeutaId: number | null = null;
+      if (oferecerPacote) {
+        const { data: terapeuta, error: erroTerapeuta } = await supabase
+          .from("therapists")
+          .select("id")
+          .eq("profile_id", user.id)
+          .single();
 
+        if (erroTerapeuta || !terapeuta) {
+          setErro("Não foi possível identificar o terapeuta para cadastrar o pacote.");
+          await supabase.storage.from("service-photos").remove([caminhoDaFotoEnviada]);
+          caminhoDaFotoEnviada = "";
+          return;
+        }
+        terapeutaId = terapeuta.id;
+      }
 
-      const { error: erroCadastro } = await supabase
+      const { data: servicoCriado, error: erroCadastro } = await supabase
 
         .from("services")
 
@@ -737,11 +668,11 @@ export default function NovoServicoPage() {
 
           currency: moeda,
 
-          sale_mode: modoVenda,
+          sale_mode: "direct_payment",
 
           payment_url:
 
-            modoVenda === "direct_payment" && linkPagamento.trim()
+            linkPagamento.trim()
 
               ? linkPagamento.trim()
 
@@ -749,17 +680,14 @@ export default function NovoServicoPage() {
 
           pix_key:
 
-            modoVenda === "direct_payment" && chavePix.trim()
+            chavePix.trim()
 
               ? chavePix.trim()
 
               : null,
 
           status: ativo ? "active" : "inactive",
-
-        });
-
-
+        }).select("id").single();
 
       if (erroCadastro) {
 
@@ -771,8 +699,6 @@ export default function NovoServicoPage() {
 
         );
 
-
-
         if (caminhoDaFotoEnviada) {
 
           await supabase.storage
@@ -783,22 +709,47 @@ export default function NovoServicoPage() {
 
         }
 
-
-
         setErro(
 
           `Não foi possível salvar o serviço: ${erroCadastro.message}`,
 
         );
 
-
-
         return;
 
       }
 
-
-
+      if (oferecerPacote && servicoCriado && terapeutaId !== null) {
+        const totalAvulso = precoConvertido * Number(quantidadeSessoes);
+        const valorPacote = converterValorParaNumero(precoPacote);
+        const { error: erroPacote } = await supabase.from("offers").insert({
+          therapist_id: terapeutaId,
+          service_id: servicoCriado.id,
+          title: `${nome.trim()} — pacote de ${quantidadeSessoes} sessões`,
+          description: `Pacote de ${quantidadeSessoes} sessões do serviço ${nome.trim()}.`,
+          offer_type: "pacote",
+          package_sessions: Number(quantidadeSessoes),
+          original_price: Math.round(totalAvulso * 100) / 100,
+          offer_price: valorPacote,
+          regular_price: Math.round(totalAvulso * 100) / 100,
+          promo_price: valorPacote,
+          currency_code: moeda,
+          payment_url: linkPacote.trim(),
+          active: ativo,
+        });
+        if (erroPacote) {
+          const { error: erroExclusao } = await supabase.from("services")
+            .delete().eq("id", servicoCriado.id).eq("therapist_id", user.id);
+          if (!erroExclusao) {
+            await supabase.storage.from("service-photos").remove([caminhoDaFotoEnviada]);
+            caminhoDaFotoEnviada = "";
+          }
+          setErro(erroExclusao
+            ? `Serviço criado, mas pacote não salvo: ${erroPacote.message}. Confira Meus Serviços.`
+            : `Pacote não salvo: ${erroPacote.message}. O serviço criado foi desfeito.`);
+          return;
+        }
+      }
       router.push("/dashboard-terapeuta/servicos");
 
       router.refresh();
@@ -813,8 +764,6 @@ export default function NovoServicoPage() {
 
       );
 
-
-
       if (caminhoDaFotoEnviada) {
 
         await supabase.storage
@@ -824,8 +773,6 @@ export default function NovoServicoPage() {
           .remove([caminhoDaFotoEnviada]);
 
       }
-
-
 
       setErro(
 
@@ -840,8 +787,6 @@ export default function NovoServicoPage() {
     }
 
   }
-
-
 
   return (
 
@@ -859,15 +804,11 @@ export default function NovoServicoPage() {
 
             </p>
 
-
-
             <h1 className="mt-3 text-3xl font-black sm:text-4xl">
 
               Novo Serviço
 
             </h1>
-
-
 
             <p className="mt-3 max-w-2xl leading-7 text-slate-300">
 
@@ -878,8 +819,6 @@ export default function NovoServicoPage() {
             </p>
 
           </div>
-
-
 
           <Link
 
@@ -894,8 +833,6 @@ export default function NovoServicoPage() {
           </Link>
 
         </div>
-
-
 
         <form
 
@@ -913,8 +850,6 @@ export default function NovoServicoPage() {
 
             </p>
 
-
-
             <div className="mt-6 overflow-hidden rounded-2xl border border-slate-700 bg-[#080D22]">
 
               <button
@@ -925,7 +860,7 @@ export default function NovoServicoPage() {
 
                 disabled={carregando}
 
-                className="group relative flex aspect-video w-full items-center justify-center overflow-hidden transition disabled:cursor-not-allowed disabled:opacity-60"
+                className="group relative flex min-h-[350px] w-full items-center justify-center overflow-hidden py-6 transition disabled:cursor-not-allowed disabled:opacity-60 sm:aspect-video sm:min-h-0 sm:py-0"
 
               >
 
@@ -943,8 +878,6 @@ export default function NovoServicoPage() {
 
                     />
 
-
-
                     <span className="absolute inset-0 flex items-center justify-center bg-black/65 px-4 text-lg font-black text-white opacity-0 transition group-hover:opacity-100">
 
                       Alterar foto de capa
@@ -955,23 +888,19 @@ export default function NovoServicoPage() {
 
                 ) : (
 
-                  <div className="px-6 text-center">
+                  <div className="w-full px-4 text-center sm:px-6">
 
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-3xl font-black text-black">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-yellow-400 text-2xl font-black text-black sm:h-16 sm:w-16 sm:text-3xl">
 
                       +
 
                     </div>
 
-
-
-                    <p className="mt-5 text-xl font-black text-yellow-400">
+                    <p className="mt-3 text-base font-black leading-6 text-yellow-400 sm:mt-5 sm:text-xl">
 
                       Adicionar foto do serviço
 
                     </p>
-
-
 
                     <p className="mt-2 text-sm leading-6 text-slate-400">
 
@@ -981,11 +910,9 @@ export default function NovoServicoPage() {
 
                     </p>
 
+                    <div className="mx-auto mt-4 max-w-md rounded-xl border border-yellow-400/50 bg-yellow-400/10 px-3 py-3 sm:mt-5 sm:px-4">
 
-
-                    <div className="mx-auto mt-5 max-w-md rounded-xl border border-yellow-400/50 bg-yellow-400/10 px-4 py-3">
-
-                      <p className="text-sm font-black uppercase tracking-wide text-yellow-400">
+                      <p className="text-xs font-black uppercase tracking-normal text-yellow-400 sm:text-sm sm:tracking-wide">
 
                         TAMANHO RECOMENDADO: 1200 × 675 PX
 
@@ -1004,8 +931,6 @@ export default function NovoServicoPage() {
                 )}
 
               </button>
-
-
 
               <div className="border-t border-slate-700 p-5">
 
@@ -1027,8 +952,6 @@ export default function NovoServicoPage() {
 
                 />
 
-
-
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
@@ -1036,8 +959,6 @@ export default function NovoServicoPage() {
                     JPG, PNG ou WEBP · máximo de 5 MB
 
                   </p>
-
-
 
                   <div className="flex flex-col gap-3 sm:flex-row">
 
@@ -1056,8 +977,6 @@ export default function NovoServicoPage() {
                       {foto ? "Trocar foto" : "Escolher foto"}
 
                     </button>
-
-
 
                     {foto && (
 
@@ -1087,8 +1006,6 @@ export default function NovoServicoPage() {
 
             </div>
 
-
-
             {erroFoto && (
 
               <div
@@ -1109,11 +1026,7 @@ export default function NovoServicoPage() {
 
           </section>
 
-
-
           <div className="h-px bg-slate-800" />
-
-
 
           <section>
 
@@ -1122,8 +1035,6 @@ export default function NovoServicoPage() {
               Informações principais
 
             </p>
-
-
 
             <div className="mt-6 grid gap-6">
 
@@ -1134,8 +1045,6 @@ export default function NovoServicoPage() {
                   Nome do serviço
 
                 </label>
-
-
 
                 <input
 
@@ -1157,8 +1066,6 @@ export default function NovoServicoPage() {
 
               </div>
 
-
-
               <div>
 
                 <label
@@ -1172,8 +1079,6 @@ export default function NovoServicoPage() {
                   Categoria
 
                 </label>
-
-
 
                 <select
 
@@ -1199,8 +1104,6 @@ export default function NovoServicoPage() {
 
                   </option>
 
-
-
                   {categorias.map((item) => (
 
                     <option key={item} value={item}>
@@ -1215,8 +1118,6 @@ export default function NovoServicoPage() {
 
               </div>
 
-
-
               <div>
 
                 <label
@@ -1230,8 +1131,6 @@ export default function NovoServicoPage() {
                   Descrição
 
                 </label>
-
-
 
                 <textarea
 
@@ -1257,8 +1156,6 @@ export default function NovoServicoPage() {
 
                 />
 
-
-
                 <p className="mt-2 text-right text-xs text-slate-400">
 
                   {descricao.length}/2000 caracteres
@@ -1271,11 +1168,7 @@ export default function NovoServicoPage() {
 
           </section>
 
-
-
           <div className="h-px bg-slate-800" />
-
-
 
           <section>
 
@@ -1284,8 +1177,6 @@ export default function NovoServicoPage() {
               Forma de entrega
 
             </p>
-
-
 
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
@@ -1329,8 +1220,6 @@ export default function NovoServicoPage() {
 
                 />
 
-
-
                 <span className="font-bold">
 
                   Atendimento online
@@ -1338,8 +1227,6 @@ export default function NovoServicoPage() {
                 </span>
 
               </label>
-
-
 
               <label
 
@@ -1381,8 +1268,6 @@ export default function NovoServicoPage() {
 
                 />
 
-
-
                 <span className="font-bold">
 
                   Atendimento presencial
@@ -1390,8 +1275,6 @@ export default function NovoServicoPage() {
                 </span>
 
               </label>
-
-
 
               <label
 
@@ -1429,13 +1312,9 @@ export default function NovoServicoPage() {
 
                 />
 
-
-
                 <span className="font-bold">PDF / Documento</span>
 
               </label>
-
-
 
               <label
 
@@ -1473,13 +1352,9 @@ export default function NovoServicoPage() {
 
                 />
 
-
-
                 <span className="font-bold">Vídeo</span>
 
               </label>
-
-
 
               <label
 
@@ -1517,34 +1392,56 @@ export default function NovoServicoPage() {
 
                 />
 
-
-
                 <span className="font-bold">Áudio</span>
 
               </label>
+
                 {[
+
                   { label: "Relatório em PDF", checked: relatorioPdf, set: setRelatorioPdf },
+
                   { label: "Relatório + Áudio", checked: relatorioAudio, set: setRelatorioAudio },
+
                   { label: "Relatório + Consulta", checked: relatorioConsulta, set: setRelatorioConsulta },
+
                 ].map((opcao) => (
+
                   <label
+
                     key={opcao.label}
+
                     className={`flex items-center gap-3 rounded-xl border p-5 transition ${
+
                       opcao.checked
+
                         ? "border-yellow-400 bg-yellow-400/10"
+
                         : "border-slate-700 bg-[#080D22]"
+
                     } ${carregando ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+
                   >
+
                     <input
+
                       type="checkbox"
+
                       checked={opcao.checked}
+
                       onChange={(event) => opcao.set(event.target.checked)}
+
                       disabled={carregando}
+
                       className="h-5 w-5 accent-yellow-400"
+
                     />
+
                     <span className="font-bold">{opcao.label}</span>
+
                   </label>
+
                 ))}
+
               </div>
 
               {(atendeOnline || atendePresencial || relatorioConsulta) && (
@@ -1562,8 +1459,6 @@ export default function NovoServicoPage() {
                   Duração do atendimento
 
                 </label>
-
-
 
                 <div className="flex items-center gap-3">
 
@@ -1589,8 +1484,6 @@ export default function NovoServicoPage() {
 
                   />
 
-
-
                   <span className="font-semibold text-slate-300">
 
                     minutos
@@ -1605,11 +1498,7 @@ export default function NovoServicoPage() {
 
           </section>
 
-
-
           <div className="h-px bg-slate-800" />
-
-
 
           <section>
 
@@ -1618,8 +1507,6 @@ export default function NovoServicoPage() {
               Preço
 
             </p>
-
-
 
             <div className="mt-6 grid gap-6 md:grid-cols-3">
 
@@ -1636,8 +1523,6 @@ export default function NovoServicoPage() {
                   Moeda
 
                 </label>
-
-
 
                 <select
 
@@ -1677,8 +1562,6 @@ export default function NovoServicoPage() {
 
               </div>
 
-
-
               <div>
 
                 <label
@@ -1692,8 +1575,6 @@ export default function NovoServicoPage() {
                   Preço oficial
 
                 </label>
-
-
 
                 <input
 
@@ -1721,8 +1602,6 @@ export default function NovoServicoPage() {
 
               </div>
 
-
-
               <div>
 
                 <label
@@ -1736,8 +1615,6 @@ export default function NovoServicoPage() {
                   Desconto (%)
 
                 </label>
-
-
 
                 <input
 
@@ -1769,8 +1646,6 @@ export default function NovoServicoPage() {
 
                 />
 
-
-
                 <p className="mt-2 text-xs leading-5 text-slate-400">
 
                   O preço com desconto será calculado automaticamente.
@@ -1783,145 +1658,54 @@ export default function NovoServicoPage() {
 
           </section>
 
-
-
           <div className="h-px bg-slate-800" />
 
-
-
           <section>
-
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">Pacote de sessões (opcional)</p>
+            <label className="mt-5 flex items-center gap-3 rounded-xl border border-slate-700 bg-[#080D22] p-5">
+              <input type="checkbox" checked={oferecerPacote}
+                onChange={(event) => setOferecerPacote(event.target.checked)}
+                disabled={carregando} className="h-5 w-5 accent-yellow-400" />
+              <span className="font-bold">Oferecer também um pacote com desconto</span>
+            </label>
+            {oferecerPacote && (
+              <div className="mt-5 grid gap-5 rounded-2xl border border-yellow-400/30 bg-yellow-400/5 p-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="quantidadeSessoes" className="mb-2 block font-bold">Quantidade de sessões</label>
+                  <select id="quantidadeSessoes" value={quantidadeSessoes}
+                    onChange={(event) => setQuantidadeSessoes(event.target.value)}
+                    disabled={carregando}
+                    className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4">
+                    {Array.from({length: 9}, (_, index) => index + 2).map((n) => (
+                      <option key={n} value={n}>{n} sessões</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="precoPacote" className="mb-2 block font-bold">Preço total do pacote</label>
+                  <input id="precoPacote" type="text" inputMode="decimal" value={precoPacote}
+                    onChange={(event) => setPrecoPacote(event.target.value)}
+                    placeholder="Ex.: 500,00" disabled={carregando}
+                    className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4" />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="linkPacote" className="mb-2 block font-bold">Link exclusivo de pagamento do pacote</label>
+                  <input id="linkPacote" type="url" value={linkPacote}
+                    onChange={(event) => setLinkPacote(event.target.value)}
+                    placeholder="https://..." disabled={carregando}
+                    className="w-full rounded-xl border border-slate-700 bg-[#080D22] px-4 py-4" />
+                </div>
+              </div>
+            )}
+          </section>
+          <div className="h-px bg-slate-800" />
+          <section>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
-
-              Forma de contratação
-
+              Forma de pagamento
             </p>
-
-
-
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-
-              Escolha se o visitante deverá solicitar um horário ou comprar
-
-              diretamente por InfinitePay ou Pix.
-
+              Informe seu link InfinitePay, sua chave Pix ou ambos. O horário do atendimento será combinado diretamente com o visitante.
             </p>
-
-
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-
-              <label
-
-                className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 transition ${
-
-                  modoVenda === "schedule"
-
-                    ? "border-yellow-400 bg-yellow-400/10"
-
-                    : "border-slate-700 bg-[#080D22]"
-
-                } ${carregando ? "cursor-not-allowed opacity-60" : ""}`}
-
-              >
-
-                <input
-
-                  type="radio"
-
-                  name="modoVenda"
-
-                  checked={modoVenda === "schedule"}
-
-                  onChange={() => setModoVenda("schedule")}
-
-                  disabled={carregando}
-
-                  className="mt-1 h-5 w-5 accent-yellow-400"
-
-                />
-
-
-
-                <span>
-
-                  <strong className="block text-white">
-
-                    Apenas agendamento
-
-                  </strong>
-
-
-
-                  <span className="mt-2 block text-sm leading-6 text-slate-300">
-
-                    O perfil mostrará o botão “Agendar consulta”.
-
-                  </span>
-
-                </span>
-
-              </label>
-
-
-
-              <label
-
-                className={`flex cursor-pointer items-start gap-4 rounded-2xl border p-5 transition ${
-
-                  modoVenda === "direct_payment"
-
-                    ? "border-emerald-400 bg-emerald-400/10"
-
-                    : "border-slate-700 bg-[#080D22]"
-
-                } ${carregando ? "cursor-not-allowed opacity-60" : ""}`}
-
-              >
-
-                <input
-
-                  type="radio"
-
-                  name="modoVenda"
-
-                  checked={modoVenda === "direct_payment"}
-
-                  onChange={() => setModoVenda("direct_payment")}
-
-                  disabled={carregando}
-
-                  className="mt-1 h-5 w-5 accent-emerald-400"
-
-                />
-
-
-
-                <span>
-
-                  <strong className="block text-white">
-
-                    Venda direta — InfinitePay ou Pix
-
-                  </strong>
-
-
-
-                  <span className="mt-2 block text-sm leading-6 text-slate-300">
-
-                    O perfil mostrará as opções de pagamento cadastradas.
-
-                  </span>
-
-                </span>
-
-              </label>
-
-            </div>
-
-
-
-            {modoVenda === "direct_payment" && (
 
               <div className="mt-6 grid gap-6 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5 sm:p-6">
 
@@ -1938,8 +1722,6 @@ export default function NovoServicoPage() {
                     Link de pagamento InfinitePay
 
                   </label>
-
-
 
                   <input
 
@@ -1963,8 +1745,6 @@ export default function NovoServicoPage() {
 
                   />
 
-
-
                   <p className="mt-3 text-sm leading-6 text-slate-300">
 
                     Opcional. Gere o link no aplicativo InfinitePay, copie e cole aqui.
@@ -1984,8 +1764,6 @@ export default function NovoServicoPage() {
                     PEÇA AJUDA — SOU AURA
 
                   </button>
-
-
 
                   {mostrarAjudaInfinitePay && (
 
@@ -2023,11 +1801,7 @@ export default function NovoServicoPage() {
 
                 </div>
 
-
-
                 <div className="h-px bg-emerald-400/20" />
-
-
 
                 <div>
 
@@ -2042,8 +1816,6 @@ export default function NovoServicoPage() {
                     Chave Pix
 
                   </label>
-
-
 
                   <input
 
@@ -2069,8 +1841,6 @@ export default function NovoServicoPage() {
 
                   />
 
-
-
                   <p className="mt-3 text-sm leading-6 text-slate-300">
 
                     Opcional. Cadastre a chave Pix que será apresentada ao cliente.
@@ -2083,15 +1853,10 @@ export default function NovoServicoPage() {
 
               </div>
 
-            )}
 
           </section>
 
-
-
           <div className="h-px bg-slate-800" />
-
-
 
           <section>
 
@@ -2100,8 +1865,6 @@ export default function NovoServicoPage() {
               Disponibilidade
 
             </p>
-
-
 
             <label
 
@@ -2143,8 +1906,6 @@ export default function NovoServicoPage() {
 
               />
 
-
-
               <span>
 
                 <strong className="block text-white">
@@ -2152,8 +1913,6 @@ export default function NovoServicoPage() {
                   Serviço ativo
 
                 </strong>
-
-
 
                 <span className="mt-1 block text-sm leading-6 text-slate-300">
 
@@ -2168,8 +1927,6 @@ export default function NovoServicoPage() {
             </label>
 
           </section>
-
-
 
           {erro && (
 
@@ -2188,8 +1945,6 @@ export default function NovoServicoPage() {
             </div>
 
           )}
-
-
 
           <div className="flex flex-col-reverse gap-4 border-t border-slate-800 pt-8 sm:flex-row sm:justify-end">
 
@@ -2212,8 +1967,6 @@ export default function NovoServicoPage() {
               Cancelar
 
             </Link>
-
-
 
             <button
 

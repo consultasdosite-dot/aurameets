@@ -1,677 +1,128 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import {
-  acceptAppointment,
-  deleteAppointment,
-  getAppointmentsByTherapistId,
-  getTherapistIdByProfileId,
-  proposeNewAppointmentTime,
-  type Appointment,
-} from "@/lib/appointments";
+import { getTherapistIdByProfileId } from "@/lib/appointments";
 import { supabase } from "@/lib/supabase";
-
-import ApprovalCard from "./components/ApprovalCard";
-import DashboardHeader from "./components/DashboardHeader";
-import DashboardStats from "./components/DashboardStats";
-import RegistrarAtendimentoPresente from "./components/RegistrarAtendimentoPresente";
-import Sidebar from "./components/Sidebar";
-import SolicitacoesList, {
-  type SolicitacaoAtendimento,
-} from "./components/SolicitacoesList";
-
 import type { TherapistProfile } from "./types";
 
-type Venda = {
-  id: number;
-  created_at: string | null;
-  client_id: number | null;
-  service_id: string | null;
-  amount: number | string | null;
-  commission: number | string | null;
-  status: string | null;
-  stripe_session_id: string | null;
-  client_name: string | null;
-  client_email: string | null;
-  client_phone: string | null;
-  service_name: string | null;
-};
-
-function formatarDinheiro(valor: number | string | null) {
-  const numero = Number(valor ?? 0);
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number.isFinite(numero) ? numero : 0);
-}
-
-function formatarDataHora(valor?: string | null) {
-  if (!valor) return "—";
-  const data = new Date(valor);
-  if (Number.isNaN(data.getTime())) return "—";
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(data);
-}
-
-
-function formatarHorario(horario?: string | null) {
-  if (!horario) {
-    return "";
-  }
-
-  return horario.slice(0, 5);
-}
-
-function obterMensagemErro(
-  error: unknown,
-  mensagemPadrao: string,
-) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return mensagemPadrao;
-}
-
-function idsSaoIguais(
-  primeiroId: string | number,
-  segundoId: string | number,
-) {
-  return String(primeiroId) === String(segundoId);
-}
-
+const acessos = [
+  {
+    titulo: "Guia do Terapeuta",
+    descricao: "Acompanhe as etapas do seu espaço profissional",
+    href: "/dashboard-terapeuta/guia",
+  },
+  {
+    titulo: "Comunidade do Terapeuta",
+    descricao: "Acesse a comunidade dos profissionais",
+    href: "/dashboard-terapeuta/comunidade",
+  },
+  {
+    titulo: "Meu Perfil",
+    descricao: "Foto e apresentação profissional",
+    href: "/dashboard-terapeuta/perfil",
+  },
+  {
+    titulo: "Especialidades",
+    descricao: "Mostre suas áreas de atuação e experiência",
+    href: "/dashboard-terapeuta/especialidades",
+  },
+  {
+    titulo: "Serviços",
+    descricao: "Gerencie seus atendimentos e valores",
+    href: "/dashboard-terapeuta/servicos",
+  },
+  {
+    titulo: "Presente",
+    descricao: "Gerencie suas experiências para visitantes",
+    href: "/dashboard-terapeuta/experiencias",
+  },
+  {
+    titulo: "Agenda de Divulgação",
+    descricao: "Organize a divulgação do seu trabalho",
+    href: "/agenda",
+  },
+  {
+    titulo: "Depoimentos",
+    descricao: "Cadastre e gerencie depoimentos dos seus clientes",
+    href: "/dashboard-terapeuta/depoimentos",
+  },
+  {
+    titulo: "Financeiro",
+    descricao: "Consulte suas mensalidades e pagamentos",
+    href: "/dashboard-terapeuta/financeiro",
+  },
+];
 
 export default function DashboardTerapeutaPage() {
   const router = useRouter();
 
-  const [profile, setProfile] =
-    useState<TherapistProfile | null>(null);
-
-  const [therapistId, setTherapistId] =
-    useState<number | null>(null);
-
-  const [carregandoPerfil, setCarregandoPerfil] =
-    useState(true);
-
-  const [solicitacoes, setSolicitacoes] = useState<
-    Appointment[]
-  >([]);
-
-  const [carregando, setCarregando] = useState(true);
+  const [profile, setProfile] = useState<TherapistProfile | null>(null);
+  const [therapistId, setTherapistId] = useState<number | null>(null);
+  const [carregandoPerfil, setCarregandoPerfil] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-
-  const [vendas, setVendas] = useState<Venda[]>([]);
-  const [carregandoVendas, setCarregandoVendas] =
-    useState(false);
-
-
-  const [
-    solicitacaoEmAtualizacao,
-    setSolicitacaoEmAtualizacao,
-  ] = useState<number | null>(null);
-
-  const [
-    solicitacaoParaNovoHorario,
-    setSolicitacaoParaNovoHorario,
-  ] = useState<Appointment | null>(null);
-
-  const [novaData, setNovaData] = useState("");
-  const [novoHorario, setNovoHorario] = useState("");
 
   const carregarPerfil = useCallback(async () => {
     setCarregandoPerfil(true);
     setErro(null);
 
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+    try {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-    if (sessionError || !session?.user) {
-      setProfile(null);
-      setTherapistId(null);
-      setCarregandoPerfil(false);
-      router.replace("/login-terapeuta");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(
-        `
-          id,
-          name,
-          email,
-          user_type,
-          avatar_url,
-          created_at
-        `,
-      )
-      .eq("id", session.user.id)
-      .maybeSingle();
-
-    if (error) {
-      setErro(
-        "Não foi possível carregar os dados do seu perfil.",
-      );
-      setProfile(null);
-      setTherapistId(null);
-      setCarregandoPerfil(false);
-      return;
-    }
-
-    if (!data) {
-      setErro(
-        "O perfil desta conta não foi localizado.",
-      );
-      setProfile(null);
-      setTherapistId(null);
-      setCarregandoPerfil(false);
-      return;
-    }
-
-    if (data.user_type !== "therapist") {
-      setCarregandoPerfil(false);
-
-      if (data.user_type === "admin") {
-        router.replace("/admin");
+      if (sessionError || !session?.user) {
+        router.replace("/login-terapeuta");
         return;
       }
 
-      router.replace("/dashboard");
-      return;
-    }
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, email, user_type, avatar_url, created_at")
+        .eq("id", session.user.id)
+        .maybeSingle();
 
-    try {
-      const idDoTerapeuta =
-        await getTherapistIdByProfileId(
-          session.user.id,
+      if (error || !data) {
+        setErro(
+          error
+            ? "Não foi possível carregar os dados do seu perfil."
+            : "O perfil desta conta não foi localizado."
         );
+        return;
+      }
 
-      const perfilAtual =
-        data as TherapistProfile;
+      if (data.user_type !== "therapist") {
+        router.replace(
+          data.user_type === "admin" ? "/admin" : "/dashboard"
+        );
+        return;
+      }
 
-      setProfile(perfilAtual);
-      setTherapistId(idDoTerapeuta);
+      const id = await getTherapistIdByProfileId(session.user.id);
 
-    } catch (errorDesconhecido) {
+      setProfile(data as TherapistProfile);
+      setTherapistId(id);
+    } catch (error) {
       setErro(
-        obterMensagemErro(
-          errorDesconhecido,
-          "Não foi possível localizar o cadastro do terapeuta.",
-        ),
+        error instanceof Error
+          ? error.message
+          : "Não foi possível localizar o cadastro do terapeuta."
       );
-      setProfile(null);
-      setTherapistId(null);
     } finally {
       setCarregandoPerfil(false);
     }
   }, [router]);
 
-
-  const carregarVendas =
-    useCallback(async () => {
-      if (therapistId === null) {
-        setVendas([]);
-        return;
-      }
-
-      setCarregandoVendas(true);
-
-      const { data: pagamentos, error: pagamentosError } =
-        await supabase
-          .from("payments")
-          .select(
-            `
-              id,
-              created_at,
-              client_id,
-              service_id,
-              amount,
-              commission,
-              status,
-              stripe_session_id
-            `,
-          )
-          .eq("therapist_id", therapistId)
-          .eq("status", "paid")
-          .order("created_at", { ascending: false })
-          .limit(50);
-
-      if (pagamentosError) {
-        console.error("Erro ao carregar vendas:", pagamentosError);
-        setVendas([]);
-        setCarregandoVendas(false);
-        return;
-      }
-
-      const lista = pagamentos ?? [];
-      const clientIds = Array.from(
-        new Set(
-          lista
-            .map((item) => item.client_id)
-            .filter((id): id is number => typeof id === "number"),
-        ),
-      );
-
-      const serviceIds = Array.from(
-        new Set(
-          lista
-            .map((item) => item.service_id)
-            .filter(
-              (id): id is string =>
-                typeof id === "string" && id.length > 0,
-            ),
-        ),
-      );
-
-      const clientesPorId = new Map<number, any>();
-      const servicosPorId = new Map<string, any>();
-
-      if (clientIds.length > 0) {
-        const { data: clientes } = await supabase
-          .from("clients")
-          .select("id, name, email, phone")
-          .in("id", clientIds);
-
-        (clientes ?? []).forEach((cliente) => {
-          clientesPorId.set(cliente.id, cliente);
-        });
-      }
-
-      if (serviceIds.length > 0) {
-        const { data: servicos } = await supabase
-          .from("services")
-          .select("id, name")
-          .in("id", serviceIds);
-
-        (servicos ?? []).forEach((servico) => {
-          servicosPorId.set(servico.id, servico);
-        });
-      }
-
-      setVendas(
-        lista.map((pagamento) => {
-          const cliente =
-            typeof pagamento.client_id === "number"
-              ? clientesPorId.get(pagamento.client_id)
-              : null;
-
-          const servico =
-            typeof pagamento.service_id === "string"
-              ? servicosPorId.get(pagamento.service_id)
-              : null;
-
-          return {
-            ...pagamento,
-            client_name: cliente?.name ?? null,
-            client_email: cliente?.email ?? null,
-            client_phone: cliente?.phone ?? null,
-            service_name: servico?.name ?? null,
-          } as Venda;
-        }),
-      );
-
-      setCarregandoVendas(false);
-    }, [therapistId]);
-
-  const carregarSolicitacoes =
-    useCallback(async () => {
-      if (therapistId === null) {
-        setSolicitacoes([]);
-        setCarregando(false);
-        return;
-      }
-
-      setCarregando(true);
-      setErro(null);
-
-      try {
-        const agendamentos =
-          await getAppointmentsByTherapistId(
-            therapistId,
-          );
-
-        setSolicitacoes(agendamentos);
-      } catch (errorDesconhecido) {
-        setErro(
-          obterMensagemErro(
-            errorDesconhecido,
-            "Não foi possível carregar os agendamentos.",
-          ),
-        );
-        setSolicitacoes([]);
-      } finally {
-        setCarregando(false);
-      }
-    }, [therapistId]);
-
   useEffect(() => {
     void carregarPerfil();
   }, [carregarPerfil]);
-
-  useEffect(() => {
-    if (therapistId !== null) {
-      void carregarSolicitacoes();
-    }
-  }, [carregarSolicitacoes, therapistId]);
-
-  useEffect(() => {
-    if (therapistId !== null) {
-      void carregarVendas();
-    }
-  }, [carregarVendas, therapistId]);
-
-  async function aceitarSolicitacao(
-    solicitacaoRecebida: SolicitacaoAtendimento,
-  ) {
-    const solicitacao = solicitacoes.find(
-      (item) =>
-        idsSaoIguais(
-          item.id,
-          solicitacaoRecebida.id,
-        ),
-    );
-
-    if (!solicitacao) {
-      setErro(
-        "O agendamento selecionado não foi localizado.",
-      );
-      return;
-    }
-
-    setSolicitacaoEmAtualizacao(solicitacao.id);
-    setErro(null);
-
-    try {
-      await acceptAppointment(
-        solicitacao.id,
-        solicitacao.preferred_date,
-        solicitacao.preferred_time,
-      );
-
-      const atualizadoEm = new Date().toISOString();
-
-      setSolicitacoes((solicitacoesAtuais) =>
-        solicitacoesAtuais.map((item) =>
-          item.id === solicitacao.id
-            ? {
-                ...item,
-                status: "awaiting_payment",
-                confirmed_date:
-                  item.preferred_date,
-                confirmed_time:
-                  item.preferred_time,
-                updated_at: atualizadoEm,
-              }
-            : item,
-        ),
-      );
-    } catch (errorDesconhecido) {
-      setErro(
-        obterMensagemErro(
-          errorDesconhecido,
-          "Não foi possível aceitar o agendamento.",
-        ),
-      );
-    } finally {
-      setSolicitacaoEmAtualizacao(null);
-    }
-  }
-
-  async function excluirSolicitacao(
-    solicitacaoRecebida: SolicitacaoAtendimento,
-  ) {
-    if (therapistId === null) {
-      setErro(
-        "Não foi possível identificar o terapeuta desta solicitação.",
-      );
-      return;
-    }
-
-    const solicitacao = solicitacoes.find(
-      (item) =>
-        idsSaoIguais(
-          item.id,
-          solicitacaoRecebida.id,
-        ),
-    );
-
-    if (!solicitacao) {
-      setErro(
-        "O agendamento selecionado não foi localizado.",
-      );
-      return;
-    }
-
-    const nomeCliente =
-      solicitacao.client_name?.trim() ||
-      "Cliente AuraMeets";
-
-    const confirmouExclusao = window.confirm(
-      `Tem certeza que deseja excluir definitivamente a solicitação de ${nomeCliente}? Esta ação não poderá ser desfeita.`,
-    );
-
-    if (!confirmouExclusao) {
-      return;
-    }
-
-    setSolicitacaoEmAtualizacao(solicitacao.id);
-    setErro(null);
-
-    try {
-      await deleteAppointment(
-        solicitacao.id,
-        therapistId,
-      );
-
-      setSolicitacoes((solicitacoesAtuais) =>
-        solicitacoesAtuais.filter(
-          (item) =>
-            !idsSaoIguais(
-              item.id,
-              solicitacao.id,
-            ),
-        ),
-      );
-    } catch (errorDesconhecido) {
-      setErro(
-        obterMensagemErro(
-          errorDesconhecido,
-          "Não foi possível excluir a solicitação.",
-        ),
-      );
-    } finally {
-      setSolicitacaoEmAtualizacao(null);
-    }
-  }
-
-  function proporOutroHorario(
-    solicitacaoRecebida: SolicitacaoAtendimento,
-  ) {
-    const solicitacao = solicitacoes.find(
-      (item) =>
-        idsSaoIguais(
-          item.id,
-          solicitacaoRecebida.id,
-        ),
-    );
-
-    if (!solicitacao) {
-      setErro(
-        "O agendamento selecionado não foi localizado.",
-      );
-      return;
-    }
-
-    setSolicitacaoParaNovoHorario(solicitacao);
-
-    setNovaData(
-      solicitacao.proposed_date ??
-        solicitacao.preferred_date ??
-        "",
-    );
-
-    setNovoHorario(
-      formatarHorario(
-        solicitacao.proposed_time ??
-          solicitacao.preferred_time,
-      ),
-    );
-
-    setErro(null);
-  }
-
-  function fecharModalNovoHorario() {
-    if (
-      solicitacaoParaNovoHorario &&
-      solicitacaoEmAtualizacao ===
-        solicitacaoParaNovoHorario.id
-    ) {
-      return;
-    }
-
-    setSolicitacaoParaNovoHorario(null);
-    setNovaData("");
-    setNovoHorario("");
-  }
-
-  async function salvarNovoHorario() {
-    if (!solicitacaoParaNovoHorario) {
-      return;
-    }
-
-    if (!novaData || !novoHorario) {
-      setErro(
-        "Informe a nova data e o novo horário.",
-      );
-      return;
-    }
-
-    setSolicitacaoEmAtualizacao(
-      solicitacaoParaNovoHorario.id,
-    );
-    setErro(null);
-
-    try {
-      await proposeNewAppointmentTime(
-        solicitacaoParaNovoHorario.id,
-        novaData,
-        novoHorario,
-      );
-
-      const atualizadoEm = new Date().toISOString();
-
-      setSolicitacoes((solicitacoesAtuais) =>
-        solicitacoesAtuais.map((solicitacao) =>
-          solicitacao.id ===
-          solicitacaoParaNovoHorario.id
-            ? {
-                ...solicitacao,
-                status: "new_time_proposed",
-                proposed_date: novaData,
-                proposed_time: novoHorario,
-                updated_at: atualizadoEm,
-              }
-            : solicitacao,
-        ),
-      );
-
-      setSolicitacaoParaNovoHorario(null);
-      setNovaData("");
-      setNovoHorario("");
-    } catch (errorDesconhecido) {
-      setErro(
-        obterMensagemErro(
-          errorDesconhecido,
-          "Não foi possível salvar o novo horário.",
-        ),
-      );
-    } finally {
-      setSolicitacaoEmAtualizacao(null);
-    }
-  }
-
-  const totalPendentes = solicitacoes.filter(
-    (solicitacao) =>
-      solicitacao.status === "pending",
-  ).length;
-
-  const totalAceitas = solicitacoes.filter(
-    (solicitacao) =>
-      solicitacao.status ===
-        "awaiting_payment" ||
-      solicitacao.status ===
-        "payment_processing" ||
-      solicitacao.status === "confirmed" ||
-      solicitacao.status === "completed",
-  ).length;
-
-  const solicitacoesParaLista =
-    useMemo<SolicitacaoAtendimento[]>(
-      () =>
-        solicitacoes.map((solicitacao) => ({
-          id: solicitacao.id,
-          nome_cliente:
-            solicitacao.client_name,
-          email_cliente:
-            solicitacao.client_email,
-          telefone_cliente:
-            solicitacao.client_phone,
-          mensagem: solicitacao.message,
-          data_preferida:
-            solicitacao.preferred_date,
-          horario_preferido: formatarHorario(
-            solicitacao.preferred_time,
-          ),
-          data_proposta:
-            solicitacao.proposed_date,
-          horario_proposto: formatarHorario(
-            solicitacao.proposed_time,
-          ),
-          data_confirmada:
-            solicitacao.confirmed_date,
-          horario_confirmado: formatarHorario(
-            solicitacao.confirmed_time,
-          ),
-          modalidade: solicitacao.modality,
-          valor:
-            solicitacao.price ??
-            solicitacao.offer?.offer_price ??
-            null,
-          oferta_titulo:
-            solicitacao.offer?.title ?? null,
-          oferta_tipo:
-            solicitacao.offer?.offer_type ??
-            null,
-          oferta_duracao:
-            solicitacao.offer?.duration ??
-            null,
-          status: solicitacao.status,
-          created_at:
-            solicitacao.created_at ??
-            solicitacao.updated_at,
-        })),
-      [solicitacoes],
-    );
 
   if (carregandoPerfil) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f7f8fc] px-6">
         <div className="text-center">
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-purple-200 border-t-purple-700" />
-
           <p className="mt-4 text-sm font-semibold text-slate-600">
             Carregando seu consultório...
           </p>
@@ -689,16 +140,13 @@ export default function DashboardTerapeutaPage() {
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            {erro ??
-              "Não foi possível carregar os dados desta conta."}
+            {erro ?? "Não foi possível carregar os dados desta conta."}
           </p>
 
           <button
             type="button"
-            onClick={() =>
-              void carregarPerfil()
-            }
-            className="mt-6 min-h-11 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-800"
+            onClick={() => void carregarPerfil()}
+            className="mt-6 min-h-11 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-800"
           >
             Tentar novamente
           </button>
@@ -712,424 +160,62 @@ export default function DashboardTerapeutaPage() {
       className="min-h-screen bg-[#f7f8fc]"
       data-profile-id={profile.id}
       data-profile-name={profile.name}
-      data-therapist-id={
-        therapistId ?? undefined
-      }
+      data-therapist-id={therapistId ?? undefined}
     >
-      <div className="min-h-screen lg:flex">
-        <Sidebar
-          profile={profile}
-          pendingRequests={totalPendentes}
-        />
-
-        <div className="min-w-0 flex-1">
-
-          <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="space-y-6">
-              <section className="mx-auto max-w-2xl space-y-5">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-purple-700">Meu espaço profissional</p>
-                  <h1 className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">
-                    Olá, {profile.name?.trim().split(/\s+/)[0] || "Terapeuta"}!
-                  </h1>
-                  <p className="mt-2 text-sm text-slate-600">Organize sua apresentação seguindo estas etapas:</p>
-                </div>
-                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                  {[
-                    { titulo: "Meu Perfil", descricao: "Foto e apresentação profissional", href: "/dashboard-terapeuta/perfil" },
-                    { titulo: "Especialidades e Experiência", descricao: "Mostre suas áreas de atuação", href: "/dashboard-terapeuta/especialidades" },
-                    { titulo: "Meus Serviços", descricao: "Cadastre atendimentos e valores", href: "/dashboard-terapeuta/servicos" },
-                    { titulo: "Agenda de Disponibilidade", descricao: "Organize seus horários e sessões", href: "/agenda" },
-                  ].map((etapa, indice) => (
-                    <button
-                      key={etapa.href}
-                      type="button"
-                      onClick={() => router.push(etapa.href)}
-                      className="flex w-full items-center gap-4 border-b border-slate-100 px-4 py-5 text-left transition hover:bg-purple-50 last:border-b-0 sm:px-6"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 font-bold text-purple-700">{indice + 1}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-semibold text-slate-950">{etapa.titulo}</span>
-                        <span className="mt-1 block text-sm text-slate-500">{etapa.descricao}</span>
-                      </span>
-                      <span aria-hidden="true" className="text-xl text-purple-700">›</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-              <details className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white px-4 py-3 sm:px-6">
-                <summary className="cursor-pointer py-2 font-semibold text-slate-700">Outras informações e atendimentos</summary>
-                <div className="mt-5 space-y-6">
-                  <div className="overflow-hidden rounded-xl border border-slate-200">
-                    {[
-                      { titulo: "Guia do Terapeuta", descricao: "Seu passo a passo", href: "/dashboard-terapeuta/guia" },
-                      { titulo: "Comunidade de Terapeutas", descricao: "Divulgação e mensagens", href: "/dashboard-terapeuta/comunidade" },
-                      { titulo: "Experiência Presente", descricao: "Gerencie suas experiências", href: "/dashboard-terapeuta/experiencias" },
-                      { titulo: "Solicitações", descricao: "Consulte novos atendimentos", href: "/dashboard/solicitacoes" },
-                      { titulo: "Centro Financeiro", descricao: "Mensalidades, recebimentos e comissões", href: "/dashboard-terapeuta/financeiro" },
-                      { titulo: "Configurações", descricao: "Preferências da conta", href: "/dashboard-terapeuta/dados-profissionais" },
-                    ].map((item) => (
-                      <button
-                        key={item.href}
-                        type="button"
-                        onClick={() => router.push(item.href)}
-                        className="flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-4 text-left transition hover:bg-purple-50 last:border-b-0"
-                      >
-                        <span>
-                          <span className="block text-sm font-semibold text-slate-900">{item.titulo}</span>
-                          <span className="mt-1 block text-xs text-slate-500">{item.descricao}</span>
-                        </span>
-                        <span aria-hidden="true" className="text-lg text-purple-700">›</span>
-                      </button>
-                    ))}
-                  </div>
-              <DashboardStats
-                totalSolicitacoes={
-                  solicitacoes.length
-                }
-                totalPendentes={totalPendentes}
-                totalAceitas={totalAceitas}
-              />
-
-              {therapistId !== null && (
-                <RegistrarAtendimentoPresente
-                  therapistId={therapistId}
-                  onRegistrado={() =>
-                    void carregarSolicitacoes()
-                  }
-                />
-              )}
-
-              <section className="rounded-3xl border border-purple-200 bg-white p-5 shadow-sm sm:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-600">
-                      Vendas
-                    </p>
-                    <h2 className="mt-2 text-xl font-bold text-slate-950">
-                      Compras confirmadas
-                    </h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      Aqui aparecem somente as vendas pagas dos seus produtos e serviços.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => void carregarVendas()}
-                    disabled={carregandoVendas}
-                    className="min-h-11 w-full rounded-xl border border-purple-200 bg-white px-5 py-2.5 text-sm font-semibold text-purple-700 transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
-                  >
-                    {carregandoVendas ? "Atualizando..." : "Atualizar vendas"}
-                  </button>
-                </div>
-
-                <div className="mt-5 space-y-4">
-                  {carregandoVendas && vendas.length === 0 ? (
-                    <p className="text-sm font-medium text-slate-500">
-                      Carregando vendas...
-                    </p>
-                  ) : vendas.length === 0 ? (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
-                      <p className="text-sm font-semibold text-slate-700">
-                        Nenhuma venda paga até o momento.
-                      </p>
-                    </div>
-                  ) : (
-                    vendas.map((venda) => {
-                      const valor = Number(venda.amount ?? 0);
-                      const comissao = Number(venda.commission ?? 0);
-                      const liquido = Math.max(
-                        (Number.isFinite(valor) ? valor : 0) -
-                          (Number.isFinite(comissao) ? comissao : 0),
-                        0,
-                      );
-
-                      return (
-                        <article
-                          key={venda.id}
-                          className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5"
-                        >
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-[0.15em] text-emerald-700">
-                                Venda #{venda.id}
-                              </p>
-                              <h3 className="mt-1 text-lg font-bold text-slate-950">
-                                {venda.service_name ?? "Produto/serviço AuraMeets"}
-                              </h3>
-                            </div>
-
-                            <span className="w-fit rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">
-                              PAGO
-                            </span>
-                          </div>
-
-                          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-                                Comprador
-                              </p>
-                              <p className="mt-1 font-semibold text-slate-900">
-                                {venda.client_name ?? "Não identificado"}
-                              </p>
-                              {venda.client_email && (
-                                <p className="mt-1 text-sm text-slate-600">
-                                  {venda.client_email}
-                                </p>
-                              )}
-                              {venda.client_phone && (
-                                <p className="mt-1 text-sm text-slate-600">
-                                  {venda.client_phone}
-                                </p>
-                              )}
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-                                Valor da venda
-                              </p>
-                              <p className="mt-1 text-lg font-black text-slate-950">
-                                {formatarDinheiro(venda.amount)}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-                                Comissão AuraMeets
-                              </p>
-                              <p className="mt-1 text-lg font-black text-amber-700">
-                                {formatarDinheiro(venda.commission)}
-                              </p>
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-                                Líquido do terapeuta
-                              </p>
-                              <p className="mt-1 text-lg font-black text-emerald-700">
-                                {formatarDinheiro(liquido)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="mt-4 border-t border-emerald-200 pt-4">
-                            <p className="text-xs font-semibold text-slate-500">
-                              Compra confirmada em {formatarDataHora(venda.created_at)}
-                            </p>
-                          </div>
-                        </article>
-                      );
-                    })
-                  )}
-                </div>
-              </section>
-
-              <div className="grid gap-6">
-                <ApprovalCard status="em_analise" />
-              </div>
-
-              <section className="rounded-3xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur sm:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-600">
-                      Dados em tempo real
-                    </p>
-
-                    <h2 className="mt-2 text-lg font-bold text-slate-950">
-                      Atualização dos agendamentos
-                    </h2>
-
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      Recarregue os dados para
-                      consultar os agendamentos mais
-                      recentes registrados no
-                      AuraMeets.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void carregarSolicitacoes()
-                    }
-                    disabled={carregando}
-                    className="min-h-11 w-full rounded-xl border border-purple-200 bg-white px-5 py-2.5 text-sm font-semibold text-purple-700 shadow-sm transition hover:border-purple-400 hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
-                  >
-                    {carregando
-                      ? "Atualizando..."
-                      : "Atualizar agendamentos"}
-                  </button>
-                </div>
-              </section>
-
-              {erro && (
-                <div
-                  role="alert"
-                  className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 shadow-sm"
-                >
-                  <p className="text-sm font-medium text-red-700">
-                    {erro}
-                  </p>
-                </div>
-              )}
-
-              <SolicitacoesList
-                solicitacoes={
-                  solicitacoesParaLista
-                }
-                carregando={carregando}
-                processandoId={
-                  solicitacaoEmAtualizacao
-                }
-                onAceitar={
-                  aceitarSolicitacao
-                }
-                onProporNovoHorario={
-                  proporOutroHorario
-                }
-                onExcluir={
-                  excluirSolicitacao
-                }
-              />
-                </div>
-              </details>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {solicitacaoParaNovoHorario && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 px-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="titulo-modal-novo-horario"
-          onMouseDown={(event) => {
-            if (
-              event.currentTarget ===
-              event.target
-            ) {
-              fecharModalNovoHorario();
-            }
-          }}
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 lg:py-8">
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          className="mb-7 inline-flex min-h-11 items-center rounded-xl border border-purple-200 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 transition hover:bg-purple-50"
         >
-          <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white p-6 shadow-2xl sm:p-7">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-purple-600">
-                  Reagendamento
-                </p>
+          ← VOLTAR À HOME
+        </button>
 
-                <h2
-                  id="titulo-modal-novo-horario"
-                  className="mt-2 text-xl font-bold text-slate-950"
-                >
-                  Propor novo horário
-                </h2>
+        <section className="space-y-6">
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-purple-700">
+              Meu espaço profissional
+            </p>
 
-                <p className="mt-2 text-sm text-slate-600">
-                  Cliente:{" "}
-                  <span className="font-semibold text-slate-900">
-                    {solicitacaoParaNovoHorario.client_name ??
-                      "Cliente AuraMeets"}
-                  </span>
-                </p>
-              </div>
+            <h1 className="mt-3 text-2xl font-bold text-slate-950 sm:text-3xl">
+              Olá, {profile.name?.trim().split(/\s+/)[0] || "Terapeuta"}!
+            </h1>
 
-              <button
-                type="button"
-                onClick={
-                  fecharModalNovoHorario
-                }
-                aria-label="Fechar modal"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <div>
-                <label
-                  htmlFor="nova-data"
-                  className="mb-2 block text-sm font-semibold text-slate-700"
-                >
-                  Nova data
-                </label>
-
-                <input
-                  id="nova-data"
-                  type="date"
-                  value={novaData}
-                  onChange={(event) =>
-                    setNovaData(
-                      event.target.value,
-                    )
-                  }
-                  className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="novo-horario"
-                  className="mb-2 block text-sm font-semibold text-slate-700"
-                >
-                  Novo horário
-                </label>
-
-                <input
-                  id="novo-horario"
-                  type="time"
-                  value={novoHorario}
-                  onChange={(event) =>
-                    setNovoHorario(
-                      event.target.value,
-                    )
-                  }
-                  className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900"
-                />
-              </div>
-            </div>
-
-            <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={
-                  fecharModalNovoHorario
-                }
-                disabled={
-                  solicitacaoEmAtualizacao ===
-                  solicitacaoParaNovoHorario.id
-                }
-                className="min-h-11 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  void salvarNovoHorario()
-                }
-                disabled={
-                  !novaData ||
-                  !novoHorario ||
-                  solicitacaoEmAtualizacao ===
-                    solicitacaoParaNovoHorario.id
-                }
-                className="min-h-11 rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-200 transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-              >
-                {solicitacaoEmAtualizacao ===
-                solicitacaoParaNovoHorario.id
-                  ? "Salvando..."
-                  : "Salvar novo horário"}
-              </button>
-            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              Seja bem-vindo ao seu Painel do Terapeuta.
+              Escolha abaixo o que deseja acessar.
+            </p>
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {acessos.map((acesso) => (
+              <button
+                key={acesso.href}
+                type="button"
+                onClick={() => router.push(acesso.href)}
+                className="group flex min-h-28 items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-5 text-left shadow-sm transition hover:border-purple-300 hover:bg-purple-50 hover:shadow-md"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-bold text-slate-950">
+                    {acesso.titulo}
+                  </span>
+
+                  <span className="mt-2 block text-sm leading-5 text-slate-500">
+                    {acesso.descricao}
+                  </span>
+                </span>
+
+                <span
+                  aria-hidden="true"
+                  className="text-2xl font-semibold text-purple-700 transition group-hover:translate-x-1"
+                >
+                  ›
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

@@ -16,7 +16,7 @@ import {
 
 
 
-import Sidebar from "../components/Sidebar";
+import { useRouter } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
 
@@ -195,6 +195,7 @@ function formatDate(value: string) {
 
 
 export default function TherapistExperiencesPage() {
+  const router = useRouter();
 
   const [therapist, setTherapist] =
 
@@ -537,6 +538,8 @@ export default function TherapistExperiencesPage() {
       )
 
       .eq("therapist_id", therapistId)
+
+      .eq("offer_type", "presente")
 
       .order("display_order", {
 
@@ -1271,15 +1274,16 @@ export default function TherapistExperiencesPage() {
 
   return (
 
-    <div className="min-h-screen bg-slate-50 lg:grid lg:grid-cols-[288px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-slate-50">
 
-      <Sidebar />
+
 
 
 
       <main className="min-w-0">
 
         <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+          <button type="button" onClick={() => router.push("/dashboard-terapeuta")} className="mb-6 inline-flex min-h-11 items-center rounded-xl border border-purple-200 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 transition hover:bg-purple-50">← VOLTAR AO PAINEL</button>
 
           <div className="overflow-hidden rounded-[32px] bg-gradient-to-br from-slate-950 via-purple-950 to-violet-900 p-7 text-white shadow-2xl shadow-purple-200/40 sm:p-9">
 

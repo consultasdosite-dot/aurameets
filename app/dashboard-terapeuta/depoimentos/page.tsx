@@ -37,13 +37,39 @@ export default function DepoimentosTerapeutaPage() {
   const [nomeEdicao, setNomeEdicao] = useState("");
   const [textoEdicao, setTextoEdicao] = useState("");
   const [autorizadoEdicao, setAutorizadoEdicao] = useState(false);
+  const [nomeAutorizadoEdicao, setNomeAutorizadoEdicao] = useState(false);
 
   const [nomeCliente, setNomeCliente] = useState("");
   const [textoDepoimento, setTextoDepoimento] = useState("");
   const [autorizado, setAutorizado] = useState(false);
+  const [nomeAutorizado, setNomeAutorizado] = useState(false);
+  const [imagemPrevia, setImagemPrevia] = useState<string | null>(null);
 
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (imagemPrevia) URL.revokeObjectURL(imagemPrevia);
+    };
+  }, [imagemPrevia]);
+
+  function selecionarImagem(arquivo?: File) {
+    setErro("");
+    if (!arquivo) {
+      setImagemPrevia(null);
+      return;
+    }
+    if (!arquivo.type.startsWith("image/")) {
+      setErro("Selecione um arquivo de imagem.");
+      return;
+    }
+    if (arquivo.size > 5 * 1024 * 1024) {
+      setErro("A imagem deve ter no máximo 5 MB.");
+      return;
+    }
+    setImagemPrevia(URL.createObjectURL(arquivo));
+  }
 
   const carregarDepoimentos = useCallback(async (id: string) => {
     const { data, error } = await supabase
@@ -124,7 +150,7 @@ export default function DepoimentosTerapeutaPage() {
       return;
     }
 
-    if (!nomeCliente.trim() || !textoDepoimento.trim()) {
+    if ((nomeAutorizado && !nomeCliente.trim()) || !textoDepoimento.trim()) {
       setErro("Preencha o nome do cliente e o depoimento.");
       return;
     }
@@ -142,7 +168,7 @@ export default function DepoimentosTerapeutaPage() {
       .from("therapist_testimonials")
       .insert({
         therapist_id: usuarioId,
-        client_name: nomeCliente.trim(),
+        client_name: nomeAutorizado ? nomeCliente.trim() : "Cliente com identidade preservada",
         testimonial: textoDepoimento.trim(),
         client_photo_url: null,
         publication_authorized: true,
@@ -159,6 +185,8 @@ export default function DepoimentosTerapeutaPage() {
     setNomeCliente("");
     setTextoDepoimento("");
     setAutorizado(false);
+    setNomeAutorizado(false);
+    setImagemPrevia(null);
 
     setMensagem(
       "Depoimento cadastrado com sucesso! Ele ficará aguardando aprovação antes de aparecer no seu minissite."
@@ -175,6 +203,7 @@ export default function DepoimentosTerapeutaPage() {
     setNomeEdicao(depoimento.client_name);
     setTextoEdicao(depoimento.testimonial);
     setAutorizadoEdicao(depoimento.publication_authorized);
+    setNomeAutorizadoEdicao(depoimento.client_name !== "Cliente com identidade preservada");
   }
 
   function cancelarEdicao() {
@@ -182,6 +211,7 @@ export default function DepoimentosTerapeutaPage() {
     setNomeEdicao("");
     setTextoEdicao("");
     setAutorizadoEdicao(false);
+    setNomeAutorizadoEdicao(false);
   }
 
   async function salvarEdicao(depoimento: Depoimento) {
@@ -190,7 +220,7 @@ export default function DepoimentosTerapeutaPage() {
     setErro("");
     setMensagem("");
 
-    if (!nomeEdicao.trim() || !textoEdicao.trim()) {
+    if ((nomeAutorizadoEdicao && !nomeEdicao.trim()) || !textoEdicao.trim()) {
       setErro("Preencha o nome do cliente e o depoimento.");
       return;
     }
@@ -209,7 +239,7 @@ export default function DepoimentosTerapeutaPage() {
     const { data, error } = await supabase
       .from("therapist_testimonials")
       .update({
-        client_name: nomeEdicao.trim(),
+        client_name: nomeAutorizadoEdicao ? nomeEdicao.trim() : "Cliente com identidade preservada",
         testimonial: textoEdicao.trim(),
         publication_authorized: true,
         status: "pending",
@@ -328,7 +358,7 @@ export default function DepoimentosTerapeutaPage() {
                   onChange={(evento) =>
                     setNomeCliente(evento.target.value)
                   }
-                  placeholder="Nome autorizado para publicação"
+                  placeholder="Nome do cliente (não será publicado sem autorização)"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-purple-600"
                 />
               </div>
@@ -359,6 +389,26 @@ export default function DepoimentosTerapeutaPage() {
                 </p>
               </div>
 
+              <div className="rounded-xl border border-slate-200 p-4">
+                <label htmlFor="imagemDepoimento" className="block text-sm font-semibold text-slate-800">
+                  Captura de tela do depoimento (prévia)
+                </label>
+                <input
+                  id="imagemDepoimento"
+                  type="file"
+                  accept="image/*"
+                  onChange={(evento) => selecionarImagem(evento.target.files?.[0])}
+                  className="mt-3 block w-full text-sm text-slate-700"
+                />
+                {imagemPrevia && (
+                  <img src={imagemPrevia} alt="Prévia da captura de tela" className="mt-4 max-h-80 max-w-full rounded-lg object-contain" />
+                )}
+                <p className="mt-3 text-xs leading-5 text-amber-800">
+                  Esta imagem é apenas uma prévia neste dispositivo: não será salva nem publicada nesta etapa.
+                  Oculte telefones, nomes e outros dados pessoais sem autorização antes de selecionar a imagem.
+                </p>
+              </div>
+
               <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-purple-200 bg-purple-50 p-4">
                 <input
                   type="checkbox"
@@ -370,9 +420,20 @@ export default function DepoimentosTerapeutaPage() {
                 />
 
                 <span className="text-sm leading-6 text-slate-800">
-                  Confirmo que o cliente autorizou a publicação deste
-                  depoimento e do nome informado no meu espaço profissional
-                  AuraMeets.
+                  Confirmo que o cliente autorizou a publicação deste depoimento no AuraMeets.
+                </span>
+              </label>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
+                <input
+                  type="checkbox"
+                  checked={nomeAutorizado}
+                  onChange={(evento) => setNomeAutorizado(evento.target.checked)}
+                  className="mt-1 h-5 w-5 shrink-0 accent-purple-700"
+                />
+                <span className="text-sm leading-6 text-slate-800">
+                  Confirmo que o cliente autorizou expressamente a divulgação de seu nome junto ao depoimento.
+                  Sem esta autorização, será exibido “Cliente com identidade preservada”.
                 </span>
               </label>
 
@@ -488,7 +549,16 @@ export default function DepoimentosTerapeutaPage() {
                         onChange={(evento) => setAutorizadoEdicao(evento.target.checked)}
                         className="mt-1 h-5 w-5 shrink-0 accent-purple-700"
                       />
-                      Confirmo que o cliente autorizou a publicação deste depoimento e do nome informado.
+                      Confirmo que o cliente autorizou a publicação deste depoimento.
+                    </label>
+                    <label className="flex items-start gap-3 text-sm text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={nomeAutorizadoEdicao}
+                        onChange={(evento) => setNomeAutorizadoEdicao(evento.target.checked)}
+                        className="mt-1 h-5 w-5 shrink-0 accent-purple-700"
+                      />
+                      Confirmo que o cliente autorizou expressamente a divulgação de seu nome.
                     </label>
                     <p className="text-xs text-amber-800">
                       A alteração exigirá nova aprovação administrativa antes da publicação.
