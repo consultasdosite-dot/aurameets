@@ -656,60 +656,20 @@ async function getServiceDiscounts(): Promise<FeaturedExperience[]> {
 
 
 
-// Terapeutas ativos com pelo menos um serviço ativo, mesmo sem experiência presente
-// ou desconto. Esta consulta não altera a seleção atual de ofertas da Home.
+// Todos os terapeutas ativos podem aparecer na Home, mesmo sem serviços
+// ou experiências cadastrados. As consultas de ofertas permanecem inalteradas.
 export async function getHomeTherapistsWithServices(): Promise<HomeExperienceTherapist[]> {
-  const { data: serviceData, error: serviceError } = await supabase
-    .from("services")
-    .select("therapist_id")
-    .eq("status", "active");
-
-  if (serviceError) {
-    console.error("Erro ao buscar serviços ativos para a Home:", serviceError.message);
-    return [];
-  }
-
-  const profileIds = [
-    ...new Set(
-      (serviceData ?? [])
-        .map((service) => service.therapist_id as string | null)
-        .filter((id): id is string => Boolean(id)),
-    ),
-  ];
-
-  // Inclui também profissionais que aparecem na Home por uma experiência
-  // aprovada, mesmo quando não possuem serviço ativo na tabela services.
-  const { data: experienceData, error: experienceError } = await supabase
-    .from("experiences")
-    .select("therapist_id")
-    .eq("approval_status", "approved")
-    .eq("active", true);
-
-  if (experienceError) {
-    console.error("Erro ao buscar terapeutas das experiências da Home:", experienceError.message);
-  }
-
-  const idsComExperiencia = new Set(
-    (experienceData ?? []).map((item) => Number(item.therapist_id)),
-  );
-  if (profileIds.length === 0 && idsComExperiencia.size === 0) return [];
-
   const { data: therapistData, error: therapistError } = await supabase
     .from("therapists")
     .select(DISCOUNT_THERAPIST_SELECT)
     .eq("active", true);
 
   if (therapistError) {
-    console.error("Erro ao buscar terapeutas com serviços ou experiências:", therapistError.message);
+    console.error("Erro ao buscar terapeutas ativos para a Home:", therapistError.message);
     return [];
   }
 
-  const idsComServico = new Set(profileIds);
-  const terapeutas = ((therapistData ?? []) as DiscountTherapist[]).filter(
-    (item) =>
-      (item.profile_id !== null && idsComServico.has(item.profile_id)) ||
-      idsComExperiencia.has(item.id),
-  );
+  const terapeutas = (therapistData ?? []) as DiscountTherapist[];
   const idsTerapeutas = terapeutas.map((item) => item.id);
   if (idsTerapeutas.length === 0) return [];
 

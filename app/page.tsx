@@ -25,24 +25,11 @@ const abordagens = [
   "Terapias Integrativas",
 ];
 
-const terapeutasSelecionados = [
-  { nome: "Alzira", busca: ["alzira"] },
-  { nome: "Renata Martins", busca: ["renata martins"] },
-  { nome: "Adriana Klein", busca: ["adriana klein"] },
-  { nome: "Renatta Godoi", busca: ["renatta godoi", "renata godoi"] },
-  { nome: "Semiramis", busca: ["semiramis"] },
-  { nome: "Milena", busca: ["milena"] },
-  { nome: "Pollyana de Oliveira", busca: ["pollyanna", "pollyana"] },
-  { nome: "Pedro", busca: ["pedro"] },
-  { nome: "Ricardo", busca: ["ricardo"] },
-  { nome: "Tyemi", busca: ["tyemi"] },
-  { nome: "Oscar", busca: ["oscar ahumada", "oscar"] },
-  { nome: "Kassia", busca: ["kassia", "kássia"] },
-  { nome: "Fernanda", busca: ["fernanda"] },
-  { nome: "Kelly", busca: ["kelly"] },
-  { nome: "Danyela", busca: ["danyela"] },
-  { nome: "Mariangela", busca: ["mariangela", "mariângela"] },
-];
+// Prioridades da Home. Somente terapeutas retornados pela consulta pública são exibidos.
+const prioridadePrincipal = ["alzira", "renata martins", "addriana klein", "adriana klein", "kelly"];
+const prioridadePreferencial = ["renatta godoi", "renata godoi", "pollyanna", "pollyana", "milena"];
+// Dorcas (ID 109) inaugura o grupo de novos ingressantes; IDs posteriores entram automaticamente.
+const primeiroIdNovoIngresso = 109;
 
 function embaralharTerapeutas<T>(itens: T[]): T[] {
   const resultado = [...itens];
@@ -78,32 +65,44 @@ function montarDestaques(
   terapeutas: HomeExperienceTherapist[],
   ofertas: FeaturedExperience[],
 ): TerapeutaDestaque[] {
-  const destaques = terapeutasSelecionados.map((selecionado) => {
-    const corresponde = (nome: string) => {
-      const normalizado = normalizarNome(nome);
-      return selecionado.busca.some((busca) =>
-        normalizado === busca || normalizado.startsWith(`${busca} `),
-      );
+  const destaques = terapeutas.map((terapeuta) => {
+    const oferta = ofertas.find((item) => normalizarNome(item.therapist_name) === normalizarNome(terapeuta.name));
+    const foto = normalizarNome(terapeuta.name).startsWith("oscar ahumada")
+      ? "/oscar-ahumada-fundador.png"
+      : (terapeuta.profile_photo_url || terapeuta.photo_url || oferta?.therapist_photo_url || null);
+    const perfil = terapeuta.slug?.trim()
+      ? `/terapeuta/${encodeURIComponent(terapeuta.slug.trim())}`
+      : `/terapeutas?therapistId=${encodeURIComponent(String(terapeuta.id))}`;
+    return {
+      id: Number(terapeuta.id),
+      nome: terapeuta.name,
+      profissao: terapeuta.speciality?.trim() || oferta?.therapist?.speciality?.trim() || null,
+      especialidades: terapeuta.especialidades ?? [],
+      foto,
+      perfil,
+      whatsapp: linkWhatsAppTerapeuta(terapeuta.phone || oferta?.therapist?.phone),
     };
-    const terapeuta = terapeutas.find((item) => corresponde(item.name));
-    const oferta = ofertas.find((item) => corresponde(item.therapist_name));
-    const foto = selecionado.busca.includes("oscar ahumada") ? "/oscar-ahumada-fundador.png" : (terapeuta?.profile_photo_url || terapeuta?.photo_url || oferta?.therapist_photo_url || null);
-    const perfil = terapeuta
-      ? terapeuta.slug?.trim()
-        ? `/terapeuta/${encodeURIComponent(terapeuta.slug.trim())}`
-        : `/terapeutas?therapistId=${encodeURIComponent(String(terapeuta.id))}`
-      : oferta?.public_href || null;
-    const profissao = terapeuta?.speciality?.trim() || oferta?.therapist?.speciality?.trim() || null;
-    return { nome: selecionado.nome === "Pollyana de Oliveira" ? "Pollyana de Oliveira" : (terapeuta?.name || oferta?.therapist_name || selecionado.nome), profissao, especialidades: terapeuta?.especialidades ?? [], foto, perfil, whatsapp: linkWhatsAppTerapeuta(terapeuta?.phone || oferta?.therapist?.phone) };
-  }).filter((item) => item.perfil);
+  });
 
-  const alzira = destaques.find((item) => normalizarNome(item.nome).startsWith("alzira"));
-  const renata = destaques.find((item) => normalizarNome(item.nome).startsWith("renata martins"));
-  const addriana = destaques.find((item) => normalizarNome(item.nome).startsWith("addriana klein"));
-  const primeiros = [alzira, renata].filter((item): item is TerapeutaDestaque => Boolean(item));
-  const restantes = destaques.filter((item) => item !== alzira && item !== renata && item !== addriana);
+  const corresponde = (nome: string, buscas: string[]) => {
+    const normalizado = normalizarNome(nome);
+    return buscas.some((busca) => normalizado === busca || normalizado.startsWith(`${busca} `));
+  };
+  const principais = destaques.filter((item) => corresponde(item.nome, prioridadePrincipal));
+  const novos = destaques.filter((item) => !principais.includes(item) && item.id >= primeiroIdNovoIngresso);
+  const preferenciais = destaques.filter((item) =>
+    !principais.includes(item) && !novos.includes(item) && corresponde(item.nome, prioridadePreferencial),
+  );
+  const demais = destaques.filter((item) =>
+    !principais.includes(item) && !novos.includes(item) && !preferenciais.includes(item),
+  );
 
-  return [...embaralharTerapeutas(primeiros), ...(addriana ? [addriana] : []), ...embaralharTerapeutas(restantes)];
+  return [
+    ...embaralharTerapeutas(principais),
+    ...embaralharTerapeutas(novos),
+    ...embaralharTerapeutas(preferenciais),
+    ...embaralharTerapeutas(demais),
+  ];
 }
 
 // Alfabeto e redução da Numerologia Latina fornecidos para o Desafio do Nome.
