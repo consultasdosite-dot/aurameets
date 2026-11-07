@@ -32,7 +32,7 @@ const terapeutasSelecionados = [
   { nome: "Renatta Godoi", busca: ["renatta godoi", "renata godoi"] },
   { nome: "Semiramis", busca: ["semiramis"] },
   { nome: "Milena", busca: ["milena"] },
-  { nome: "Pollyanna", busca: ["pollyanna"] },
+  { nome: "Pollyana de Oliveira", busca: ["pollyanna", "pollyana"] },
   { nome: "Pedro", busca: ["pedro"] },
   { nome: "Ricardo", busca: ["ricardo"] },
   { nome: "Tyemi", busca: ["tyemi"] },
@@ -94,7 +94,7 @@ function montarDestaques(
         : `/terapeutas?therapistId=${encodeURIComponent(String(terapeuta.id))}`
       : oferta?.public_href || null;
     const profissao = terapeuta?.speciality?.trim() || oferta?.therapist?.speciality?.trim() || null;
-    return { nome: terapeuta?.name || oferta?.therapist_name || selecionado.nome, profissao, especialidades: terapeuta?.especialidades ?? [], foto, perfil, whatsapp: linkWhatsAppTerapeuta(terapeuta?.phone || oferta?.therapist?.phone) };
+    return { nome: selecionado.nome === "Pollyana de Oliveira" ? "Pollyana de Oliveira" : (terapeuta?.name || oferta?.therapist_name || selecionado.nome), profissao, especialidades: terapeuta?.especialidades ?? [], foto, perfil, whatsapp: linkWhatsAppTerapeuta(terapeuta?.phone || oferta?.therapist?.phone) };
   }).filter((item) => item.perfil);
 
   const alzira = destaques.find((item) => normalizarNome(item.nome).startsWith("alzira"));
@@ -480,7 +480,7 @@ export default function Home() {
                       <span aria-hidden="true">✧</span>
                     )}
                   </span>
-                  <strong>{terapeuta.nome.trim().split(/\s+/).slice(0, 2).map((parte) => parte.charAt(0).toLocaleUpperCase("pt-BR") + parte.slice(1).toLocaleLowerCase("pt-BR")).join(" ")}</strong>
+                  <strong>{normalizarNome(terapeuta.nome) === "pollyana de oliveira" ? "Pollyana de Oliveira" : terapeuta.nome.trim().split(/\s+/).slice(0, 2).map((parte) => parte.charAt(0).toLocaleUpperCase("pt-BR") + parte.slice(1).toLocaleLowerCase("pt-BR")).join(" ")}</strong>
                   {terapeuta.especialidades.length > 0 ? (
                     <span className="especialidadesTerapeuta">{terapeuta.especialidades.map((nome) => (
                       <span className="profissaoTerapeuta" key={nome}>{nome}</span>
@@ -1058,15 +1058,18 @@ export default function Home() {
           width: 100%;
           height: 220px;
           overflow: hidden;
-          background: linear-gradient(135deg, #7735c5, #ef649a);
-          color: #fff;
+          background: #f1e7f8;
+          color: #7735c5;
           font-size: 54px;
         }
         .home3 .fotoTerapeuta img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center top;
+          display: block;
+          width: auto;
+          height: auto;
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+          object-position: center center;
         }
         .home3 .conviteTerapeuta {
           background: #fff8f7;

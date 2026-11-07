@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -59,7 +60,7 @@ export default function TherapistCard({
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-[#E7D8F2] bg-white shadow-md transition hover:-translate-y-1 hover:border-[#A66AD6] hover:shadow-xl">
-      <div className="relative flex h-64 items-center justify-center overflow-hidden bg-gradient-to-br from-[#F8EDFC] to-[#EBDDF7] sm:h-72">
+      <div className="relative flex h-64 items-center justify-center overflow-hidden bg-white sm:h-72">
         {possuiFoto ? (
           <img
             src={therapist.foto}

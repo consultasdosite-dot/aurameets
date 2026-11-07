@@ -79,10 +79,18 @@ export default async function TherapistList() {
           .filter(Boolean)
           .join(" - ");
 
+        const ehOscar =
+          normalizarIdentificador(therapist.name) ===
+          "oscarahumada";
+
         return {
           id: therapist.slug,
           nome: therapist.name,
-          foto: therapist.photo_url ?? "",
+          foto: ehOscar
+            ? "/oscar-ahumada-fundador.png"
+            : therapist.profile_photo_url?.trim() ||
+              therapist.photo_url?.trim() ||
+              "",
           especialidades,
           cidade:
             cidade || "Atendimento online",

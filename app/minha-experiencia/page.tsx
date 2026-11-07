@@ -200,6 +200,48 @@ function MinhaExperienciaConteudo() {
                 AuraMeets a criar experiências cada vez mais especiais.
               </p>
 
+            <div className="mx-auto mt-6 grid w-full max-w-3xl gap-3 sm:gap-4 md:grid-cols-3">
+              <button
+                type="button"
+                disabled={enviando || avaliado}
+                onClick={() => { setAvaliacaoEscolhida("GOSTEI MUITO"); setErro(""); }}
+                className={`min-h-[64px] rounded-2xl px-5 font-black text-white shadow-xl transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  avaliacaoEscolhida === "GOSTEI MUITO"
+                    ? "bg-[#5e2b82] ring-4 ring-purple-200"
+                    : "bg-gradient-to-r from-[#a855b5] via-[#8244a9] to-[#5a287d] hover:-translate-y-0.5"
+                }`}
+              >
+                {"GOSTEI MUITO"}
+              </button>
+
+              <button
+                type="button"
+                disabled={enviando || avaliado}
+                onClick={() => { setAvaliacaoEscolhida("FOI BOM"); setErro(""); }}
+                className={`min-h-[64px] rounded-2xl border-2 px-5 font-black shadow-xl transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  avaliacaoEscolhida === "FOI BOM"
+                    ? "border-[#5e2b82] bg-[#5e2b82] text-white"
+                    : "border-[#7d45b5] bg-white/95 text-[#63309a] hover:-translate-y-0.5"
+                }`}
+              >
+                {"FOI BOM"}
+              </button>
+
+              <button
+                type="button"
+                disabled={enviando || avaliado}
+                onClick={() => { setAvaliacaoEscolhida("ESPERAVA MAIS"); setErro(""); }}
+                className={`min-h-[64px] rounded-2xl px-5 font-black shadow-xl transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  avaliacaoEscolhida === "ESPERAVA MAIS"
+                    ? "bg-[#5e2b82] text-white ring-4 ring-purple-200"
+                    : "bg-white/95 text-[#542785] hover:-translate-y-0.5"
+                }`}
+              >
+                {"ESPERAVA MAIS"}
+              </button>
+            </div>
+
+
               {!visitanteWhatsappUrl && !avaliado && (
                 <div className="mx-auto mt-5 grid max-w-2xl gap-3 sm:grid-cols-2">
                   <input
@@ -246,56 +288,24 @@ function MinhaExperienciaConteudo() {
                 </div>
               )}
 
+              {!avaliado && (
+                <button
+                  type="button"
+                  disabled={enviando || !avaliacaoEscolhida}
+                  onClick={() => {
+                    if (avaliacaoEscolhida) void avaliar(avaliacaoEscolhida);
+                  }}
+                  className="mx-auto mt-5 block min-h-14 w-full max-w-2xl rounded-2xl bg-gradient-to-r from-[#8c4cac] to-[#5e2b82] px-6 font-black text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  ENVIAR AVALIAÇÃO
+                </button>
+              )}
+
               {erro && (
                 <div className="mx-auto mt-4 max-w-2xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-semibold text-red-700">
                   {erro}
                 </div>
               )}
-            </div>
-
-            <div className="grid w-full gap-3 sm:gap-4 md:grid-cols-3">
-              <button
-                type="button"
-                disabled={enviando || avaliado}
-                onClick={() => void avaliar("GOSTEI MUITO")}
-                className={`min-h-[64px] rounded-2xl px-5 font-black text-white shadow-xl transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                  avaliacaoEscolhida === "GOSTEI MUITO"
-                    ? "bg-emerald-600"
-                    : "bg-gradient-to-r from-[#a855b5] via-[#8244a9] to-[#5a287d] hover:-translate-y-0.5"
-                }`}
-              >
-                {avaliacaoEscolhida === "GOSTEI MUITO"
-                  ? "OBRIGADO!"
-                  : "GOSTEI MUITO"}
-              </button>
-
-              <button
-                type="button"
-                disabled={enviando || avaliado}
-                onClick={() => void avaliar("FOI BOM")}
-                className={`min-h-[64px] rounded-2xl border-2 px-5 font-black shadow-xl transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                  avaliacaoEscolhida === "FOI BOM"
-                    ? "border-emerald-600 bg-emerald-600 text-white"
-                    : "border-[#7d45b5] bg-white/95 text-[#63309a] hover:-translate-y-0.5"
-                }`}
-              >
-                {avaliacaoEscolhida === "FOI BOM" ? "OBRIGADO!" : "FOI BOM"}
-              </button>
-
-              <button
-                type="button"
-                disabled={enviando || avaliado}
-                onClick={() => void avaliar("ESPERAVA MAIS")}
-                className={`min-h-[64px] rounded-2xl px-5 font-black shadow-xl transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                  avaliacaoEscolhida === "ESPERAVA MAIS"
-                    ? "bg-emerald-600 text-white"
-                    : "bg-white/95 text-[#542785] hover:-translate-y-0.5"
-                }`}
-              >
-                {avaliacaoEscolhida === "ESPERAVA MAIS"
-                  ? "OBRIGADO!"
-                  : "ESPERAVA MAIS"}
-              </button>
             </div>
 
             {enviando && (
@@ -413,7 +423,8 @@ function MinhaExperienciaConteudo() {
               </div>
 
               <div className="relative min-h-[280px] overflow-hidden bg-[#24122f] lg:min-h-full">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(180,114,204,0.55),transparent_35%),radial-gradient(circle_at_70%_65%,rgba(105,187,197,0.35),transparent_35%)]" />
+                <div className="absolute inset-0 bg-[url('/hero-aura-maos-limpa.png')] bg-cover bg-center" />
+                <div className="absolute inset-0 bg-[#24122f]/75" />
 
                 <div className="relative flex h-full min-h-[280px] items-center justify-center p-8 text-center text-white">
                   <div>
