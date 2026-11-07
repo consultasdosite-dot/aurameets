@@ -185,6 +185,24 @@ export default function GuiaTerapeutaPage() {
             quando terminar. Presentes, descontos e depoimentos são opcionais.
           </p>
 
+          <div className="mt-6 rounded-2xl border border-purple-200 bg-purple-50 p-5 sm:p-6">
+            <h2 className="text-lg font-extrabold text-purple-950">
+              Cartilha de Boas-Vindas AuraMeets
+            </h2>
+            <p className="mt-2 text-sm leading-7 text-slate-700">
+              Consulte orientações para conhecer a plataforma, preparar seu perfil
+              profissional e aproveitar as oportunidades de divulgação.
+            </p>
+            <a
+              href="/cartilha-boas-vindas.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-purple-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-purple-800"
+            >
+              LER CARTILHA
+            </a>
+          </div>
+
           <div className="mt-7">
             <div className="flex items-center justify-between gap-3 text-sm font-semibold">
               <span>Seu progresso</span>
