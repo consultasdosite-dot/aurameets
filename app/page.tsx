@@ -65,7 +65,7 @@ function montarDestaques(
   terapeutas: HomeExperienceTherapist[],
   ofertas: FeaturedExperience[],
 ): TerapeutaDestaque[] {
-  const destaques = terapeutas.map((terapeuta) => {
+  const destaques = terapeutas.filter((terapeuta) => Number(terapeuta.id) !== 109).map((terapeuta) => {
     const oferta = ofertas.find((item) => normalizarNome(item.therapist_name) === normalizarNome(terapeuta.name));
     const foto = normalizarNome(terapeuta.name).startsWith("oscar ahumada")
       ? "/oscar-ahumada-fundador.png"
