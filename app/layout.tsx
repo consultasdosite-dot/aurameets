@@ -1,3 +1,4 @@
+import RadarDigital from "@/components/radar/RadarDigital";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import CookieConsent from "@/components/CookieConsent";
@@ -37,6 +38,7 @@ export default function RootLayout({
       >
         <ServiceWorkerRegister />
 
+        <RadarDigital />
         {children}
 
         <CookieConsent />

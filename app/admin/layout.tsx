@@ -22,6 +22,7 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
+  { label: "Radar Digital", href: "/admin/radar", icon: <ReportsIcon /> },
   {
     label: "Visão geral",
     href: "/admin",
