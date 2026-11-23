@@ -335,7 +335,7 @@ export default function Home() {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
-          }).format(new Date(agora + 2 * 60 * 60 * 1000));
+          }).format(new Date(agora - 14 * 60 * 60 * 1000));
 
           const programacao: Record<string, {
             busca: string;
@@ -499,10 +499,87 @@ export default function Home() {
               descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
             },
             "2026-11-23": {
-              busca: "mariangela",
-              nome: "Mariangela",
+              busca: "pollyanna",
+              nome: "Pollyanna de Oliveira",
               data: "SEGUNDA-FEIRA • 23/11/2026",
-              titulo: "VALE CONSULTA COM MARIANGELA",
+              titulo: "VALE CONSULTA COM POLLYANNA DE OLIVEIRA",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-11-24": {
+              busca: "mariangela",
+              nome: "Mariangela Andrade",
+              data: "TERÇA-FEIRA • 24/11/2026",
+              titulo: "VALE CONSULTA COM MARIANGELA ANDRADE",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-11-25": {
+              busca: "kassia",
+              nome: "Kassia Vieira",
+              data: "QUARTA-FEIRA • 25/11/2026",
+              titulo: "VALE CONSULTA COM KASSIA VIEIRA",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-11-26": {
+              busca: "renatta godoi",
+              nome: "Renatta Godoi",
+              data: "QUINTA-FEIRA • 26/11/2026",
+              titulo: "VALE CONSULTA COM RENATTA GODOI",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-11-27": {
+              busca: "semiramis",
+              nome: "Semíramis Marciano",
+              data: "SEXTA-FEIRA • 27/11/2026",
+              titulo: "VALE CONSULTA COM SEMÍRAMIS MARCIANO",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-11-28": {
+              busca: "alzira",
+              nome: "Alzira Inamine",
+              data: "SÁBADO • 28/11/2026",
+              titulo: "VALE CONSULTA COM ALZIRA INAMINE",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-11-30": {
+              busca: "kelly",
+              nome: "Kelly Santtos",
+              data: "SEGUNDA-FEIRA • 30/11/2026",
+              titulo: "VALE CONSULTA COM KELLY SANTTOS",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-12-01": {
+              busca: "fernanda miranda",
+              nome: "Fernanda Miranda Pais",
+              data: "TERÇA-FEIRA • 01/12/2026",
+              titulo: "VALE CONSULTA COM FERNANDA MIRANDA PAIS",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-12-02": {
+              busca: "milena",
+              nome: "Milena Rocha",
+              data: "QUARTA-FEIRA • 02/12/2026",
+              titulo: "VALE CONSULTA COM MILENA ROCHA",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-12-03": {
+              busca: "renata martins",
+              nome: "Renata Martins",
+              data: "QUINTA-FEIRA • 03/12/2026",
+              titulo: "VALE CONSULTA COM RENATA MARTINS",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-12-04": {
+              busca: "semiramis",
+              nome: "Semíramis Marciano",
+              data: "SEXTA-FEIRA • 04/12/2026",
+              titulo: "VALE CONSULTA COM SEMÍRAMIS MARCIANO",
+              descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
+            },
+            "2026-12-05": {
+              busca: "tyemi",
+              nome: "Tyemi Seigaki",
+              data: "SÁBADO • 05/12/2026",
+              titulo: "VALE CONSULTA COM TYEMI SEIGAKI",
               descricao: "Conheça o perfil do profissional e saiba mais sobre seus atendimentos.",
             },
           };
@@ -516,6 +593,9 @@ export default function Home() {
           }).format(new Date(`${dataBrasilia}T12:00:00-03:00`)).toLocaleUpperCase("pt-BR");
 
           const semAgendamento = !programacao[dataBrasilia];
+          // A programação começa às 14h de Brasília e cada peça dura 24h.
+          // Não estender o último destaque para dias sem programação.
+          if (dataBrasilia >= "2026-11-23" && semAgendamento) return null;
           const experiencia = programacao[dataBrasilia] ?? {
             busca: "oscar ahumada",
             nome: "Oscar Ahumada",
